@@ -108,11 +108,18 @@ one, and the harness must *test* each one.
      fixed at some precision stands out against jittered decoys. → decoys are
      roundness-matched to the real leg's **exact** trailing-zero level, so the whole
      bundle shares one precision and the real's roundness is not a signal.
-   - **Verified against a learned attacker.** The harness does not only run hand-picked
-     heuristics — it trains a logistic-regression adversary over all channels
-     (z-score, distance-to-median, roundness, position) on the train split and reports
-     its advantage on held-out data. "Indistinguishable" means *even a trained model*
-     can't beat `1/K` (for `K ≥ 8`).
+   - **Measured against a strong learned attacker — honest bounded result.** The harness
+     does not only run hand-picked heuristics — it trains a **standardized 13-feature
+     logistic-regression** adversary spanning the amount, centrality, roundness, position,
+     isolation, order-statistic-rank, and value-collision channels, on the train split,
+     and reports its advantage on held-out data. That advantage is **small and decreasing
+     in K but not zero** (~+0.041 at K=2, ~+0.022 at K=8, ~+0.016 at K=16). We report this
+     bounded advantage rather than claim indistinguishability. The residual traces to the
+     roundness-matching step (decoys are grid-snapped to the real leg's exact roundness so
+     a round real doesn't stand out, which is not perfectly symmetric with the exact real
+     value); removing the match is far worse (a round real then leaks at ~+0.35, which the
+     harness shows under `--round-match 0.0`). The design tradeoff is therefore measured,
+     not assumed — and the honest takeaway is: **use the largest K you can afford.**
 4. **Timing / cadence.** Deterministic scheduling is a fingerprint. → **Countermeasure:**
    randomized, human-plausible cadence at the SDK layer (bundles are atomic on-chain,
    but *when* a user casts them is a signal).

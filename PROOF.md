@@ -94,16 +94,19 @@ tx, with an explicit warning that this re-links them — the honest default.
 $ supersonic-harness --n 8000 --seed 1
   K  | baseline | best attack          | adv (test) | interpretation
 -----+----------+----------------------+------------+---------------------
-   2 |   0.500 | learned_logreg       |   +0.0417 | indistinguishable
-   4 |   0.250 | learned_logreg       |   +0.0338 | weak leak (small residual)
-   8 |   0.125 | learned_logreg       |   +0.0136 | indistinguishable
-  16 |   0.062 | min_amount           |   +0.0111 | indistinguishable
+   2 |   0.500 | learned_logreg       |   +0.0411 | small residual
+   4 |   0.250 | learned_logreg       |   +0.0294 | small residual
+   8 |   0.125 | learned_logreg       |   +0.0221 | small residual
+  16 |   0.062 | learned_logreg       |   +0.0158 | small residual
 ```
-The attack suite includes the `log_median_central` classifier (the attack that broke an
-earlier design where decoys were centred on the real amount) **and** a learned
-logistic-regression adversary trained on the train split. The attacker selects its best
-attack on train; advantage is measured on held-out test. For **K ≥ 8** even the learned
-adversary is at the `1/K` baseline. Full JSON: `PROOF/harness-report.json`.
+The suite includes `log_median_central` (the attack that broke an earlier design where
+decoys were centred on the real amount) **and a deliberately strong learned adversary**:
+a standardized 13-feature logistic regression covering the amount, centrality, roundness,
+position, isolation, rank, and value-collision channels, trained on the train split and
+evaluated on held-out test. The advantage is **small and shrinks with K but is not zero**
+(~2 points at K=8) — we report the number rather than claim indistinguishability. The
+residual is the cost of roundness-matching decoys to a fixed real leg; disabling it
+(`--round-match 0.0`) is far worse (+0.35). Full JSON: `PROOF/harness-report.json`.
 
 ## 4. Third-party-verifiable references
 
@@ -125,13 +128,17 @@ All actively confirmed on devnet (each `solana confirm … --url devnet` returne
   were **recovered in dispersed mode** — proving decoys are economically real (they move
   value) yet recoverable, and that the consolidation mitigation is working code, not prose
   (§3b–3d, §4).
-- **The privacy claim survives the attack that an auditor actually tries.** An earlier
-  version's headline ("K≥4 indistinguishable") was false against a "pick the most central
-  value" attack, because decoys were centred on the real amount. The generator now uses an
-  exchangeable construction; the harness ships that exact attack plus a learned adversary,
-  and measures advantage ≈ baseline for **K ≥ 8** (§3e). Two regression tests lock it.
-- **Where it is weaker, the number is reported, not hidden.** K = 4 keeps a small residual
-  (~14% of baseline) and K = 2 is weakest; the README recommends K ≥ 8.
+- **The privacy claim was adversarially stress-tested — and is reported honestly.** An
+  earlier version's headline ("K≥4 indistinguishable") was false against a "pick the most
+  central value" attack, because decoys were centred on the real amount. The generator now
+  uses an exchangeable construction; the harness ships that exact attack **plus a
+  deliberately strong 13-feature learned adversary**. The measured advantage is small and
+  decreasing in K (+0.041 at K=2 → +0.016 at K=16) but **not zero** — we state that
+  bounded advantage rather than claiming perfect indistinguishability (§3e). Two regression
+  tests lock the exchangeability property.
+- **The one residual is explained, not hidden.** It comes from roundness-matching decoys
+  to a fixed real leg; the README shows that removing the match is far worse (+0.35), so
+  the small residual is a deliberate, measured tradeoff. Use the largest K you can afford.
 - **Anyone can verify it.** Program and transactions are live on devnet and `Finalized`;
   the harness result reproduces from `--seed 1`.
 
