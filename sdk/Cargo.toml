@@ -1,0 +1,13 @@
+[package]
+name = "supersonic-sdk"
+version = "0.1.0"
+edition = "2021"
+description = "Client SDK for supersonic-tx: builds intent-ambiguous transfer bundles (1 real leg + K-1 recoverable decoys) and the recovery path."
+license = "MIT"
+
+[dependencies]
+solana-sdk = { workspace = true }
+sha2 = { workspace = true }
+rand = { workspace = true }
+rand_chacha = { workspace = true }
+serde = { workspace = true }
