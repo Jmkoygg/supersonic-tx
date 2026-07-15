@@ -42,6 +42,7 @@ pub const MAX_LEGS: usize = 16;
 /// Domain-separation tags for the key-derivation function.
 const KDF_RNG: &[u8] = b"supersonic-tx/rng/v1";
 const KDF_DECOY: &[u8] = b"supersonic-tx/decoy-dest/v1";
+const KDF_SINK: &[u8] = b"supersonic-tx/disperse-sink/v1";
 
 /// Tunables for decoy generation. Defaults are reasonable; the adversarial harness
 /// is what justifies any change to them.
@@ -61,10 +62,13 @@ impl Default for DecoyConfig {
     fn default() -> Self {
         Self {
             sigma: 0.6,
-            // 0.8 chosen empirically against the adversarial harness's enumerated
-            // attacks: it drives every classifier to "indistinguishable" for K>=4 and
-            // keeps the inherent small-K roundness residual minimal. See PROOF.md.
-            round_match_prob: 0.8,
+            // 1.0: all decoys share the real leg's exact roundness level, which kills
+            // the roundness channel entirely (a real leg fixed at some precision can't
+            // stand out). Combined with the exchangeable amount construction
+            // (amounts.rs), this drives every attack — including the log-central one
+            // that broke the earlier version, and a learned logistic-regression
+            // adversary — to the 1/K baseline for K>=8. See PROOF.md.
+            round_match_prob: 1.0,
         }
     }
 }
@@ -132,6 +136,22 @@ pub fn derive_decoy_keypair(master_seed: &[u8; 32], bundle_id: u64, index: u32) 
     h.update(index.to_le_bytes());
     let seed: [u8; 32] = h.finalize().into();
     // keypair_from_seed accepts a >=32-byte seed and is fully deterministic.
+    keypair_from_seed(&seed).expect("32-byte seed is valid")
+}
+
+/// Derive a per-decoy **dispersal sink** — a distinct user-controlled address that a
+/// decoy's funds are swept to instead of straight back to the main wallet. Dispersed
+/// recovery sends each decoy to its own sink in a separate transaction, so an
+/// observer sees `K-1` unrelated onward transfers to `K-1` distinct addresses rather
+/// than a single star into the user's wallet (the consolidation tell, THREAT_MODEL
+/// §4.6). Still fully recoverable from the seed.
+pub fn derive_sink_keypair(master_seed: &[u8; 32], bundle_id: u64, index: u32) -> Keypair {
+    let mut h = Sha256::new();
+    h.update(KDF_SINK);
+    h.update(master_seed);
+    h.update(bundle_id.to_le_bytes());
+    h.update(index.to_le_bytes());
+    let seed: [u8; 32] = h.finalize().into();
     keypair_from_seed(&seed).expect("32-byte seed is valid")
 }
 

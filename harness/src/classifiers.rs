@@ -27,6 +27,10 @@ pub enum Classifier {
     LeastRound,
     /// "The real amount is the outlier from the pack" (in log space).
     LogMedianOutlier,
+    /// "The real amount is the MOST CENTRAL of the pack" (in log space) — the
+    /// mirror of LogMedianOutlier, and the decisive attack if decoys are drawn
+    /// around the real value.
+    LogMedianCentral,
     /// Fixed-position guesses — catch any ordering leak.
     FirstPosition,
     LastPosition,
@@ -40,6 +44,7 @@ impl Classifier {
             Classifier::Roundest,
             Classifier::LeastRound,
             Classifier::LogMedianOutlier,
+            Classifier::LogMedianCentral,
             Classifier::FirstPosition,
             Classifier::LastPosition,
         ]
@@ -52,6 +57,7 @@ impl Classifier {
             Classifier::Roundest => "roundest",
             Classifier::LeastRound => "least_round",
             Classifier::LogMedianOutlier => "log_median_outlier",
+            Classifier::LogMedianCentral => "log_median_central",
             Classifier::FirstPosition => "first_position",
             Classifier::LastPosition => "last_position",
         }
@@ -71,6 +77,13 @@ impl Classifier {
                 let logs: Vec<f64> = amounts.iter().map(|&a| (a.max(1) as f64).ln()).collect();
                 let med = median(&logs);
                 argmax_by(&logs, |&l| (l - med).abs())
+            }
+            Classifier::LogMedianCentral => {
+                let logs: Vec<f64> = amounts.iter().map(|&a| (a.max(1) as f64).ln()).collect();
+                let med = median(&logs);
+                // Most central = smallest distance to the median = argmax of the
+                // negated distance.
+                argmax_by(&logs, |&l| -(l - med).abs())
             }
             Classifier::FirstPosition => 0,
             Classifier::LastPosition => amounts.len() - 1,

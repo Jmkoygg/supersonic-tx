@@ -22,7 +22,24 @@ use rand::Rng;
 
 use crate::DecoyConfig;
 
-/// Generate `n` decoy amounts around `real`, roundness-matched to it.
+/// Generate `n` decoy amounts so that the real amount is statistically
+/// **exchangeable** with them, then roundness-match them to the real.
+///
+/// ## Why exchangeability (the fix for the log-centrality leak)
+///
+/// A naive generator draws decoys from a log-normal centered on `ln(real)`. That
+/// makes the real leg the *most central* value in log-space, and an adversary that
+/// simply picks "the value closest to the median" identifies it far above `1/K`.
+/// (This is the mirror of the outlier attack, and it is decisive — see the harness'
+/// `log_median_central` classifier.)
+///
+/// The correct construction treats `real` as if it were itself one draw from the
+/// bundle's log-normal `LN(mu, sigma)`. We draw the real leg's own z-score
+/// `z_real ~ N(0,1)` and back out `mu = ln(real) - sigma*z_real`; the decoys are
+/// then fresh i.i.d. draws from that *same* `LN(mu, sigma)`. Because the real leg's
+/// z-score came from the same `N(0,1)` as the decoys', the real value is just one of
+/// `K` i.i.d. samples — no amount- or position-based classifier can beat `1/K` on
+/// the amount channel, by construction rather than by tuning.
 pub fn generate_decoy_amounts<R: Rng>(
     real: u64,
     n: usize,
@@ -33,24 +50,24 @@ pub fn generate_decoy_amounts<R: Rng>(
         return Vec::new();
     }
     let real_round = trailing_zeros_base10(real);
-    let mu = (real.max(1) as f64).ln();
+
+    // Draw the real leg's own z-score, then derive the bundle center so that `real`
+    // is a genuine LN(mu, sigma) sample with that z-score. Bound z to ±3.5 (both for
+    // real and decoys) so tails can't blow the user's balance; the same bound applies
+    // to every leg, so it introduces no directional tell.
+    const Z_CLAMP: f64 = 3.5;
+    let z_real = standard_normal(rng).clamp(-Z_CLAMP, Z_CLAMP);
+    let mu = (real.max(1) as f64).ln() - cfg.sigma * z_real;
 
     let mut out = Vec::with_capacity(n);
     for _ in 0..n {
-        // Standard normal via Box–Muller, so we don't pull in a distributions crate.
-        let z = standard_normal(rng);
+        let z = standard_normal(rng).clamp(-Z_CLAMP, Z_CLAMP);
         let raw = (mu + cfg.sigma * z).exp();
-        // Clamp to a sane band: never zero, and cap runaway tails at 100x the real
-        // so a decoy can't dwarf the whole bundle and blow the user's balance.
-        let raw = raw.clamp(1.0, real.max(1) as f64 * 100.0);
-        let mut v = raw.round() as u64;
-        v = v.max(1);
+        let mut v = (raw.round() as u64).max(1);
 
-        // Roundness matching: most decoys share the real's roundness; the rest get a
-        // *symmetrically* nearby level so the set isn't suspiciously uniform, without
-        // biasing decoys to be systematically rounder (or less round) than the real.
-        // The earlier asymmetric range let a precise real stand out as "least round"
-        // and leak at small K; a symmetric ±1 window removes that directional tell.
+        // Roundness matching: real's roundness is fixed and observable, so decoys'
+        // roundness levels are drawn symmetrically around the real's level (mode =
+        // real_round), making the real's roundness a typical draw rather than a tell.
         let level = if rng.gen_bool(cfg.round_match_prob) {
             real_round
         } else {
@@ -58,7 +75,8 @@ pub fn generate_decoy_amounts<R: Rng>(
             let hi = (real_round + 1).min(MAX_ROUND_LEVEL);
             rng.gen_range(lo..=hi)
         };
-        out.push(snap_to_roundness(v, level));
+        v = snap_to_roundness(v, level);
+        out.push(v);
     }
     out
 }
@@ -82,19 +100,32 @@ pub fn trailing_zeros_base10(x: u64) -> u32 {
     n
 }
 
-/// Round `v` to the nearest multiple of `10^level`, never returning zero (a
-/// zero-value leg is rejected on-chain and is a trivial tell).
+/// Round `v` to have **exactly** `level` trailing zeros in base 10 (never more),
+/// never returning zero (a zero-value leg is rejected on-chain and is a trivial
+/// tell).
+///
+/// The "exactly, never more" part matters: if a decoy snapped to `level` happened
+/// to land on a multiple of `10^(level+1)` it would read as *rounder* than a real
+/// leg fixed at exactly `level` trailing zeros, letting the real stand out as the
+/// least-round leg. Forcing exactly `level` keeps matched decoys' roundness
+/// identical to the real's.
 pub fn snap_to_roundness(v: u64, level: u32) -> u64 {
     let m = 10u64.saturating_pow(level);
     if m <= 1 {
         return v.max(1);
     }
-    let snapped = ((v + m / 2) / m) * m;
+    let mut snapped = ((v + m / 2) / m) * m;
     if snapped == 0 {
-        m
-    } else {
-        snapped
+        snapped = m;
     }
+    // Break any extra trailing zero so the result has exactly `level` of them.
+    if level < MAX_ROUND_LEVEL {
+        let m10 = m.saturating_mul(10);
+        if snapped % m10 == 0 {
+            snapped += m;
+        }
+    }
+    snapped
 }
 
 /// A standard normal sample via the Box–Muller transform.
@@ -141,26 +172,67 @@ mod tests {
     }
 
     #[test]
-    fn real_amount_is_not_an_outlier() {
-        // The real should land inside the decoy range, not be the unique min/max —
-        // that positional tell is exactly what log-space clustering removes.
+    fn real_is_exchangeable_not_systematically_extreme() {
+        // Exchangeability means the real leg is the global min OR max of the bundle
+        // at ~2/K — the same rate as any single leg — not systematically central
+        // (the old centrality bug) nor systematically extreme. For K=8 that's 0.25.
         let cfg = DecoyConfig::default();
         let real = 1_337_000u64;
-        let mut inside = 0;
-        let trials = 200;
+        let k = 8usize;
+        let trials = 4000;
+        let mut extreme = 0;
         for i in 0..trials {
             let mut r = ChaCha20Rng::seed_from_u64(i);
-            let decoys = generate_decoy_amounts(real, 7, &cfg, &mut r);
+            let decoys = generate_decoy_amounts(real, k - 1, &cfg, &mut r);
             let min = *decoys.iter().min().unwrap();
             let max = *decoys.iter().max().unwrap();
-            if real >= min && real <= max {
-                inside += 1;
+            if real <= min || real >= max {
+                extreme += 1;
             }
         }
-        // Not a guarantee every time, but it must be the overwhelming norm.
+        let rate = extreme as f64 / trials as f64;
+        let expected = 2.0 / k as f64; // 0.25
         assert!(
-            inside as f64 / trials as f64 > 0.8,
-            "real should sit within the decoy range most of the time, got {inside}/{trials}"
+            (rate - expected).abs() < 0.06,
+            "real should be the extreme at ~{expected:.2} (exchangeable), got {rate:.3}"
+        );
+    }
+
+    #[test]
+    fn real_is_not_the_most_central_above_baseline() {
+        // Regression test for the log-centrality leak: with the exchangeable
+        // construction, the real leg must be the value closest to the log-median at
+        // only ~1/K frequency, not systematically. (Before the fix, the real was the
+        // most-central value far above 1/K, which broke the headline claim.)
+        let cfg = DecoyConfig::default();
+        let real = 1_337_000u64;
+        let k = 8usize; // 1 real + 7 decoys
+        let trials = 4000;
+        let mut real_is_central = 0;
+        for i in 0..trials {
+            let mut r = ChaCha20Rng::seed_from_u64(1000 + i);
+            let decoys = generate_decoy_amounts(real, k - 1, &cfg, &mut r);
+            let mut logs: Vec<f64> = decoys.iter().map(|&a| (a as f64).ln()).collect();
+            logs.push((real as f64).ln());
+            let med = {
+                let mut s = logs.clone();
+                s.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                s[s.len() / 2]
+            };
+            // Is the real leg (last pushed) the closest to the median?
+            let real_dist = (logs[k - 1] - med).abs();
+            let most_central = logs.iter().all(|&l| (l - med).abs() >= real_dist - 1e-9);
+            if most_central {
+                real_is_central += 1;
+            }
+        }
+        let rate = real_is_central as f64 / trials as f64;
+        let baseline = 1.0 / k as f64; // 0.125
+        // Allow slack for roundness perturbation + ties, but it must be near 1/K,
+        // nowhere near the pre-fix leak (which pushed this well above baseline).
+        assert!(
+            rate < baseline + 0.05,
+            "real is most-central at rate {rate:.3}, baseline {baseline:.3} — centrality leak regressed"
         );
     }
 

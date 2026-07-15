@@ -96,9 +96,12 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
     let train = generate_bundles(k, n, cfg, &mut rng);
     let test = generate_bundles(k, n, cfg, &mut rng);
 
-    // Per-classifier test numbers (for transparency), and pick the best on TRAIN.
+    // Every candidate reports (name, train advantage, test advantage). The adversary
+    // selects the best on TRAIN; we report its TEST advantage (no peeking at test).
     let mut per_classifier = Vec::new();
-    let mut best: Option<(Classifier, f64)> = None;
+    let mut candidates: Vec<(String, f64, f64)> = Vec::new();
+    let base = 1.0 / k as f64;
+
     for &c in Classifier::all() {
         let (_train_acc, train_adv) = advantage(c, &train, k);
         let (test_acc, test_adv) = advantage(c, &test, k);
@@ -107,14 +110,29 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
             test_accuracy: test_acc,
             test_advantage: test_adv,
         });
-        // Adversary selects on train advantage only.
-        if best.map_or(true, |(_, b)| train_adv > b) {
-            best = Some((c, train_adv));
-        }
+        candidates.push((c.name().to_string(), train_adv, test_adv));
     }
 
-    let best_classifier = best.unwrap().0;
-    let (_best_test_acc, best_test_adv) = advantage(best_classifier, &test, k);
+    // The learned logistic-regression adversary competes on equal footing — this is
+    // the attack a real copy-trader would run over all channels at once.
+    let (learn_train_acc, learn_test_acc) = crate::learned::train_and_eval(&train, &test);
+    per_classifier.push(ClassifierResult {
+        name: "learned_logreg".to_string(),
+        test_accuracy: learn_test_acc,
+        test_advantage: learn_test_acc - base,
+    });
+    candidates.push((
+        "learned_logreg".to_string(),
+        learn_train_acc - base,
+        learn_test_acc - base,
+    ));
+
+    let best = candidates
+        .iter()
+        .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+        .unwrap();
+    let best_classifier = best.0.clone();
+    let best_test_adv = best.2;
 
     // Naive consolidation: sweeping decoys back identifies all K-1 of them, so the
     // real leg is fully exposed. accuracy = 1.0, advantage = 1 - 1/k.
@@ -124,9 +142,9 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         k,
         n_train: n,
         n_test: n,
-        baseline: 1.0 / k as f64,
+        baseline: base,
         per_classifier,
-        best_classifier: best_classifier.name().to_string(),
+        best_classifier,
         adversary_test_advantage: best_test_adv,
         naive_consolidation_advantage,
     }

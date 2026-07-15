@@ -12,6 +12,7 @@
 
 mod classifiers;
 mod eval;
+mod learned;
 
 use eval::{eval_k, KResult};
 use serde::Serialize;
