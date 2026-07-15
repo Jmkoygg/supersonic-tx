@@ -56,12 +56,25 @@ pub struct DecoyConfig {
     /// real amount. The rest get a nearby roundness level, so the set mixes round
     /// and precise values the way real activity does.
     pub round_match_prob: f64,
+    /// Plausible amount band, in lamports. Decoys are resampled to stay inside it so
+    /// an observer holding a prior on plausible payment sizes cannot eliminate a
+    /// decoy as "impossible" — the support-boundary attack. The real amount is
+    /// assumed to lie within this band; if it doesn't, the band is widened to include
+    /// it (the real is never distorted).
+    pub min_lamports: u64,
+    pub max_lamports: u64,
 }
 
 impl Default for DecoyConfig {
     fn default() -> Self {
         Self {
             sigma: 0.6,
+            // Plausible payment band: 0.001 SOL to 100 SOL. Keeps decoys inside the
+            // same support the real leg lives in, closing the boundary leak where a
+            // decoy in a Gaussian tail lands at an implausible size and gives itself
+            // away as "not the real one."
+            min_lamports: 1_000_000,
+            max_lamports: 100_000_000_000,
             // 1.0: all decoys share the real leg's exact roundness level, which kills
             // the roundness channel entirely (a real leg fixed at some precision can't
             // stand out). Combined with the exchangeable amount construction

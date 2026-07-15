@@ -59,11 +59,28 @@ pub fn generate_decoy_amounts<R: Rng>(
     let z_real = standard_normal(rng).clamp(-Z_CLAMP, Z_CLAMP);
     let mu = (real.max(1) as f64).ln() - cfg.sigma * z_real;
 
+    // Plausible band, widened to always include the real leg (the real is never
+    // distorted). Decoys are rejection-sampled to land inside it, so a decoy in a
+    // Gaussian tail can't fall to an implausible size and reveal itself as "not the
+    // real one" (the support-boundary attack).
+    let lo = (cfg.min_lamports.min(real).max(1)) as f64;
+    let hi = (cfg.max_lamports.max(real)) as f64;
+
     let mut out = Vec::with_capacity(n);
     for _ in 0..n {
-        let z = standard_normal(rng).clamp(-Z_CLAMP, Z_CLAMP);
-        let raw = (mu + cfg.sigma * z).exp();
-        let mut v = (raw.round() as u64).max(1);
+        // Rejection-sample z until the amount is inside the band. Truncation keeps the
+        // log-normal smooth rather than piling decoys up at the edge.
+        let mut raw;
+        let mut tries = 0;
+        loop {
+            let z = standard_normal(rng).clamp(-Z_CLAMP, Z_CLAMP);
+            raw = (mu + cfg.sigma * z).exp();
+            if (raw >= lo && raw <= hi) || tries >= 64 {
+                break;
+            }
+            tries += 1;
+        }
+        let mut v = (raw.clamp(lo, hi).round() as u64).max(1);
 
         // round_match_prob == 0 disables roundness matching entirely: decoys are raw
         // exchangeable draws (no grid snapping). Kept as an experimental/measurement
@@ -84,6 +101,8 @@ pub fn generate_decoy_amounts<R: Rng>(
             rng.gen_range(lo..=hi)
         };
         v = snap_to_roundness(v, level);
+        // Snapping can nudge a value across the band edge; keep it inside.
+        v = ((v as f64).clamp(lo, hi).round() as u64).max(1);
         out.push(v);
     }
     out

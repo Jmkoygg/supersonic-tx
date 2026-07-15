@@ -14,7 +14,7 @@ use supersonic_sdk::amounts::trailing_zeros_base10;
 
 use crate::eval::Bundle;
 
-const N_FEATURES: usize = 13;
+const N_FEATURES: usize = 15;
 
 /// Per-leg features, all relative to the leg's own bundle (an observer sees one
 /// bundle at a time). This is deliberately the *strong* adversary — the one a real
@@ -58,6 +58,15 @@ fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
     let mult = amounts.iter().filter(|&&a| a == amounts[idx]).count() as f64;
     let rd = trailing_zeros_base10(amounts[idx]) as f64 - mean_round;
 
+    // Absolute magnitude channel — the raw size a copy-trader reads first, and the
+    // channel an earlier version of this adversary omitted. `abs_log` lets the model
+    // learn the plausible-amount band edges from training data (the support-boundary
+    // attack); `edge` is its distance from the observed bundle's own log-extremes.
+    let abs_log = logs[idx];
+    let lo = sorted[0];
+    let hi = sorted[k - 1];
+    let edge = (logs[idx] - lo).min(hi - logs[idx]);
+
     [
         1.0,
         z,
@@ -72,6 +81,8 @@ fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
         isolation * isolation,
         rank,
         mult,
+        abs_log,
+        edge,
     ]
 }
 

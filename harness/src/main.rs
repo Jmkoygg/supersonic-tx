@@ -11,6 +11,7 @@
 //! Defaults: N=5000 bundles per train/test split, seed=1, K ∈ {2,4,8,16}.
 
 mod classifiers;
+mod consolidation;
 mod eval;
 mod learned;
 
@@ -88,25 +89,26 @@ fn main() {
 fn print_table(results: &[KResult], n: usize) {
     println!("supersonic-tx — adversarial proof harness");
     println!("{n} bundles per train/test split · real amounts sampled log-uniform 0.001-100 SOL\n");
-    println!("  K  | baseline | best attack          | adv (test) | interpretation      | consolidation adv");
-    println!("-----+----------+----------------------+------------+---------------------+------------------");
+    println!("  K  | baseline | best attack          | adv (test) | interpretation      | consolidation: naive -> disperse");
+    println!("-----+----------+----------------------+------------+---------------------+---------------------------------");
     for r in results {
         let interp = interpret(r.adversary_test_advantage, r.baseline);
         println!(
-            "  {:>2} | {:>7.3} | {:<20} | {:>+9.4} | {:<19} | {:>+9.4}",
+            "  {:>2} | {:>7.3} | {:<20} | {:>+9.4} | {:<19} | {:>+8.4} -> {:>+8.4}",
             r.k,
             r.baseline,
             r.best_classifier,
             r.adversary_test_advantage,
             interp,
             r.naive_consolidation_advantage,
+            r.dispersed_consolidation_advantage,
         );
     }
     println!();
     println!("adv (test) = (attacker accuracy on held-out bundles) - 1/K.");
     println!("~0 => the attacker does no better than a random guess (the goal).");
-    println!("consolidation adv = worst case if decoys are swept back immediately (THREAT_MODEL §4.6);");
-    println!("mitigated by delaying/dispersing recovery or keeping decoys live (account-cooker).");
+    println!("consolidation = measured recovery-linkage advantage (consolidation.rs), naive sweep");
+    println!("vs `recover --disperse`: dispersing each decoy to its own sink removes the linkage.");
 }
 
 fn interpret(adv: f64, baseline: f64) -> &'static str {

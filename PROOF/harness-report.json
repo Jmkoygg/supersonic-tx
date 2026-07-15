@@ -12,53 +12,54 @@
       "per_classifier": [
         {
           "name": "max_amount",
-          "test_accuracy": 0.486125,
-          "test_advantage": -0.013875000000000026
+          "test_accuracy": 0.492875,
+          "test_advantage": -0.0071249999999999925
         },
         {
           "name": "min_amount",
-          "test_accuracy": 0.519,
-          "test_advantage": 0.019000000000000017
+          "test_accuracy": 0.511875,
+          "test_advantage": 0.011874999999999969
         },
         {
           "name": "roundest",
-          "test_accuracy": 0.470375,
-          "test_advantage": -0.029625000000000012
+          "test_accuracy": 0.471,
+          "test_advantage": -0.029000000000000026
         },
         {
           "name": "least_round",
-          "test_accuracy": 0.528,
-          "test_advantage": 0.028000000000000025
+          "test_accuracy": 0.528375,
+          "test_advantage": 0.02837500000000004
         },
         {
           "name": "log_median_outlier",
-          "test_accuracy": 0.497625,
-          "test_advantage": -0.002375000000000016
+          "test_accuracy": 0.498375,
+          "test_advantage": -0.0016249999999999876
         },
         {
           "name": "log_median_central",
-          "test_accuracy": 0.5075,
-          "test_advantage": 0.007499999999999951
+          "test_accuracy": 0.50525,
+          "test_advantage": 0.005249999999999977
         },
         {
           "name": "first_position",
-          "test_accuracy": 0.497625,
-          "test_advantage": -0.002375000000000016
+          "test_accuracy": 0.49775,
+          "test_advantage": -0.0022499999999999742
         },
         {
           "name": "last_position",
-          "test_accuracy": 0.502375,
-          "test_advantage": 0.002375000000000016
+          "test_accuracy": 0.50225,
+          "test_advantage": 0.0022499999999999742
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.541125,
-          "test_advantage": 0.04112499999999997
+          "test_accuracy": 0.535875,
+          "test_advantage": 0.03587499999999999
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.04112499999999997,
-      "naive_consolidation_advantage": 0.5
+      "adversary_test_advantage": 0.03587499999999999,
+      "naive_consolidation_advantage": 0.0,
+      "dispersed_consolidation_advantage": 0.0
     },
     {
       "k": 4,
@@ -68,53 +69,54 @@
       "per_classifier": [
         {
           "name": "max_amount",
-          "test_accuracy": 0.22775,
-          "test_advantage": -0.022249999999999992
+          "test_accuracy": 0.234625,
+          "test_advantage": -0.015375
         },
         {
           "name": "min_amount",
-          "test_accuracy": 0.268,
-          "test_advantage": 0.018000000000000016
+          "test_accuracy": 0.26275,
+          "test_advantage": 0.012749999999999984
         },
         {
           "name": "roundest",
-          "test_accuracy": 0.21925,
-          "test_advantage": -0.03075
+          "test_accuracy": 0.21775,
+          "test_advantage": -0.03225
         },
         {
           "name": "least_round",
-          "test_accuracy": 0.27025,
-          "test_advantage": 0.02024999999999999
+          "test_accuracy": 0.269,
+          "test_advantage": 0.019000000000000017
         },
         {
           "name": "log_median_outlier",
-          "test_accuracy": 0.246375,
-          "test_advantage": -0.0036249999999999893
+          "test_accuracy": 0.24775,
+          "test_advantage": -0.002250000000000002
         },
         {
           "name": "log_median_central",
-          "test_accuracy": 0.2565,
-          "test_advantage": 0.006500000000000006
+          "test_accuracy": 0.256375,
+          "test_advantage": 0.0063750000000000195
         },
         {
           "name": "first_position",
-          "test_accuracy": 0.255625,
-          "test_advantage": 0.005624999999999991
+          "test_accuracy": 0.253625,
+          "test_advantage": 0.0036249999999999893
         },
         {
           "name": "last_position",
-          "test_accuracy": 0.257125,
-          "test_advantage": 0.0071249999999999925
+          "test_accuracy": 0.257875,
+          "test_advantage": 0.007875000000000021
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.279375,
-          "test_advantage": 0.029374999999999984
+          "test_accuracy": 0.272625,
+          "test_advantage": 0.022625000000000006
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.029374999999999984,
-      "naive_consolidation_advantage": 0.75
+      "adversary_test_advantage": 0.022625000000000006,
+      "naive_consolidation_advantage": 0.75,
+      "dispersed_consolidation_advantage": 0.0
     },
     {
       "k": 8,
@@ -124,53 +126,54 @@
       "per_classifier": [
         {
           "name": "max_amount",
-          "test_accuracy": 0.10975,
-          "test_advantage": -0.01525
+          "test_accuracy": 0.113,
+          "test_advantage": -0.011999999999999997
         },
         {
           "name": "min_amount",
-          "test_accuracy": 0.141125,
-          "test_advantage": 0.016125
+          "test_accuracy": 0.138,
+          "test_advantage": 0.013000000000000012
         },
         {
           "name": "roundest",
-          "test_accuracy": 0.090625,
-          "test_advantage": -0.034375
+          "test_accuracy": 0.090125,
+          "test_advantage": -0.034875
         },
         {
           "name": "least_round",
-          "test_accuracy": 0.133125,
-          "test_advantage": 0.008124999999999993
+          "test_accuracy": 0.13075,
+          "test_advantage": 0.005750000000000005
         },
         {
           "name": "log_median_outlier",
-          "test_accuracy": 0.119625,
-          "test_advantage": -0.005375000000000005
+          "test_accuracy": 0.1195,
+          "test_advantage": -0.005500000000000005
         },
         {
           "name": "log_median_central",
-          "test_accuracy": 0.12375,
-          "test_advantage": -0.0012500000000000011
+          "test_accuracy": 0.123125,
+          "test_advantage": -0.0018750000000000017
         },
         {
           "name": "first_position",
-          "test_accuracy": 0.127125,
-          "test_advantage": 0.002124999999999988
+          "test_accuracy": 0.124625,
+          "test_advantage": -0.00037500000000000033
         },
         {
           "name": "last_position",
-          "test_accuracy": 0.1255,
-          "test_advantage": 0.0005000000000000004
+          "test_accuracy": 0.128125,
+          "test_advantage": 0.003124999999999989
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.147125,
-          "test_advantage": 0.022125000000000006
+          "test_accuracy": 0.1485,
+          "test_advantage": 0.023499999999999993
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.022125000000000006,
-      "naive_consolidation_advantage": 0.875
+      "adversary_test_advantage": 0.023499999999999993,
+      "naive_consolidation_advantage": 0.875,
+      "dispersed_consolidation_advantage": 0.0
     },
     {
       "k": 16,
@@ -180,53 +183,54 @@
       "per_classifier": [
         {
           "name": "max_amount",
-          "test_accuracy": 0.053625,
-          "test_advantage": -0.008875000000000001
+          "test_accuracy": 0.057125,
+          "test_advantage": -0.005374999999999998
         },
         {
           "name": "min_amount",
-          "test_accuracy": 0.073625,
-          "test_advantage": 0.011124999999999996
+          "test_accuracy": 0.07175,
+          "test_advantage": 0.009249999999999994
         },
         {
           "name": "roundest",
-          "test_accuracy": 0.034,
-          "test_advantage": -0.028499999999999998
+          "test_accuracy": 0.034875,
+          "test_advantage": -0.027624999999999997
         },
         {
           "name": "least_round",
-          "test_accuracy": 0.067125,
-          "test_advantage": 0.004625000000000004
+          "test_accuracy": 0.067,
+          "test_advantage": 0.004500000000000004
         },
         {
           "name": "log_median_outlier",
-          "test_accuracy": 0.05825,
-          "test_advantage": -0.004249999999999997
+          "test_accuracy": 0.058875,
+          "test_advantage": -0.0036250000000000032
         },
         {
           "name": "log_median_central",
-          "test_accuracy": 0.064625,
-          "test_advantage": 0.002125000000000002
+          "test_accuracy": 0.06375,
+          "test_advantage": 0.0012500000000000011
         },
         {
           "name": "first_position",
-          "test_accuracy": 0.06275,
-          "test_advantage": 0.0002500000000000002
+          "test_accuracy": 0.062875,
+          "test_advantage": 0.00037500000000000033
         },
         {
           "name": "last_position",
-          "test_accuracy": 0.063375,
-          "test_advantage": 0.0008750000000000008
+          "test_accuracy": 0.064875,
+          "test_advantage": 0.002375000000000002
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.07825,
-          "test_advantage": 0.01575
+          "test_accuracy": 0.07375,
+          "test_advantage": 0.011249999999999996
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.01575,
-      "naive_consolidation_advantage": 0.9375
+      "adversary_test_advantage": 0.011249999999999996,
+      "naive_consolidation_advantage": 0.9375,
+      "dispersed_consolidation_advantage": 0.0
     }
   ]
 }

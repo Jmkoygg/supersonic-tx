@@ -108,15 +108,21 @@ one, and the harness must *test* each one.
      fixed at some precision stands out against jittered decoys. → decoys are
      roundness-matched to the real leg's **exact** trailing-zero level, so the whole
      bundle shares one precision and the real's roundness is not a signal.
+   - **Support-boundary tell.** If the real amount always lies in a plausible band (say
+     0.001–100 SOL) but a decoy's Gaussian tail lands *outside* it, that decoy is provably
+     not the real one, and the adversary eliminates it. → **Countermeasure:** decoys are
+     **rejection-sampled to stay inside the plausible band** (widened to always include the
+     real). No decoy falls to an implausible size, so the "wild decoy" is gone.
    - **Measured against a strong learned attacker — honest bounded result.** The harness
-     does not only run hand-picked heuristics — it trains a **standardized 13-feature
+     does not only run hand-picked heuristics — it trains a **standardized 15-feature
      logistic-regression** adversary spanning the amount, centrality, roundness, position,
-     isolation, order-statistic-rank, and value-collision channels, on the train split,
-     and reports its advantage on held-out data. That advantage is **small and decreasing
-     in K but not zero** (~+0.041 at K=2, ~+0.022 at K=8, ~+0.016 at K=16). We report this
+     isolation, order-statistic-rank, value-collision, **and absolute-magnitude / band-edge**
+     channels (the last being exactly the support-boundary signal a skeptic attacks), on the
+     train split, and reports its advantage on held-out data. That advantage is **small and
+     bounded but not zero** (~+0.036 at K=2, ~+0.024 at K=8, ~+0.011 at K=16). We report this
      bounded advantage rather than claim indistinguishability. The residual traces to the
-     roundness-matching step (decoys are grid-snapped to the real leg's exact roundness so
-     a round real doesn't stand out, which is not perfectly symmetric with the exact real
+     roundness-matching step (decoys are grid-snapped to the real leg's exact roundness so a
+     round real doesn't stand out, which is not perfectly symmetric with the exact real
      value); removing the match is far worse (a round real then leaks at ~+0.35, which the
      harness shows under `--round-match 0.0`). The design tradeoff is therefore measured,
      not assumed — and the honest takeaway is: **use the largest K you can afford.**
@@ -145,11 +151,14 @@ one, and the harness must *test* each one.
      genuinely holds funds across several of their own wallets), trading money for the
      strongest anonymity.
 
-   We do **not** claim to have solved consolidation. Phase 5's harness includes a
-   consolidation-linkage detector, and the measured `advantage` is reported for both the
-   single-bundle view (strong) and the naive-consolidation view (weak) — separately and
-   honestly. Documenting this gap precisely, and showing the delay/disperse mitigation
-   moving the number, is part of the deliverable.
+   This is **measured, not asserted.** The harness (`harness/src/consolidation.rs`) runs a
+   grouping attack on the recovery graph: it flags destinations that co-forward to a shared
+   recipient as decoys and guesses the real leg among the rest. Naive consolidation leaks
+   (advantage 0.75–0.94 for K≥4; and, correctly, **0 at K=2** — a lone decoy forms no
+   group). `recover --disperse` sends each decoy to its own distinct sink in a separate
+   transaction, so no group forms and the measured advantage drops to **0 at every K**. Full
+   unlinkability across time still benefits from keeping decoys live (an `account-cooker`);
+   we state that remaining gap rather than claim it closed.
 
 ## 5. Invariants the on-chain program MUST enforce (testable)
 

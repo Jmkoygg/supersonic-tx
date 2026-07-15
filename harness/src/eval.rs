@@ -44,9 +44,11 @@ pub struct KResult {
     /// advantage — the headline number for this K.
     pub best_classifier: String,
     pub adversary_test_advantage: f64,
-    /// Naive-consolidation worst case: if decoys are swept back immediately, the
-    /// adversary identifies them and the real leg is whatever is left.
+    /// Measured recovery-linkage advantage (see `consolidation.rs`), not hardcoded:
+    /// `naive` = decoys swept to one wallet (grouping identifies them); `dispersed` =
+    /// `recover --disperse`, each decoy to its own sink (no group forms).
     pub naive_consolidation_advantage: f64,
+    pub dispersed_consolidation_advantage: f64,
 }
 
 /// Sample a realistic "real intent" amount in lamports.
@@ -134,9 +136,9 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
     let best_classifier = best.0.clone();
     let best_test_adv = best.2;
 
-    // Naive consolidation: sweeping decoys back identifies all K-1 of them, so the
-    // real leg is fully exposed. accuracy = 1.0, advantage = 1 - 1/k.
-    let naive_consolidation_advantage = 1.0 - 1.0 / k as f64;
+    // Recovery-linkage attack, measured on the test set for both recovery modes.
+    let naive_consolidation_advantage = crate::consolidation::linkage_advantage(&test, true);
+    let dispersed_consolidation_advantage = crate::consolidation::linkage_advantage(&test, false);
 
     KResult {
         k,
@@ -147,5 +149,6 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         best_classifier,
         adversary_test_advantage: best_test_adv,
         naive_consolidation_advantage,
+        dispersed_consolidation_advantage,
     }
 }
