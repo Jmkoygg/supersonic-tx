@@ -88,9 +88,31 @@ one, and the harness must *test* each one.
    instruction-data schemas, filtering is trivial. → **Countermeasure:** a *normalized
    leg format* — real and decoy legs are structurally identical at the program
    interface.
-3. **Value signature.** Round numbers, or decoys with suspiciously uniform sizes,
-   stand out. → **Countermeasure:** decoy amounts drawn from a distribution that
-   matches plausible real activity (justified, not `rand()`), no round-number tells.
+3. **Value signature — amount distribution (the subtle one).** How decoy amounts
+   relate to the real amount is the whole game.
+   - *Naive centering leaks.* Drawing decoys from a log-normal centred on the real
+     amount makes the real leg the **most central** value in log-space. An adversary
+     that picks "the value closest to the median" then wins far above `1/K`. This is
+     the mirror of the outlier attack and it is decisive — an earlier version of this
+     tool failed exactly here, and the harness now ships the `log_median_central`
+     classifier that exposes it.
+   - **Countermeasure — exchangeable construction.** The real amount is treated as if
+     it were itself one draw from the bundle's log-normal `LN(mu, sigma)`: we draw the
+     real leg's own z-score `z_real ~ N(0,1)` and set `mu = ln(real) - sigma*z_real`,
+     then draw the decoys as fresh i.i.d. draws from that same `LN(mu, sigma)`. Because
+     the real leg's z-score came from the same `N(0,1)` as the decoys', the real value
+     is statistically one of `K` exchangeable samples — neither the most central nor
+     the most outlier. No amount- or position-based attack separates it, *by
+     construction*.
+   - **Round-number tell.** Real payments are often round (`1.0 SOL`), and a real leg
+     fixed at some precision stands out against jittered decoys. → decoys are
+     roundness-matched to the real leg's **exact** trailing-zero level, so the whole
+     bundle shares one precision and the real's roundness is not a signal.
+   - **Verified against a learned attacker.** The harness does not only run hand-picked
+     heuristics — it trains a logistic-regression adversary over all channels
+     (z-score, distance-to-median, roundness, position) on the train split and reports
+     its advantage on held-out data. "Indistinguishable" means *even a trained model*
+     can't beat `1/K` (for `K ≥ 8`).
 4. **Timing / cadence.** Deterministic scheduling is a fingerprint. → **Countermeasure:**
    randomized, human-plausible cadence at the SDK layer (bundles are atomic on-chain,
    but *when* a user casts them is a signal).
