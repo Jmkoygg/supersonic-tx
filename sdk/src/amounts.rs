@@ -65,6 +65,14 @@ pub fn generate_decoy_amounts<R: Rng>(
         let raw = (mu + cfg.sigma * z).exp();
         let mut v = (raw.round() as u64).max(1);
 
+        // round_match_prob == 0 disables roundness matching entirely: decoys are raw
+        // exchangeable draws (no grid snapping). Kept as an experimental/measurement
+        // path — it removes the snap-vs-exact asymmetry but re-exposes a round real.
+        if cfg.round_match_prob <= 0.0 {
+            out.push(v);
+            continue;
+        }
+
         // Roundness matching: real's roundness is fixed and observable, so decoys'
         // roundness levels are drawn symmetrically around the real's level (mode =
         // real_round), making the real's roundness a typical draw rather than a tell.

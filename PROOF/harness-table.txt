@@ -3,10 +3,10 @@ supersonic-tx — adversarial proof harness
 
   K  | baseline | best attack          | adv (test) | interpretation      | consolidation adv
 -----+----------+----------------------+------------+---------------------+------------------
-   2 |   0.500 | learned_logreg       |   +0.0417 | indistinguishable   |   +0.5000
-   4 |   0.250 | learned_logreg       |   +0.0338 | weak leak           |   +0.7500
-   8 |   0.125 | learned_logreg       |   +0.0136 | indistinguishable   |   +0.8750
-  16 |   0.062 | min_amount           |   +0.0111 | indistinguishable   |   +0.9375
+   2 |   0.500 | learned_logreg       |   +0.0411 | indistinguishable   |   +0.5000
+   4 |   0.250 | learned_logreg       |   +0.0294 | weak leak           |   +0.7500
+   8 |   0.125 | learned_logreg       |   +0.0221 | weak leak           |   +0.8750
+  16 |   0.062 | learned_logreg       |   +0.0158 | indistinguishable   |   +0.9375
 
 adv (test) = (attacker accuracy on held-out bundles) - 1/K.
 ~0 => the attacker does no better than a random guess (the goal).

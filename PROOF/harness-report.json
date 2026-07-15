@@ -52,12 +52,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.54175,
-          "test_advantage": 0.041749999999999954
+          "test_accuracy": 0.541125,
+          "test_advantage": 0.04112499999999997
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.041749999999999954,
+      "adversary_test_advantage": 0.04112499999999997,
       "naive_consolidation_advantage": 0.5
     },
     {
@@ -108,12 +108,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.28375,
-          "test_advantage": 0.03375
+          "test_accuracy": 0.279375,
+          "test_advantage": 0.029374999999999984
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.03375,
+      "adversary_test_advantage": 0.029374999999999984,
       "naive_consolidation_advantage": 0.75
     },
     {
@@ -164,12 +164,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.138625,
-          "test_advantage": 0.013624999999999998
+          "test_accuracy": 0.147125,
+          "test_advantage": 0.022125000000000006
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.013624999999999998,
+      "adversary_test_advantage": 0.022125000000000006,
       "naive_consolidation_advantage": 0.875
     },
     {
@@ -220,12 +220,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.065,
-          "test_advantage": 0.0025000000000000022
+          "test_accuracy": 0.07825,
+          "test_advantage": 0.01575
         }
       ],
-      "best_classifier": "min_amount",
-      "adversary_test_advantage": 0.011124999999999996,
+      "best_classifier": "learned_logreg",
+      "adversary_test_advantage": 0.01575,
       "naive_consolidation_advantage": 0.9375
     }
   ]
