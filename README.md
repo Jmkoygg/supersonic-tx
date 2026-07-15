@@ -44,10 +44,11 @@ magnitude / band-edge, **and nonlinear interaction terms**, trained on the train
 includes `log_median_central` ("pick the most central value"), the attack that broke a
 design where decoys were centred on the real amount; the absolute-magnitude features are
 the "the real is inside the plausible band, wild decoys aren't" signal a skeptical analyst
-attacks; and the interaction terms exist because an independent nonlinear check (kNN and
-boosted trees, built outside this repo against the same SDK) beat an earlier linear-only
-adversary by up to 2x at low K — so the shipped number below is the honest one a real
-attacker gets, not an artifact of a too-weak model. The generator answers the amount/band
+attacks; and the interaction terms exist because a linear-only version of this adversary
+under-detects the leak a nonlinear attacker (e.g. kNN or boosted trees) would find at low
+K — the cubic/cross-product terms give this same linear model that nonlinear power, so the
+shipped number below is the honest one a real attacker gets, not an artifact of a too-weak
+model. The generator answers the amount/band
 attacks with an **exchangeable construction** (the real amount is one draw from the
 bundle's own log-normal) plus **plausible-band rejection sampling** so no decoy lands at an
 implausible size (see [`THREAT_MODEL.md §3–4`](./THREAT_MODEL.md)).
@@ -59,8 +60,9 @@ implausible size (see [`THREAT_MODEL.md §3–4`](./THREAT_MODEL.md)).
 | 8  | 0.125 | **+0.013** | 13.8% vs 12.5% |
 | 16 | 0.062 | **+0.012** | 7.5% vs 6.25% |
 
-*(seed 1, 8000 bundles per split; reproduce with `cargo run -p supersonic-harness
---release -- --n 8000 --seed 1`.)*
+*(seed 1, **`--n 8000`** bundles per split — the table above is this specific run, not the
+tool's smaller default; smaller `n` gives a noisier estimate, e.g. K=2 swings to ~+0.05 at
+`--n 4000`. Reproduce with `cargo run -p supersonic-harness --release -- --n 8000 --seed 1`.)*
 
 **Honest reading:** the advantage is **small and bounded (~0.01–0.037)** even against a
 nonlinear-strength adversary — but **not zero**. So the guarantee is *"small, bounded
@@ -135,7 +137,7 @@ signal" is not.
 
 - **Costs money.** Real decoys mean real fees + parked principal. Inherent to defeating
   the balance-delta filter, not a bug.
-- **Consolidation tell (measured, and mitigated).** Sweeping all decoys back to one wallet
+- **Consolidation tell (modeled, and mitigated).** Sweeping all decoys back to one wallet
   re-links them (`THREAT_MODEL §4.6`). The harness **models** this with a grouping attack on
   the recovery graph (`harness/src/consolidation.rs` — a structural model, not a clustering
   run over observed on-chain data): naive consolidation leaks (advantage 0.75–0.94 for K≥4),

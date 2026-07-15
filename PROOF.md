@@ -89,7 +89,7 @@ $ supersonic recover --bundle-id 301 --k 8 --disperse
 ```
 Each decoy is swept to its own seed-derived sink in a **separate** transaction. An observer
 sees 7 unrelated onward transfers to 7 distinct addresses — no star into one wallet — which
-is what drives the measured consolidation-linkage advantage to 0 (§3e). Funds stay
+is what drives the modeled consolidation-linkage advantage to 0 (§3e). Funds stay
 recoverable (sinks derive from the master seed).
 
 ### 3d. The plain (consolidating) recovery also works
@@ -114,11 +114,11 @@ adversary-favorable:
 - The strongest candidate is a **standardized 23-feature logistic regression** covering the
   amount, centrality, roundness, position, isolation, rank, collision, absolute-
   magnitude / band-edge channels, **and nonlinear interaction terms** (cubic and
-  cross-product features). An independent nonlinear check (kNN and boosted trees, built
-  outside this repo, trained on the same SDK-generated bundles) beat an earlier
-  *linear-only* version of this adversary by up to 2x at low K — the interaction terms
-  close that gap, so the reported number is the honest one a nonlinear attacker would
-  actually get, not an artifact of using too weak a model. The generator's rejection-
+  cross-product features). A *linear-only* version of this adversary under-detects the
+  leak a nonlinear attacker (kNN, boosted trees) would find at low K; these interaction
+  terms give the same linear model that nonlinear power, so the reported number is the
+  honest one a nonlinear attacker would actually get, not an artifact of using too weak a
+  model. The generator's rejection-
   sampling to a plausible band closes the support-boundary leak; against this adversary
   the advantage is **small (~0.01–0.037) and bounded**.
 - **Consolidation is derived from a model, not hardcoded** (`harness/src/consolidation.rs`):
@@ -156,9 +156,9 @@ All actively confirmed on devnet (each `solana confirm … --url devnet` returne
   honestly.** An earlier headline ("K≥4 indistinguishable") was false against a "most
   central value" attack (decoys were centred on the real). The generator now uses an
   **exchangeable construction** plus **plausible-band rejection sampling**; the harness
-  ships that exact central attack, a magnitude/band-edge-aware adversary, and — after an
-  independent nonlinear check (kNN/boosting) beat an earlier linear-only version by up to
-  2x — **nonlinear interaction terms** so the shipped number is the honest one. Measured
+  ships that exact central attack, a magnitude/band-edge-aware adversary, and —since a
+  linear-only version under-detects what a nonlinear attacker (kNN/boosting) would find at
+  low K — **nonlinear interaction terms** so the shipped number is the honest one. Measured
   advantage is small and bounded (+0.037 at K=2 → +0.012 at K=16, K=4 the weakest at
   +0.027). Two regression tests lock the exchangeability property.
 - **The recovery-linkage risk is modeled and mitigated.** A grouping-attack model of the

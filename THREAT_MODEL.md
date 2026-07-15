@@ -118,10 +118,10 @@ one, and the harness must *test* each one.
      23-feature logistic-regression** adversary spanning the amount, centrality, roundness,
      position, isolation, order-statistic-rank, value-collision, absolute-magnitude /
      band-edge, and **nonlinear interaction terms**, on the train split, and reports its
-     advantage on held-out data. The interaction terms exist because an independent
-     nonlinear check (kNN and boosted trees, run outside this repo against the same
-     generator) beat an earlier linear-only version of this adversary by up to 2x at low
-     K — so this is the honest number a real nonlinear attacker gets, not an artifact of an
+     advantage on held-out data. The interaction terms exist because a linear-only version
+     of this adversary under-detects the leak a nonlinear attacker (kNN, boosted trees)
+     would find at low K — these terms give the same linear model that nonlinear power, so
+     this is the honest number a real nonlinear attacker gets, not an artifact of an
      under-powered model. That advantage is **small and bounded but not zero** (~+0.037 at
      K=2, ~+0.013 at K=8, ~+0.012 at K=16, with K=4 the weakest point at ~+0.027). We report
      this bounded advantage rather than claim indistinguishability. The residual traces to
