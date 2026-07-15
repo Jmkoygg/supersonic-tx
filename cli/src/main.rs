@@ -24,7 +24,10 @@ use solana_sdk::{
     system_instruction,
     transaction::Transaction,
 };
-use supersonic_sdk::{build_instruction, derive_decoy_keypair, plan_bundle, BundlePlan, DecoyConfig};
+use supersonic_sdk::{
+    build_instruction, derive_decoy_keypair, derive_sink_keypair, plan_bundle, BundlePlan,
+    DecoyConfig,
+};
 
 /// The deployed router program id (matches `declare_id!` in the program).
 const DEFAULT_PROGRAM_ID: &str = "BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn";
@@ -53,13 +56,18 @@ enum Cmd {
     Plan(PlanArgs),
     /// Cast a bundle: send the real transfer buried among K-1 recoverable decoys.
     Send(PlanArgs),
-    /// Sweep the decoys of a past bundle back to your wallet.
+    /// Sweep the decoys of a past bundle back.
     Recover {
         #[arg(long)]
         bundle_id: u64,
         /// Anonymity set size K used when the bundle was sent.
         #[arg(long)]
         k: usize,
+        /// Disperse: sweep each decoy to its own distinct sink in a separate
+        /// transaction (breaks the consolidation star, THREAT_MODEL §4.6) instead of
+        /// consolidating them all into your wallet at once.
+        #[arg(long)]
+        disperse: bool,
     },
     /// Show locally-recorded bundles.
     Inspect {
@@ -105,9 +113,13 @@ fn main() -> Result<()> {
             println!("   explorer:  https://explorer.solana.com/tx/{sig}?cluster=devnet");
             record_bundle(&plan, a, &sig.to_string())?;
         }
-        Cmd::Recover { bundle_id, k } => {
+        Cmd::Recover {
+            bundle_id,
+            k,
+            disperse,
+        } => {
             let client = rpc(&cli.rpc);
-            recover(&client, &keypair, &master_seed, *bundle_id, *k)?;
+            recover(&client, &keypair, &master_seed, *bundle_id, *k, *disperse)?;
         }
         Cmd::Inspect { bundle_id } => inspect(*bundle_id)?,
     }
@@ -161,15 +173,19 @@ fn recover(
     master_seed: &[u8; 32],
     bundle_id: u64,
     k: usize,
+    disperse: bool,
 ) -> Result<()> {
-    println!("[warn] Immediate consolidation of all decoys into one wallet re-links them");
-    println!("       (see THREAT_MODEL §4.6). For strong privacy, recover late and spread");
-    println!("       across time. This command does a simple sweep.\n");
-
     let n_decoys = k.saturating_sub(1);
     let decoy_kps: Vec<Keypair> = (0..n_decoys)
         .map(|i| derive_decoy_keypair(master_seed, bundle_id, i as u32))
         .collect();
+
+    if disperse {
+        return recover_dispersed(client, payer, master_seed, bundle_id, &decoy_kps);
+    }
+
+    println!("[warn] Consolidating all decoys into one wallet re-links them (THREAT_MODEL");
+    println!("       §4.6). For stronger privacy use --disperse, or recover late/spread.\n");
 
     let mut instrs = Vec::new();
     let mut signers: Vec<&Keypair> = vec![payer];
@@ -196,6 +212,49 @@ fn recover(
         lamports_to_sol(swept),
         signers.len() - 1
     );
+    Ok(())
+}
+
+/// Dispersed recovery: sweep each decoy to its own distinct, seed-derived sink in a
+/// **separate** transaction. An observer sees K-1 unrelated onward transfers to K-1
+/// distinct addresses — no star into one wallet, no common sink to link them — which
+/// removes the naive-consolidation tell (THREAT_MODEL §4.6). Funds stay recoverable
+/// (sinks are derived from the master seed). This is the mitigation as code, not prose.
+fn recover_dispersed(
+    client: &RpcClient,
+    payer: &Keypair,
+    master_seed: &[u8; 32],
+    bundle_id: u64,
+    decoy_kps: &[Keypair],
+) -> Result<()> {
+    println!("[disperse] sweeping each decoy to its own sink in a separate tx (no star).\n");
+    let mut swept = 0u64;
+    let mut n = 0usize;
+    for (i, kp) in decoy_kps.iter().enumerate() {
+        let bal = client.get_balance(&kp.pubkey()).unwrap_or(0);
+        if bal == 0 {
+            continue;
+        }
+        let sink = derive_sink_keypair(master_seed, bundle_id, i as u32);
+        let ix = system_instruction::transfer(&kp.pubkey(), &sink.pubkey(), bal);
+        // Fresh blockhash per leg keeps the sweeps as independent transactions.
+        let bh = client.get_latest_blockhash()?;
+        let tx = Transaction::new_signed_with_payer(&[ix], Some(&payer.pubkey()), &[payer, kp], bh);
+        let sig = client
+            .send_and_confirm_transaction_with_spinner(&tx)
+            .with_context(|| format!("disperse decoy {i}"))?;
+        println!("  decoy {i} -> sink {} ({} SOL)  {sig}", sink.pubkey(), lamports_to_sol(bal));
+        swept += bal;
+        n += 1;
+    }
+    if n == 0 {
+        println!("nothing to recover for bundle {bundle_id} (decoys already empty)");
+    } else {
+        println!(
+            "\ndispersed {} SOL across {n} distinct sinks — no consolidation star",
+            lamports_to_sol(swept)
+        );
+    }
     Ok(())
 }
 
