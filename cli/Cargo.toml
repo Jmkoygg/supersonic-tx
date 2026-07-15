@@ -1,0 +1,20 @@
+[package]
+name = "supersonic-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI for supersonic-tx: cast intent-ambiguous transfer bundles and recover decoys."
+license = "MIT"
+
+[[bin]]
+name = "supersonic"
+path = "src/main.rs"
+
+[dependencies]
+supersonic-sdk = { path = "../sdk" }
+solana-sdk = { workspace = true }
+solana-client = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }
+sha2 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
