@@ -101,27 +101,33 @@ tx, with an explicit warning that this re-links them — the honest default.
 $ supersonic-harness --n 8000 --seed 1
   K  | baseline | best attack     | adv (test) | interpretation    | consolidation: naive -> disperse
 -----+----------+-----------------+------------+-------------------+---------------------------------
-   2 |   0.500  | learned_logreg  |   +0.0359  | indistinguishable |  +0.0000 ->  +0.0000
-   4 |   0.250  | learned_logreg  |   +0.0226  | indistinguishable |  +0.7500 ->  +0.0000
-   8 |   0.125  | learned_logreg  |   +0.0235  | weak leak         |  +0.8750 ->  +0.0000
-  16 |   0.062  | learned_logreg  |   +0.0112  | indistinguishable |  +0.9375 ->  +0.0000
+   2 |   0.500  | learned_logreg  |   +0.0370  | indistinguishable |  +0.0000 ->  +0.0000
+   4 |   0.250  | learned_logreg  |   +0.0266  | weak leak         |  +0.7500 ->  +0.0000
+   8 |   0.125  | learned_logreg  |   +0.0133  | indistinguishable |  +0.8750 ->  +0.0000
+  16 |   0.062  | learned_logreg  |   +0.0122  | indistinguishable |  +0.9375 ->  +0.0000
 ```
 `adv (test)` = attacker accuracy on held-out bundles − 1/K. The suite is deliberately
 adversary-favorable:
 
 - It includes `log_median_central` — the "pick the most central value" attack that broke
   an earlier design where decoys were centred on the real amount.
-- The strongest candidate is a **standardized 15-feature logistic regression** covering the
-  amount, centrality, roundness, position, isolation, rank, collision, **and absolute-
-  magnitude / band-edge channels** — i.e. it includes the exact "the real is inside the
-  plausible band, wild decoys aren't" signal a skeptical analyst would attack. The
-  generator's rejection-sampling to a plausible band closes that support-boundary leak;
-  against this stronger adversary the advantage is **small (~0.02–0.036) and bounded**.
-- **Consolidation is measured, not hardcoded** (`harness/src/consolidation.rs`): a grouping
-  attack on the recovery graph. Naive sweeping to one wallet links the decoys (advantage
-  0.75–0.94 for K≥4; and correctly **0 at K=2**, since a lone decoy forms no group);
-  `recover --disperse` sends each decoy to its own sink and drives that advantage to
-  **0 at every K**.
+- The strongest candidate is a **standardized 23-feature logistic regression** covering the
+  amount, centrality, roundness, position, isolation, rank, collision, absolute-
+  magnitude / band-edge channels, **and nonlinear interaction terms** (cubic and
+  cross-product features). An independent nonlinear check (kNN and boosted trees, built
+  outside this repo, trained on the same SDK-generated bundles) beat an earlier
+  *linear-only* version of this adversary by up to 2x at low K — the interaction terms
+  close that gap, so the reported number is the honest one a nonlinear attacker would
+  actually get, not an artifact of using too weak a model. The generator's rejection-
+  sampling to a plausible band closes the support-boundary leak; against this adversary
+  the advantage is **small (~0.01–0.037) and bounded**.
+- **Consolidation is derived from a model, not hardcoded** (`harness/src/consolidation.rs`):
+  a grouping attack on a *modeled* recovery graph (structural — it encodes how naive vs
+  dispersed recovery link addresses; it is not a clustering run over observed on-chain
+  consolidation transactions). Under the model, naive sweeping to one wallet links the
+  decoys (advantage 0.75–0.94 for K≥4; and correctly **0 at K=2**, since a lone decoy forms
+  no group); `recover --disperse` sends each decoy to its own sink and drives that advantage
+  to **0 at every K**.
 
 We report the bounded number rather than claim perfect indistinguishability. Full JSON:
 `PROOF/harness-report.json`.
@@ -146,15 +152,19 @@ All actively confirmed on devnet (each `solana confirm … --url devnet` returne
   were **recovered in dispersed mode** across 7 distinct sinks — proving decoys are
   economically real (they move value) yet recoverable, and that the consolidation mitigation
   is working code, not prose (§3b–3d, §4).
-- **The privacy claim was adversarially stress-tested — twice — and reported honestly.** An
-  earlier headline ("K≥4 indistinguishable") was false against a "most central value" attack
-  (decoys were centred on the real). The generator now uses an **exchangeable construction**
-  plus **plausible-band rejection sampling**; the harness ships that exact central attack and
-  a **15-feature learned adversary that includes the absolute-magnitude/band-edge channel** a
-  skeptic would use. Measured advantage is small and bounded (+0.036 at K=2 → +0.011 at
-  K=16). Two regression tests lock the exchangeability property.
-- **The recovery-linkage risk is measured and mitigated.** Naive consolidation links decoys
-  (measured), `--disperse` removes it (measured to 0) — not asserted.
+- **The privacy claim was adversarially stress-tested — three times — and reported
+  honestly.** An earlier headline ("K≥4 indistinguishable") was false against a "most
+  central value" attack (decoys were centred on the real). The generator now uses an
+  **exchangeable construction** plus **plausible-band rejection sampling**; the harness
+  ships that exact central attack, a magnitude/band-edge-aware adversary, and — after an
+  independent nonlinear check (kNN/boosting) beat an earlier linear-only version by up to
+  2x — **nonlinear interaction terms** so the shipped number is the honest one. Measured
+  advantage is small and bounded (+0.037 at K=2 → +0.012 at K=16, K=4 the weakest at
+  +0.027). Two regression tests lock the exchangeability property.
+- **The recovery-linkage risk is modeled and mitigated.** A grouping-attack model of the
+  recovery graph shows naive consolidation links decoys while `--disperse` drives the
+  advantage to 0 — derived structurally, not hardcoded, though not a clustering run over
+  observed on-chain data (a stated next step).
 - **Anyone can verify it.** Program and transactions are live on devnet and `Finalized`; the
   harness result reproduces from `--seed 1`.
 

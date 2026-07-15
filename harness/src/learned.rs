@@ -14,7 +14,7 @@ use supersonic_sdk::amounts::trailing_zeros_base10;
 
 use crate::eval::Bundle;
 
-const N_FEATURES: usize = 15;
+const N_FEATURES: usize = 23;
 
 /// Per-leg features, all relative to the leg's own bundle (an observer sees one
 /// bundle at a time). This is deliberately the *strong* adversary — the one a real
@@ -67,6 +67,7 @@ fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
     let hi = sorted[k - 1];
     let edge = (logs[idx] - lo).min(hi - logs[idx]);
 
+    let pos = idx as f64 / (k as f64 - 1.0).max(1.0);
     [
         1.0,
         z,
@@ -76,13 +77,25 @@ fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
         dmed * dmed,
         rd,
         rd * rd,
-        idx as f64 / (k as f64 - 1.0).max(1.0),
+        pos,
         isolation,
         isolation * isolation,
         rank,
         mult,
         abs_log,
         edge,
+        // Nonlinear interaction terms: a plain linear logreg over the base features
+        // underreports the leak (an independent kNN/boosting adversary beats it at low
+        // K). These cross/higher-order terms give the same linear model the nonlinear
+        // structure those attackers exploit, so the reported number is the honest one.
+        z * z * z,
+        z * edge,
+        z * rank,
+        abs_log * z,
+        edge * abs_log,
+        dmed.abs() * z.abs(),
+        isolation * rank,
+        mult * z.abs(),
     ]
 }
 

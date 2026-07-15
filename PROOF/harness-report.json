@@ -52,12 +52,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.535875,
-          "test_advantage": 0.03587499999999999
+          "test_accuracy": 0.537,
+          "test_advantage": 0.03700000000000003
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.03587499999999999,
+      "adversary_test_advantage": 0.03700000000000003,
       "naive_consolidation_advantage": 0.0,
       "dispersed_consolidation_advantage": 0.0
     },
@@ -109,12 +109,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.272625,
-          "test_advantage": 0.022625000000000006
+          "test_accuracy": 0.276625,
+          "test_advantage": 0.02662500000000001
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.022625000000000006,
+      "adversary_test_advantage": 0.02662500000000001,
       "naive_consolidation_advantage": 0.75,
       "dispersed_consolidation_advantage": 0.0
     },
@@ -166,12 +166,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.1485,
-          "test_advantage": 0.023499999999999993
+          "test_accuracy": 0.13825,
+          "test_advantage": 0.013250000000000012
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.023499999999999993,
+      "adversary_test_advantage": 0.013250000000000012,
       "naive_consolidation_advantage": 0.875,
       "dispersed_consolidation_advantage": 0.0
     },
@@ -223,12 +223,12 @@
         },
         {
           "name": "learned_logreg",
-          "test_accuracy": 0.07375,
-          "test_advantage": 0.011249999999999996
+          "test_accuracy": 0.07475,
+          "test_advantage": 0.012249999999999997
         }
       ],
       "best_classifier": "learned_logreg",
-      "adversary_test_advantage": 0.011249999999999996,
+      "adversary_test_advantage": 0.012249999999999997,
       "naive_consolidation_advantage": 0.9375,
       "dispersed_consolidation_advantage": 0.0
     }

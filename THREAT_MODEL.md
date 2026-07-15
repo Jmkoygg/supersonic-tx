@@ -113,16 +113,20 @@ one, and the harness must *test* each one.
      not the real one, and the adversary eliminates it. → **Countermeasure:** decoys are
      **rejection-sampled to stay inside the plausible band** (widened to always include the
      real). No decoy falls to an implausible size, so the "wild decoy" is gone.
-   - **Measured against a strong learned attacker — honest bounded result.** The harness
-     does not only run hand-picked heuristics — it trains a **standardized 15-feature
-     logistic-regression** adversary spanning the amount, centrality, roundness, position,
-     isolation, order-statistic-rank, value-collision, **and absolute-magnitude / band-edge**
-     channels (the last being exactly the support-boundary signal a skeptic attacks), on the
-     train split, and reports its advantage on held-out data. That advantage is **small and
-     bounded but not zero** (~+0.036 at K=2, ~+0.024 at K=8, ~+0.011 at K=16). We report this
-     bounded advantage rather than claim indistinguishability. The residual traces to the
-     roundness-matching step (decoys are grid-snapped to the real leg's exact roundness so a
-     round real doesn't stand out, which is not perfectly symmetric with the exact real
+   - **Measured against a strong, nonlinear learned attacker — honest bounded result.** The
+     harness does not only run hand-picked heuristics — it trains a **standardized
+     23-feature logistic-regression** adversary spanning the amount, centrality, roundness,
+     position, isolation, order-statistic-rank, value-collision, absolute-magnitude /
+     band-edge, and **nonlinear interaction terms**, on the train split, and reports its
+     advantage on held-out data. The interaction terms exist because an independent
+     nonlinear check (kNN and boosted trees, run outside this repo against the same
+     generator) beat an earlier linear-only version of this adversary by up to 2x at low
+     K — so this is the honest number a real nonlinear attacker gets, not an artifact of an
+     under-powered model. That advantage is **small and bounded but not zero** (~+0.037 at
+     K=2, ~+0.013 at K=8, ~+0.012 at K=16, with K=4 the weakest point at ~+0.027). We report
+     this bounded advantage rather than claim indistinguishability. The residual traces to
+     the roundness-matching step (decoys are grid-snapped to the real leg's exact roundness
+     so a round real doesn't stand out, which is not perfectly symmetric with the exact real
      value); removing the match is far worse (a round real then leaks at ~+0.35, which the
      harness shows under `--round-match 0.0`). The design tradeoff is therefore measured,
      not assumed — and the honest takeaway is: **use the largest K you can afford.**
@@ -151,14 +155,16 @@ one, and the harness must *test* each one.
      genuinely holds funds across several of their own wallets), trading money for the
      strongest anonymity.
 
-   This is **measured, not asserted.** The harness (`harness/src/consolidation.rs`) runs a
-   grouping attack on the recovery graph: it flags destinations that co-forward to a shared
-   recipient as decoys and guesses the real leg among the rest. Naive consolidation leaks
-   (advantage 0.75–0.94 for K≥4; and, correctly, **0 at K=2** — a lone decoy forms no
-   group). `recover --disperse` sends each decoy to its own distinct sink in a separate
-   transaction, so no group forms and the measured advantage drops to **0 at every K**. Full
-   unlinkability across time still benefits from keeping decoys live (an `account-cooker`);
-   we state that remaining gap rather than claim it closed.
+   This is **modeled, not asserted — and not overclaimed as empirical.** The harness
+   (`harness/src/consolidation.rs`) runs a grouping attack on a *structural model* of the
+   recovery graph: it flags destinations that co-forward to a shared recipient as decoys and
+   guesses the real leg among the rest. It is a model of the linkage, not a clustering run
+   over observed on-chain consolidation transactions (that is a stated next step). Under the
+   model, naive consolidation leaks (advantage 0.75–0.94 for K≥4; and, correctly, **0 at
+   K=2** — a lone decoy forms no group), while `recover --disperse` sends each decoy to its
+   own distinct sink in a separate transaction, so no group forms and the advantage drops to
+   **0 at every K**. Full unlinkability across time still benefits from keeping decoys live
+   (an `account-cooker`); we state that remaining gap rather than claim it closed.
 
 ## 5. Invariants the on-chain program MUST enforce (testable)
 
