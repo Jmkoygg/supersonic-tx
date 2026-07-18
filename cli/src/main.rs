@@ -35,7 +35,10 @@ const DEFAULT_RPC: &str = "https://api.devnet.solana.com";
 const MASTER_TAG: &[u8] = b"supersonic-tx/master/v1";
 
 #[derive(Parser)]
-#[command(name = "supersonic", about = "Cast fuzzy transfer bundles to obscure intent")]
+#[command(
+    name = "supersonic",
+    about = "Cast fuzzy transfer bundles to obscure intent"
+)]
 struct Cli {
     /// Path to the signing keypair (defaults to the Solana CLI default).
     #[arg(long, global = true)]
@@ -133,19 +136,36 @@ fn build_plan(master_seed: &[u8; 32], a: &PlanArgs) -> Result<(BundlePlan, u64)>
         return Err(anyhow!("amount too small"));
     }
     let bundle_id = a.bundle_id.unwrap_or_else(next_bundle_id);
-    let plan = plan_bundle(master_seed, bundle_id, to, lamports, a.k, DecoyConfig::default())
-        .map_err(|e| anyhow!("plan failed: {e}"))?;
+    let plan = plan_bundle(
+        master_seed,
+        bundle_id,
+        to,
+        lamports,
+        a.k,
+        DecoyConfig::default(),
+    )
+    .map_err(|e| anyhow!("plan failed: {e}"))?;
     Ok((plan, bundle_id))
 }
 
 fn print_plan(plan: &BundlePlan, a: &PlanArgs) {
-    println!("bundle {} — K={} (1 real + {} decoys)", plan.bundle_id, a.k, a.k - 1);
+    println!(
+        "bundle {} — K={} (1 real + {} decoys)",
+        plan.bundle_id,
+        a.k,
+        a.k - 1
+    );
     println!("  real intent: {} SOL -> {}", a.amount, a.to);
     println!("  legs (as an observer sees them, real hidden):");
     for (i, leg) in plan.legs.iter().enumerate() {
         println!("    [{i:>2}] {:>14} lamports -> {}", leg.amount, leg.dest);
     }
-    let decoy: u64 = plan.legs.iter().filter(|l| !l.is_real).map(|l| l.amount).sum();
+    let decoy: u64 = plan
+        .legs
+        .iter()
+        .filter(|l| !l.is_real)
+        .map(|l| l.amount)
+        .sum();
     println!(
         "  principal moved: {} SOL total; {} SOL parked in recoverable decoys",
         lamports_to_sol(plan.total_moved()),
@@ -193,7 +213,11 @@ fn recover(
     for kp in &decoy_kps {
         let bal = client.get_balance(&kp.pubkey()).unwrap_or(0);
         if bal > 0 {
-            instrs.push(system_instruction::transfer(&kp.pubkey(), &payer.pubkey(), bal));
+            instrs.push(system_instruction::transfer(
+                &kp.pubkey(),
+                &payer.pubkey(),
+                bal,
+            ));
             signers.push(kp);
             swept += bal;
         }
@@ -243,7 +267,11 @@ fn recover_dispersed(
         let sig = client
             .send_and_confirm_transaction_with_spinner(&tx)
             .with_context(|| format!("disperse decoy {i}"))?;
-        println!("  decoy {i} -> sink {} ({} SOL)  {sig}", sink.pubkey(), lamports_to_sol(bal));
+        println!(
+            "  decoy {i} -> sink {} ({} SOL)  {sig}",
+            sink.pubkey(),
+            lamports_to_sol(bal)
+        );
         swept += bal;
         n += 1;
     }

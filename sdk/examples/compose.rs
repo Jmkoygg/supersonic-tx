@@ -16,8 +16,7 @@ use supersonic_sdk::{build_instruction, plan_bundle, DecoyConfig};
 
 fn main() {
     // The deployed router program id (a third party only needs this + the SDK).
-    let program_id =
-        Pubkey::from_str("BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn").unwrap();
+    let program_id = Pubkey::from_str("BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn").unwrap();
 
     // The integrating tool's own wallet and its real intent.
     let user = Keypair::new();
@@ -45,7 +44,11 @@ fn main() {
     println!("  program:      {}", ix.program_id);
     println!("  real intent:  {real_amount} lamports -> {real_payee}");
     println!("  real hidden at index {} of {k} legs", plan.real_index);
-    println!("  instruction:  {} accounts, {} data bytes", ix.accounts.len(), ix.data.len());
+    println!(
+        "  instruction:  {} accounts, {} data bytes",
+        ix.accounts.len(),
+        ix.data.len()
+    );
     println!("  amounts (observer's view): {:?}", plan.amounts());
     println!("\nNo router source was touched — the SDK public API is the whole contract.");
 }

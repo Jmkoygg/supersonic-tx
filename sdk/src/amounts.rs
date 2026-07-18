@@ -255,8 +255,8 @@ mod tests {
         }
         let rate = real_is_central as f64 / trials as f64;
         let baseline = 1.0 / k as f64; // 0.125
-        // Allow slack for roundness perturbation + ties, but it must be near 1/K,
-        // nowhere near the pre-fix leak (which pushed this well above baseline).
+                                       // Allow slack for roundness perturbation + ties, but it must be near 1/K,
+                                       // nowhere near the pre-fix leak (which pushed this well above baseline).
         assert!(
             rate < baseline + 0.05,
             "real is most-central at rate {rate:.3}, baseline {baseline:.3} — centrality leak regressed"

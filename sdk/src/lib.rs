@@ -311,7 +311,11 @@ mod tests {
         let a = plan_bundle(&SEED, 1, dest, 1_337_000, 5, DecoyConfig::default()).unwrap();
         let b = plan_bundle(&SEED, 1, dest, 1_337_000, 5, DecoyConfig::default()).unwrap();
         assert_eq!(a.amounts(), b.amounts(), "same seed+id ⇒ same amounts");
-        assert_eq!(a.destinations(), b.destinations(), "same seed+id ⇒ same dests");
+        assert_eq!(
+            a.destinations(),
+            b.destinations(),
+            "same seed+id ⇒ same dests"
+        );
         assert_eq!(a.real_index, b.real_index);
     }
 
@@ -320,7 +324,11 @@ mod tests {
         let dest = Keypair::new().pubkey();
         let a = plan_bundle(&SEED, 1, dest, 1_337_000, 5, DecoyConfig::default()).unwrap();
         let b = plan_bundle(&SEED, 2, dest, 1_337_000, 5, DecoyConfig::default()).unwrap();
-        assert_ne!(a.destinations(), b.destinations(), "distinct id ⇒ distinct decoys");
+        assert_ne!(
+            a.destinations(),
+            b.destinations(),
+            "distinct id ⇒ distinct decoys"
+        );
     }
 
     #[test]

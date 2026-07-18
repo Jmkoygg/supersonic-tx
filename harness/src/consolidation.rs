@@ -67,7 +67,11 @@ pub fn linkage_advantage(bundles: &[Bundle], shared: bool) -> f64 {
             }
         } else {
             // Ambiguous: uniform guess among the unflagged (or all, if none).
-            let pool = if unflagged.is_empty() { k } else { unflagged.len() };
+            let pool = if unflagged.is_empty() {
+                k
+            } else {
+                unflagged.len()
+            };
             hits += 1.0 / pool as f64;
         }
     }

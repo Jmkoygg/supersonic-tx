@@ -75,7 +75,14 @@ fn dests(n: usize) -> Vec<Pubkey> {
 fn single_leg_succeeds_and_moves_value() {
     let (mut svm, user) = setup();
     let d = dests(1);
-    let res = send_bundle(&mut svm, &user, vec![Leg { amount: LAMPORTS_PER_SOL }], &d);
+    let res = send_bundle(
+        &mut svm,
+        &user,
+        vec![Leg {
+            amount: LAMPORTS_PER_SOL,
+        }],
+        &d,
+    );
     assert!(res.is_ok(), "single-leg bundle should succeed: {res:?}");
     assert_eq!(
         svm.get_balance(&d[0]).unwrap_or(0),
@@ -92,10 +99,12 @@ fn multi_leg_bundle_succeeds_and_distributes() {
     let (mut svm, user) = setup();
     let d = dests(4);
     let legs = vec![
-        Leg { amount: 250_000_000 }, // decoy
-        Leg { amount: 1_337_000 },   // "real" — indistinguishable to the program
-        Leg { amount: 42_000_000 },  // decoy
-        Leg { amount: 90_000_000 },  // decoy
+        Leg {
+            amount: 250_000_000,
+        }, // decoy
+        Leg { amount: 1_337_000 }, // "real" — indistinguishable to the program
+        Leg { amount: 42_000_000 }, // decoy
+        Leg { amount: 90_000_000 }, // decoy
     ];
     let amounts: Vec<u64> = legs.iter().map(|l| l.amount).collect();
     let start = svm.get_balance(&user.pubkey()).unwrap();
@@ -109,7 +118,10 @@ fn multi_leg_bundle_succeeds_and_distributes() {
     // The user paid out principal + fee (this is real value movement, by design).
     let moved: u64 = amounts.iter().sum();
     let end = svm.get_balance(&user.pubkey()).unwrap();
-    assert!(start - end >= moved, "user paid at least the moved principal");
+    assert!(
+        start - end >= moved,
+        "user paid at least the moved principal"
+    );
     assert!(start - end < moved + 100_000, "…plus only a tx fee");
 }
 
@@ -139,7 +151,10 @@ fn account_count_mismatch_rejected() {
     let legs = vec![Leg { amount: 1_000 }, Leg { amount: 2_000 }];
     let d = dests(1); // one destination for two legs
     let res = send_bundle(&mut svm, &user, legs, &d);
-    assert!(res.is_err(), "leg/destination count mismatch must be rejected");
+    assert!(
+        res.is_err(),
+        "leg/destination count mismatch must be rejected"
+    );
 }
 
 /// ZeroAmount: a leg that moves nothing is rejected — a zero-value leg would be a
@@ -178,7 +193,9 @@ fn insufficient_funds_reverts_whole_bundle() {
     let legs = vec![
         Leg { amount: 1_000_000 },
         Leg { amount: 1_000_000 },
-        Leg { amount: 1_000 * LAMPORTS_PER_SOL }, // more than airdropped
+        Leg {
+            amount: 1_000 * LAMPORTS_PER_SOL,
+        }, // more than airdropped
     ];
     let res = send_bundle(&mut svm, &user, legs, &d);
     assert!(res.is_err(), "over-balance leg must fail the bundle");
