@@ -12,7 +12,9 @@
 
 mod classifiers;
 mod consolidation;
+mod destination;
 mod eval;
+mod forest;
 mod learned;
 
 use eval::{eval_k, KResult};
@@ -105,10 +107,26 @@ fn print_table(results: &[KResult], n: usize) {
         );
     }
     println!();
+    println!("  K  | destination-history channel (MODELED): naive -> account-cooker pre-warmed");
+    println!("-----+----------------------------------------------------------------------------");
+    for r in results {
+        println!(
+            "  {:>2} | {:>+8.4} -> {:>+8.4}",
+            r.k, r.naive_history_advantage, r.prewarmed_history_advantage,
+        );
+    }
+    println!();
     println!("adv (test) = (attacker accuracy on held-out bundles) - 1/K.");
     println!("~0 => the attacker does no better than a random guess (the goal).");
+    println!(
+        "best attack now includes a nonlinear extra-trees ensemble (forest.rs) alongside logreg."
+    );
     println!("consolidation = measured recovery-linkage advantage (consolidation.rs), naive sweep");
     println!("vs `recover --disperse`: dispersing each decoy to its own sink removes the linkage.");
+    println!(
+        "destination-history = MODELED channel (destination.rs): fresh decoys leak the real leg;"
+    );
+    println!("a companion account-cooker that pre-warms decoy destinations closes it (number, not promise).");
 }
 
 fn interpret(adv: f64, baseline: f64) -> &'static str {

@@ -14,7 +14,7 @@ use supersonic_sdk::amounts::trailing_zeros_base10;
 
 use crate::eval::Bundle;
 
-const N_FEATURES: usize = 23;
+pub(crate) const N_FEATURES: usize = 23;
 
 /// Per-leg features, all relative to the leg's own bundle (an observer sees one
 /// bundle at a time). This is deliberately the *strong* adversary — the one a real
@@ -28,7 +28,7 @@ const N_FEATURES: usize = 23;
 ///   * **order-statistic rank** — normalized rank within the bundle;
 ///   * **collision multiplicity** — how many legs share this leg's exact value.
 /// Feature standardization happens in `train`.
-fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
+pub(crate) fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
     let k = amounts.len().max(1);
     let logs: Vec<f64> = amounts.iter().map(|&a| (a.max(1) as f64).ln()).collect();
     let mean = logs.iter().sum::<f64>() / k as f64;
@@ -37,8 +37,11 @@ fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
     let mut sorted = logs.clone();
     sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let med = sorted[k / 2];
-    let mean_round =
-        amounts.iter().map(|&a| trailing_zeros_base10(a) as f64).sum::<f64>() / k as f64;
+    let mean_round = amounts
+        .iter()
+        .map(|&a| trailing_zeros_base10(a) as f64)
+        .sum::<f64>()
+        / k as f64;
     let z = (logs[idx] - mean) / std;
     let dmed = logs[idx] - med;
 

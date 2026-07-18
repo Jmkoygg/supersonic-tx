@@ -49,6 +49,11 @@ pub struct KResult {
     /// `recover --disperse`, each decoy to its own sink (no group forms).
     pub naive_consolidation_advantage: f64,
     pub dispersed_consolidation_advantage: f64,
+    /// Destination-history channel (MODELED, see `destination.rs`): `naive` = decoys
+    /// fresh, real has history (near-total break); `prewarmed` = a companion
+    /// account-cooker gave decoys plausible history too (channel closes).
+    pub naive_history_advantage: f64,
+    pub prewarmed_history_advantage: f64,
 }
 
 /// Sample a realistic "real intent" amount in lamports.
@@ -66,7 +71,12 @@ fn sample_real_amount<R: Rng>(rng: &mut R) -> u64 {
 }
 
 /// Generate `count` bundles of anonymity set `k` with the real SDK.
-fn generate_bundles(k: usize, count: usize, cfg: DecoyConfig, rng: &mut ChaCha20Rng) -> Vec<Bundle> {
+fn generate_bundles(
+    k: usize,
+    count: usize,
+    cfg: DecoyConfig,
+    rng: &mut ChaCha20Rng,
+) -> Vec<Bundle> {
     let mut master_seed = [0u8; 32];
     rng.fill(&mut master_seed);
     let mut out = Vec::with_capacity(count);
@@ -129,6 +139,22 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         learn_test_acc - base,
     ));
 
+    // The nonlinear adversary: an extra-trees ensemble over the SAME 23 features. If a
+    // tree ensemble can't beat the linear model, the residual is a real generator
+    // property, not an artifact of an under-powered classifier.
+    let (rf_train_acc, rf_test_acc) =
+        crate::forest::train_and_eval(&train, &test, seed ^ 0xF0_7E57);
+    per_classifier.push(ClassifierResult {
+        name: "nonlinear_forest".to_string(),
+        test_accuracy: rf_test_acc,
+        test_advantage: rf_test_acc - base,
+    });
+    candidates.push((
+        "nonlinear_forest".to_string(),
+        rf_train_acc - base,
+        rf_test_acc - base,
+    ));
+
     let best = candidates
         .iter()
         .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
@@ -140,6 +166,10 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
     let naive_consolidation_advantage = crate::consolidation::linkage_advantage(&test, true);
     let dispersed_consolidation_advantage = crate::consolidation::linkage_advantage(&test, false);
 
+    // Destination-history channel (modeled), with vs. without a companion account-cooker.
+    let (naive_history_advantage, prewarmed_history_advantage) =
+        crate::destination::eval_history(&test, seed);
+
     KResult {
         k,
         n_train: n,
@@ -150,5 +180,7 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         adversary_test_advantage: best_test_adv,
         naive_consolidation_advantage,
         dispersed_consolidation_advantage,
+        naive_history_advantage,
+        prewarmed_history_advantage,
     }
 }
