@@ -1,0 +1,22 @@
+[package]
+name = "supersonic-tx-pinocchio"
+version = "0.1.0"
+edition = "2021"
+description = "Pinocchio reimplementation of the supersonic-tx router core, for the Anchor-vs-Pinocchio benchmark."
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+pinocchio = "0.11"
+pinocchio-system = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+# Detached from the parent Cargo workspace: this is a no_std BPF-only crate and must
+# not be built for the host target by the workspace test/build.
+[workspace]
