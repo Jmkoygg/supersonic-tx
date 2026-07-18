@@ -1,22 +1,27 @@
 //! Decoy **amount** generation — the part of the SDK that defeats the amount-based
 //! and round-number classifiers in the threat model (§4.3).
 //!
-//! Two ideas do the work:
+//! Three ideas do the work (see `generate_decoy_amounts` for the details and the
+//! attack each one answers):
 //!
-//! 1. **Log-space clustering.** Payment sizes are roughly log-distributed, and a
-//!    naive `rand()` decoy set makes the real amount an outlier (smallest, largest,
-//!    or oddly-placed). We instead draw decoys from a log-normal centered on the
-//!    real amount, so the real value sits *inside the bulk* of the set rather than
-//!    at an edge.
+//! 1. **Exchangeable construction.** Rather than centering decoys *on* the real
+//!    amount (which makes the real value the most-central point and leaks — the
+//!    `log_median_central` attack), the real amount is treated as one draw of the
+//!    bundle's own log-normal: we sample the real leg's z-score and back out the
+//!    center, so real and decoys are `K` i.i.d. samples and the real is not an
+//!    outlier *nor* systematically central.
 //!
-//! 2. **Roundness matching.** Real payments are often round (`1.0 SOL`,
-//!    `0.05 SOL`). If decoys are jittered to precise values while the real one is
-//!    round, the round leg is trivially the real one. So we measure the decimal
-//!    roundness of the real amount and snap a realistic fraction of decoys to the
-//!    *same* roundness, mixing in nearby levels for the rest.
+//! 2. **Plausible-band rejection sampling.** Decoys are resampled to stay inside a
+//!    plausible amount band (widened to include the real), so no decoy lands at an
+//!    implausible size and gives itself away (the support-boundary attack).
 //!
-//! Both are deterministic given the RNG the caller passes (seeded from the master
-//! seed), which keeps the whole plan reproducible.
+//! 3. **Roundness matching.** Real payments are often round (`1.0 SOL`). A decoy
+//!    snapped to a *different* roundness than the real leg would let the real stand
+//!    out, so by default every decoy is snapped to the real leg's exact roundness
+//!    level (`round_match_prob = 1.0`), killing the round-number channel.
+//!
+//! All three are deterministic given the RNG the caller passes (seeded from the
+//! master seed), which keeps the whole plan reproducible.
 
 use rand::Rng;
 

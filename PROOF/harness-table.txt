@@ -3,14 +3,24 @@ supersonic-tx — adversarial proof harness
 
   K  | baseline | best attack          | adv (test) | interpretation      | consolidation: naive -> disperse
 -----+----------+----------------------+------------+---------------------+---------------------------------
-   2 |   0.500 | learned_logreg       |   +0.0370 | indistinguishable   |  +0.0000 ->  +0.0000
-   4 |   0.250 | learned_logreg       |   +0.0266 | weak leak           |  +0.7500 ->  +0.0000
-   8 |   0.125 | learned_logreg       |   +0.0133 | indistinguishable   |  +0.8750 ->  +0.0000
-  16 |   0.062 | learned_logreg       |   +0.0122 | indistinguishable   |  +0.9375 ->  +0.0000
+   2 |   0.500 | nonlinear_forest     |   +0.0393 | indistinguishable   |  +0.0000 ->  +0.0000
+   4 |   0.250 | nonlinear_forest     |   +0.0305 | weak leak           |  +0.7500 ->  +0.0000
+   8 |   0.125 | nonlinear_forest     |   +0.0182 | indistinguishable   |  +0.8750 ->  +0.0000
+  16 |   0.062 | nonlinear_forest     |   +0.0073 | indistinguishable   |  +0.9375 ->  +0.0000
+
+  K  | destination-history channel (MODELED): naive -> account-cooker pre-warmed
+-----+----------------------------------------------------------------------------
+   2 |  +0.5000 ->  -0.0096
+   4 |  +0.7500 ->  +0.0082
+   8 |  +0.8750 ->  -0.0026
+  16 |  +0.9375 ->  +0.0028
 
 adv (test) = (attacker accuracy on held-out bundles) - 1/K.
 ~0 => the attacker does no better than a random guess (the goal).
+best attack now includes a nonlinear extra-trees ensemble (forest.rs) alongside logreg.
 consolidation = measured recovery-linkage advantage (consolidation.rs), naive sweep
 vs `recover --disperse`: dispersing each decoy to its own sink removes the linkage.
+destination-history = MODELED channel (destination.rs): fresh decoys leak the real leg;
+a companion account-cooker that pre-warms decoy destinations closes it (number, not promise).
 
 wrote machine-readable report to PROOF/harness-report.json

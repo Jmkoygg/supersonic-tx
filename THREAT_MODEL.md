@@ -114,17 +114,17 @@ one, and the harness must *test* each one.
      **rejection-sampled to stay inside the plausible band** (widened to always include the
      real). No decoy falls to an implausible size, so the "wild decoy" is gone.
    - **Measured against a strong, nonlinear learned attacker — honest bounded result.** The
-     harness does not only run hand-picked heuristics — it trains a **standardized
-     23-feature logistic-regression** adversary spanning the amount, centrality, roundness,
+     harness does not only run hand-picked heuristics — it trains, on the train split, a
+     **standardized 23-feature logistic regression** (amount, centrality, roundness,
      position, isolation, order-statistic-rank, value-collision, absolute-magnitude /
-     band-edge, and **nonlinear interaction terms**, on the train split, and reports its
-     advantage on held-out data. The interaction terms exist because a linear-only version
-     of this adversary under-detects the leak a nonlinear attacker (kNN, boosted trees)
-     would find at low K — these terms give the same linear model that nonlinear power, so
-     this is the honest number a real nonlinear attacker gets, not an artifact of an
-     under-powered model. That advantage is **small and bounded but not zero** (~+0.037 at
-     K=2, ~+0.013 at K=8, ~+0.012 at K=16, with K=4 the weakest point at ~+0.027). We report
-     this bounded advantage rather than claim indistinguishability. The residual traces to
+     band-edge, and interaction terms) **and an actual nonlinear model: an
+     extremely-randomized decision-tree ensemble** (`forest.rs`) over the same features, and
+     reports the winner's advantage on held-out data. The ensemble exists so the number
+     isn't an artifact of a too-weak (linear) model — and on this generator it *does* win,
+     finding slightly more signal than the logistic regression. That advantage is **small
+     and bounded but not zero** (~+0.039 at K=2, ~+0.018 at K=8, ~+0.007 at K=16, with K=4
+     the weakest point at ~+0.031). We report this bounded advantage rather than claim
+     indistinguishability. The residual traces to
      the roundness-matching step (decoys are grid-snapped to the real leg's exact roundness
      so a round real doesn't stand out, which is not perfectly symmetric with the exact real
      value); removing the match is far worse (a round real then leaks at ~+0.35, which the
