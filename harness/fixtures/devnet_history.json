@@ -1,120 +1,120 @@
 {
   "cluster": "devnet",
-  "collected_at": "2026-07-19T19:16:53Z",
+  "collected_at": "2026-07-19T23:12:42Z",
   "methodology": "Self-collected against Solana devnet (no mature account-cooker exists yet to integrate with directly): each 'aged' address is a freshly-generated keypair, funded by a single real transfer from the project's deploy/dev wallet, then used as its own fee-payer for a random number of real system-program transfers (1000 lamports each) back to the deploy wallet. signature_count is the real length of getSignaturesForAddress for that pubkey after those transactions confirmed (includes the 1 funding transaction). fresh_verified_zero addresses are generated and never funded or used; signature_count is the real (independently re-verifiable, expected zero) result of the same RPC call against devnet. Every number here is a live RPC result at collection time, not assumed or modeled.",
   "aged": [
     {
-      "pubkey": "DSpAetyq59ryJwYLAE1N6ZSKCR7GGWuxJntGuFybBy4B",
+      "pubkey": "7qLtn8kiMcQUfP7YeRRiGX88LmEyb6ZE9e2YGCrjDRRS",
+      "signature_count": 10
+    },
+    {
+      "pubkey": "3g5Ps4ZhnWfxGYziR8airUn111bgwaE1o6vBnMz6N3Um",
+      "signature_count": 18
+    },
+    {
+      "pubkey": "2GspwRAmrXWhREF7vSVynzMzw5qFmtjUQyKkuRogLxXg",
       "signature_count": 6
     },
     {
-      "pubkey": "5xe2bG9x1eg5DukZkKDm3nxQV8wvyvMMFLiKNmpUf12v",
-      "signature_count": 15
+      "pubkey": "8X1wBZnbkArNxeHiNVudqNvJn9bTGZjWpi6T7sdvU4eb",
+      "signature_count": 16
     },
     {
-      "pubkey": "69Y42kTow5psRXXPqrM18cYsF8LDZZrwgjN6iiqz7RPU",
-      "signature_count": 5
+      "pubkey": "5awtE7ZhLsKMXaZy2nvShRcVpnF2SiCZ4YVPHsJHse3A",
+      "signature_count": 14
     },
     {
-      "pubkey": "BmHJiLdLvrdczcEGmtXJFLQvmxpHt7QH9Z7EZNU1hrzQ",
-      "signature_count": 15
-    },
-    {
-      "pubkey": "D5UsC4e3N263C7PvXFG9RDhDQsxRBqMcCR9AsbWKgyyu",
+      "pubkey": "DbTgW3vrDHntgRxQuHvL4MbKRz5RAgckdPxn3TK4uUbs",
       "signature_count": 13
     },
     {
-      "pubkey": "3M9uvmC78vdfSPF1yiS2G5PdV4rbyK2KpLgN9wmRXwRe",
-      "signature_count": 11
+      "pubkey": "BnY65h7eHmaqbDSihDx81SXD9WkiLFFPGXBmGyQHddwi",
+      "signature_count": 25
     },
     {
-      "pubkey": "ACXGYZTfbF5zCPHncUTGgJtEA4wmYFq1geuztZUnQico",
-      "signature_count": 22
-    },
-    {
-      "pubkey": "8JNd7Uk9LGVzgvy4r9iP8qhjCbDdGMCPGWTbEZ9DCpk8",
-      "signature_count": 6
-    },
-    {
-      "pubkey": "8JeHbUHMbKWNAY8iTC1vPkbR5PYJf9xY9mEwxJcQeyH6",
-      "signature_count": 11
-    },
-    {
-      "pubkey": "5uLrw8zFmbza4X1WDFkQwxYTAuc2wpEsxKtqy7mpXnf9",
+      "pubkey": "6L2iFJ1p8tKenfgzpBwXehE9jESitH2yWPCBERbFwbhm",
       "signature_count": 7
     },
     {
-      "pubkey": "AHoRmcZvX6S8XGE4DF8ZD4feaTSuSdZym8Y8bDAfmMSQ",
-      "signature_count": 18
+      "pubkey": "F3BwR7SMsCp1E3R7vTQ9GvMiGeERe27yEFxcCJDfkUYM",
+      "signature_count": 12
     },
     {
-      "pubkey": "9WerDW289yipCBvTE1TDb9BL3Se2K15PwuLVLjV3ATBV",
-      "signature_count": 6
-    },
-    {
-      "pubkey": "NhmJA4FwD7x2Qmj4eL7eVKYEFrtmPcDBZXfx8HcUgY7",
+      "pubkey": "A7qAf2LUdP55gtt5Q5cKa2QPWDwx4zN2pdYX8iktNEvy",
       "signature_count": 9
     },
     {
-      "pubkey": "BD1922A6FasBEoia7pcHVvZ1vuW6xm4cEkhWFM3az75H",
-      "signature_count": 9
-    },
-    {
-      "pubkey": "6fPcYJgr7aWE7VgJz37zLNkmVP9BFDVwSuN3qsvfs64J",
+      "pubkey": "9Y5UP2MqzLHTmhn9n9xmzet3Dvj38LHDEHCiUNZbuHtH",
       "signature_count": 18
     },
     {
-      "pubkey": "5L3qbUewdnxhyZvqncSdA9XiDsiixZrnwHqst2Hxh9zt",
-      "signature_count": 5
+      "pubkey": "6xoBxm84F4xMWTdxBuEUxtqUX5AZPB38rDA7km2EBUMs",
+      "signature_count": 9
     },
     {
-      "pubkey": "6FSDuhhQiXWhYoZji9ZSJeMFvca6UknPL6xvgX4wXKHN",
+      "pubkey": "8dyG2fTtiq6SvmEri7f29zqR1sq6vnCC6rzte378ypWK",
+      "signature_count": 10
+    },
+    {
+      "pubkey": "JB4JVqHnoU7q1LumWq4MfakgrqPyksrRkbB7YYydxS9U",
       "signature_count": 13
     },
     {
-      "pubkey": "3euD6wGdv7HyVpnHSGKe1RYERmQqSaVSKCKggwzoMbcQ",
-      "signature_count": 21
+      "pubkey": "F2KXofuaeiFiWJAdxGaBqTfGcWLSHaDKBDKpCVK1JMNw",
+      "signature_count": 22
+    },
+    {
+      "pubkey": "6ScMx2raahHaoDdVYyyEPMkscZhyXtqS1qHjq1ZnZFK4",
+      "signature_count": 9
+    },
+    {
+      "pubkey": "DKkaYEUBjvKCn3ugEsuWxiWevA1mDUNsDB7ZdKy6uNTZ",
+      "signature_count": 16
+    },
+    {
+      "pubkey": "7jUUN9HxhRghjTMXV7RLtgu3UCLkj6EsYFgdreEjM9vp",
+      "signature_count": 24
     }
   ],
   "fresh_verified_zero": [
     {
-      "pubkey": "3cvK8m9VC6TihSySg6xZyptwsKdqfVhN1RdmDFewFYWL",
+      "pubkey": "CaxTJqtPx1qaDT851u98DoLBLPYkhWHA1HRmEwFHH7fr",
       "signature_count": 0
     },
     {
-      "pubkey": "4ywvNJBS5nnHedtuxcCGdEAvJMHXkyosY4P2fgQ4f9f8",
+      "pubkey": "9DjMBqrJJCgWRVU5kjb2fHQnMrTi49buSbi1uHc9FXdc",
       "signature_count": 0
     },
     {
-      "pubkey": "E79mYJt3yy72LYvGC3pgAsz8hGF98HYsqmwUNMzkwvbx",
+      "pubkey": "GaztYQyGjZh5EGEbFbVq5zZ48RPoFeA5NGqhnoS7j921",
       "signature_count": 0
     },
     {
-      "pubkey": "9LYNjGwnBfzaroMeEw3PwGMQQ7BZc4BnGYeG3VLrQq2v",
+      "pubkey": "3JTHHFkWPLCeEmiKSCw4vfg3ZCRhiJtkc2XabX8WcUpT",
       "signature_count": 0
     },
     {
-      "pubkey": "9gsdjBjL3pLj1fwy974L1fNyLogr65JYhvujePPnNK2c",
+      "pubkey": "6zR6CcQXERKJujWJ2Ns7KbRkLfP1Umj6wuBWNhaMQzZ5",
       "signature_count": 0
     },
     {
-      "pubkey": "9h6KVuuBSPCqTfD388oX3eiow2TUYNjA1YeZ2EmfPyaL",
+      "pubkey": "CkeHaFpNfT6sNn7vFoX1vtDpnWSzC4iVv5PjcegkqvvT",
       "signature_count": 0
     },
     {
-      "pubkey": "G3Y6GNBFLDcHBmTEJkq3wzbua4e6R41Ee2tKJvNwQLeW",
+      "pubkey": "DbkAAwTeQ1ve1PQUqYzVHovrbJXM4BtGHV3FGAYrGkSS",
       "signature_count": 0
     },
     {
-      "pubkey": "6CAvs5XCETm7yMR8ikdvxYxf5vX7jg2z5CdtGPUqCqV3",
+      "pubkey": "9bye3tQ1twgccYxFMTVFrwe4NM7g9cexrYZziMEtRTyt",
       "signature_count": 0
     },
     {
-      "pubkey": "FreagDrrXRNQQECMaGPxRUFd8aTFwPtW6Z21jMAvZyCN",
+      "pubkey": "7r5f7bNwhZ3WH4BpAJT9M6wjkThoHfMfcdvXxqqpPV37",
       "signature_count": 0
     },
     {
-      "pubkey": "3XwXRU8e7Y6fa7E7pM3EUQsve7xxKwDHAeC3FRYjLTKV",
+      "pubkey": "2R9SgV8Sa3fGNnDqmXA3RETLVU1CPgktbH6PcH5x5YB4",
       "signature_count": 0
     }
   ]

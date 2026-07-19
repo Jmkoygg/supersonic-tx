@@ -36,18 +36,19 @@ compile with zero errors.
 > runs clean (only trivial style lints), so it appears fixed upstream. `cargo build` /
 > `cargo test` are clean throughout.
 
-## 2. Automated tests — 29 passing, 0 failing
+## 2. Automated tests — 31 passing, 0 failing
 
 ```
-$ cargo test
+$ cargo test --workspace
    supersonic-harness              : 3 passed
    supersonic-sdk (lib)            : 12 passed
    supersonic-sdk (properties)     : 5 passed   (proptest, 400 cases each)
    supersonic-tx (lib)             : 1 passed
    supersonic-tx (invariants)      : 8 passed
+   supersonic-tx (mollusk_cu_bench): 2 passed
 ```
 
-**Total: 29 passed, 0 failed.** The 8 invariant tests map 1:1 to the threat-model
+**Total: 31 passed, 0 failed.** The 8 invariant tests map 1:1 to the threat-model
 invariants (atomicity, fail-closed, bounds, real value movement). The SDK unit tests include
 statistical regression tests that lock the privacy fix
 (`real_is_exchangeable_not_systematically_extreme` and the centrality guard). The 5
@@ -113,22 +114,22 @@ $ supersonic-harness --n 8000 --seed 1
 
   K  | destination-history (MODELED): naive -> warm  | destination-history (MEASURED, real devnet): naive -> warm
 -----+-------------------------------------------------+-------------------------------------------------------------
-   2 |  +0.5000 ->  -0.0096                       |  +0.5000 ->  -0.0066
-   4 |  +0.7500 ->  +0.0082                       |  +0.7500 ->  +0.0081
-   8 |  +0.8750 ->  -0.0026                       |  +0.8750 ->  -0.0045
-  16 |  +0.9375 ->  +0.0028                       |  +0.9375 ->  -0.0039
+   2 |  +0.5000 ->  -0.0096                       |  +0.5000 ->  -0.0017
+   4 |  +0.7500 ->  +0.0082                       |  +0.7500 ->  +0.0052
+   8 |  +0.8750 ->  -0.0026                       |  +0.8750 ->  -0.0061
+  16 |  +0.9375 ->  +0.0028                       |  +0.9375 ->  -0.0015
 ```
 
 MEASURED is bootstrap-resampled from `harness/fixtures/devnet_history.json` — 18 real devnet
 addresses funded and transacted for real (2–25 real transactions each, `signature_count` is the
 real `getSignaturesForAddress` result, not assumed) plus 10 freshly-generated addresses
-independently confirmed to have zero history, collected 2026-07-19T19:16:53Z. No account-cooker
+independently confirmed to have zero history, collected 2026-07-19T23:12:42Z. No account-cooker
 exists yet to integrate with directly, so the same self-collected "aged" pool stands in for both
 "a real payee with prior activity" (naive regime) and "an account-cooker-warmed decoy" (warm
 regime) — the two roles that tool would fill. Reproduce: `cargo run -p supersonic-harness --bin
 collect-devnet-history --release -- --collected-at <now> --aged-count 18 --fresh-count 10`, then
 `supersonic-harness --n 8000 --seed 1`. Every pubkey is independently checkable via `solana
-confirm`/explorer (§4).
+transaction-history <address>`/explorer (§4).
 `adv (test)` = attacker accuracy on held-out bundles − 1/K. The suite is deliberately
 adversary-favorable:
 
@@ -182,7 +183,7 @@ All actively confirmed on devnet (each `solana confirm … --url devnet` returne
 
 ## 5. What this proves
 
-- **The program does what it claims, safely.** 29 tests, including 8 invariant tests and 5
+- **The program does what it claims, safely.** 31 tests, including 8 invariant tests and 5
   property-based tests over arbitrary inputs, show the router executes multi-destination
   bundles atomically and **fails closed** on every malformed input (§2). One of the property
   tests proves the **structural channel is exactly zero-bit** — not a statistical claim.

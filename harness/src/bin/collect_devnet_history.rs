@@ -180,12 +180,16 @@ fn collect_aged(
         std::thread::sleep(Duration::from_millis(150));
     }
 
-    let sigs = retry(|| {
-        client
-            .get_signatures_for_address(&kp.pubkey())
-            .map_err(|e| anyhow!("{e}"))
-    })?;
-    let real_count = sigs.len() as u64;
+    // getSignaturesForAddress is served from a separate address->signature index that
+    // can lag behind the confirmed ledger: send_and_confirm above only guarantees the
+    // *transaction* is confirmed, not that this index has caught up to it yet. We know
+    // exactly how many signed transactions landed for this address (tx_count transfers
+    // + 1 funding tx, every one of them confirmed above or this function would already
+    // have returned an error) — that count is ground truth, not a guess. Poll until the
+    // index reports at least that many, rather than merely "stopped changing" (a flat
+    // but still-stale read looks just as stable as a caught-up one).
+    let expected_count = tx_count as u64 + 1;
+    let real_count = stabilized_signature_count(client, &kp.pubkey(), expected_count)?;
     println!(
         "  {} -> {real_count} real signatures (intended {tx_count} + 1 funding)",
         kp.pubkey()
@@ -194,6 +198,50 @@ fn collect_aged(
         pubkey: kp.pubkey().to_string(),
         signature_count: real_count,
     })
+}
+
+/// Poll `get_signatures_for_address` until it reports at least `expected_count` (the
+/// number of transactions we know for a fact were confirmed for this address — a flat
+/// read that just repeats itself is *not* good enough evidence of that: measured live
+/// against the public devnet RPC (2026-07-19), a stale count routinely reads back
+/// identically across several consecutive polls seconds apart, then jumps to the true
+/// value only minutes later — a naive "stop when it stops changing" check locks onto
+/// the stale number long before the real one ever shows up). Once the index reaches
+/// the known ground truth, stop immediately. If it never gets there within
+/// `STABILIZE_MAX_ATTEMPTS`, warn loudly and return the last observed value instead of
+/// silently accepting a number that may still be stale.
+const STABILIZE_POLL_INTERVAL: Duration = Duration::from_secs(15);
+const STABILIZE_MAX_ATTEMPTS: u32 = 24;
+
+fn stabilized_signature_count(
+    client: &RpcClient,
+    pubkey: &solana_sdk::pubkey::Pubkey,
+    expected_count: u64,
+) -> Result<u64> {
+    let mut last: u64 = 0;
+    for attempt in 1..=STABILIZE_MAX_ATTEMPTS {
+        let sigs = retry(|| {
+            client
+                .get_signatures_for_address(pubkey)
+                .map_err(|e| anyhow!("{e}"))
+        })?;
+        let count = sigs.len() as u64;
+        if count >= expected_count {
+            return Ok(count);
+        }
+        println!(
+            "  [stabilize {attempt}/{STABILIZE_MAX_ATTEMPTS}] {pubkey} signature count {count} \
+             of {expected_count} known-confirmed; waiting for RPC index to catch up..."
+        );
+        last = count;
+        std::thread::sleep(STABILIZE_POLL_INTERVAL);
+    }
+    eprintln!(
+        "  [warn] {pubkey} signature count did not reach the known-confirmed total \
+         ({expected_count}) after {STABILIZE_MAX_ATTEMPTS} attempts; using last observed value \
+         ({last}), which is likely still stale due to RPC indexer lag"
+    );
+    Ok(last)
 }
 
 fn collect_fresh(client: &RpcClient) -> Result<AddressSample> {

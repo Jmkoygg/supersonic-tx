@@ -154,7 +154,7 @@ fn print_fixture_provenance() {
     println!("methodology: {}", f.methodology);
     if let Some(sample) = f.aged.first() {
         println!(
-            "  e.g. aged: {} -> {} real signatures (verify: solana confirm / explorer, cluster={})",
+            "  e.g. aged: {} -> {} real signatures (verify: solana transaction-history <ADDRESS> / explorer, cluster={})",
             sample.pubkey, sample.signature_count, f.cluster
         );
     }
