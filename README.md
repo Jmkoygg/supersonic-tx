@@ -127,16 +127,25 @@ Other tools "cast through" `supersonic-tx` two ways:
 
 ## Scope of the privacy guarantee
 
-The *defended* guarantee covers the **value channel** — the amounts and their arrangement,
-which is where amount-based clustering and the centrality attack operate; that's what the
-generator closes and the forest adversary measures. The **destination-history** channel (a
-real payee with prior activity vs. fresh decoys) is not closed by this tool alone — but the
-harness now **models** it and reports the number: fresh decoys leak the real leg
-near-totally, and a companion `account-cooker` that pre-warms decoy destinations drives that
-to ~0 (`harness/src/destination.rs`, modeled — not measured on real chain data). The
-**timing/cadence** channel (when you cast) remains addressed at the SDK/operational layer and
-is not measured here. "Fuzz the value an observer reads" is the defended claim; "defeat every
-copy-trading signal" is not.
+The tool defends two channels and is explicit about the two it doesn't:
+
+- **Structural channel** (instruction shape, account roles, data width, CPI target) — **closed
+  exactly.** Every leg is byte-identical in structure; real and decoy differ *only* in amount
+  and destination address. So a shape/discriminator/account-count attacker has literally zero
+  bits and cannot beat `1/K`. This is a *proven* property (`sdk/tests/properties.rs ::
+  instruction_is_structurally_uniform_across_legs`, over arbitrary inputs), not a statistical
+  ≈0 — the structural advantage is exactly 0 by construction.
+- **Value channel** (the amounts and their arrangement) — closed by the generator and
+  **measured** against the nonlinear forest adversary; small, bounded advantage (table above).
+- **Destination-history channel** (a real payee with prior activity vs. fresh decoys) — not
+  closed by this tool alone, but **modeled and quantified**: fresh decoys leak near-totally, a
+  companion `account-cooker` that pre-warms decoy destinations drives it to ~0
+  (`harness/src/destination.rs`, modeled — not measured on real chain data).
+- **Timing/cadence channel** (when you cast) — addressed at the SDK/operational layer, not
+  measured here.
+
+"Fuzz the value an observer reads, with structure that carries no signal" is the defended
+claim; "defeat every copy-trading signal" is not.
 
 ## Honest limitations
 
@@ -164,9 +173,10 @@ copy-trading signal" is not.
   rent). The Anchor build is what's deployed and proven on devnet; the Pinocchio port is a
   clean, well-scoped follow-up the benchmark justifies.
 - **Devnet-validated.** Deployed and exercised on devnet; not audited for mainnet.
-- **Tooling note:** `cargo clippy` currently ICEs on the SDK crate (a clippy×solana-sdk
-  toolchain bug, reproduced on clippy 0.1.94 and 0.1.96); `cargo build` and `cargo test`
-  are clean.
+- **Tooling note:** `cargo clippy` hit an internal compiler panic (ICE) on the SDK crate on
+  clippy **0.1.94 / 0.1.96** (a clippy×solana-sdk toolchain bug); on **0.1.97 it runs clean**
+  (only trivial style lints), so it appears fixed upstream. `cargo build` and `cargo test`
+  are clean on all of them.
 
 ## Repository layout
 

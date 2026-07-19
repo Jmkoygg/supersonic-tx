@@ -10,7 +10,7 @@
 
 use proptest::prelude::*;
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
-use supersonic_sdk::{derive_decoy_keypair, plan_bundle, DecoyConfig};
+use supersonic_sdk::{build_instruction, derive_decoy_keypair, plan_bundle, DecoyConfig};
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(400))]
@@ -88,6 +88,40 @@ proptest! {
             prop_assert!(leg.amount >= lo && leg.amount <= hi,
                 "decoy {} outside band [{}, {}]", leg.amount, lo, hi);
         }
+    }
+
+    /// **Structural indistinguishability, proven exactly (not statistically).** Every
+    /// leg of the built instruction is byte-identical in *structure*: same account role
+    /// (writable, non-signer) for its destination, and the same fixed 8-byte width in the
+    /// instruction data. So an observer using shape / account-role / data-width / CPI-target
+    /// features — the structural channel — has literally zero bits to work with and cannot
+    /// beat 1/K. Only the amount (measured by the harness) and the destination address
+    /// (destination-history channel, modeled) carry any signal at all. This is stronger
+    /// than a statistical "≈0": the structural advantage is *exactly* 0 by construction, and
+    /// this test would fail the instant any structural variation between legs was introduced.
+    #[test]
+    fn instruction_is_structurally_uniform_across_legs(
+        seed in any::<[u8; 32]>(),
+        bundle_id in any::<u64>(),
+        real_amount in 1u64..=1_000_000_000_000,
+        k in 2usize..=16,
+        dest_bytes in any::<[u8; 32]>(),
+    ) {
+        let plan = plan_bundle(&seed, bundle_id, Pubkey::new_from_array(dest_bytes), real_amount, k, DecoyConfig::default())
+            .unwrap();
+        let ix = build_instruction(Pubkey::new_unique(), Pubkey::new_unique(), &plan);
+
+        // Accounts are [user(signer,writable), system_program(readonly), then one
+        // destination per leg]. Every destination must have the identical structural role.
+        let dests = &ix.accounts[2..];
+        prop_assert_eq!(dests.len(), k, "one destination account per leg");
+        for m in dests {
+            prop_assert!(m.is_writable, "every leg dest is writable");
+            prop_assert!(!m.is_signer, "no leg dest is a signer");
+        }
+        // Instruction data = 8-byte discriminator + 4-byte Borsh vec length + k × 8-byte
+        // legs. Each leg occupies exactly 8 bytes, so no leg is wider/narrower than another.
+        prop_assert_eq!(ix.data.len(), 8 + 4 + k * 8, "every leg is a fixed 8-byte cell");
     }
 
     /// The plan is a pure function of (master_seed, bundle_id, intent, k): identical

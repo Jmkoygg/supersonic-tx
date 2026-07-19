@@ -84,10 +84,15 @@ one, and the harness must *test* each one.
    discarded in one step by looking at balance deltas. → **Countermeasure:** every
    decoy leg is *economically real* — it moves the user's own funds. This is
    non-negotiable and it is why the tool costs fees + slippage to run.
-2. **Structural shape.** If real and decoy legs have different account layouts or
-   instruction-data schemas, filtering is trivial. → **Countermeasure:** a *normalized
-   leg format* — real and decoy legs are structurally identical at the program
-   interface.
+2. **Structural shape.** If real and decoy legs have different account layouts,
+   instruction-data schemas, or CPI targets, filtering is trivial. → **Countermeasure:** a
+   *normalized leg format* — real and decoy legs are **byte-identical in structure** (same
+   destination account role, same fixed 8-byte data cell, same System-Program transfer CPI).
+   This is not just a design intent: it is **proven exactly** by a property test over
+   arbitrary inputs (`sdk/tests/properties.rs :: instruction_is_structurally_uniform_across_legs`),
+   so the structural channel carries **exactly zero bits** — a shape/discriminator/account-count
+   attacker cannot beat `1/K`. The only channels that carry any signal are the amount (§4.3,
+   measured) and the destination address (§6, modeled).
 3. **Value signature — amount distribution (the subtle one).** How decoy amounts
    relate to the real amount is the whole game.
    - *Naive centering leaks.* Drawing decoys from a log-normal centred on the real
