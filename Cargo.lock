@@ -8102,10 +8102,12 @@ dependencies = [
 name = "supersonic-harness"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "rand 0.8.7",
  "rand_chacha 0.3.1",
  "serde",
  "serde_json",
+ "solana-client",
  "solana-sdk",
  "supersonic-sdk",
 ]

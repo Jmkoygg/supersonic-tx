@@ -15,6 +15,7 @@ mod consolidation;
 mod destination;
 mod eval;
 mod forest;
+mod history_fixture;
 mod learned;
 
 use eval::{eval_k, KResult};
@@ -72,6 +73,7 @@ fn main() {
     let results: Vec<KResult> = ks.iter().map(|&k| eval_k(k, n, cfg, seed)).collect();
 
     print_table(&results, n);
+    print_fixture_provenance();
 
     let report = Report {
         n_per_split: n,
@@ -107,12 +109,16 @@ fn print_table(results: &[KResult], n: usize) {
         );
     }
     println!();
-    println!("  K  | destination-history channel (MODELED): naive -> account-cooker pre-warmed");
-    println!("-----+----------------------------------------------------------------------------");
+    println!("  K  | destination-history (MODELED): naive -> warm  | destination-history (MEASURED, real devnet): naive -> warm");
+    println!("-----+-------------------------------------------------+-------------------------------------------------------------");
     for r in results {
         println!(
-            "  {:>2} | {:>+8.4} -> {:>+8.4}",
-            r.k, r.naive_history_advantage, r.prewarmed_history_advantage,
+            "  {:>2} | {:>+8.4} -> {:>+8.4}                       | {:>+8.4} -> {:>+8.4}",
+            r.k,
+            r.naive_history_advantage,
+            r.prewarmed_history_advantage,
+            r.naive_history_measured_advantage,
+            r.prewarmed_history_measured_advantage,
         );
     }
     println!();
@@ -124,9 +130,41 @@ fn print_table(results: &[KResult], n: usize) {
     println!("consolidation = measured recovery-linkage advantage (consolidation.rs), naive sweep");
     println!("vs `recover --disperse`: dispersing each decoy to its own sink removes the linkage.");
     println!(
-        "destination-history = MODELED channel (destination.rs): fresh decoys leak the real leg;"
+        "destination-history MODELED (destination.rs) = synthetic log-normal, regression reference."
     );
-    println!("a companion account-cooker that pre-warms decoy destinations closes it (number, not promise).");
+    println!(
+        "destination-history MEASURED = bootstrap-resampled from a real devnet fixture (harness/fixtures/devnet_history.json)."
+    );
+    println!("Both regimes: a companion account-cooker that pre-warms decoy destinations closes the channel (number, not promise).");
+}
+
+/// Print where the MEASURED destination-history numbers actually came from, so the
+/// claim is checkable, not just a label — the fixture's own `collected_at`/`cluster`,
+/// sample sizes, and the first few pubkeys (full list + counts in the fixture file).
+fn print_fixture_provenance() {
+    let f = history_fixture::HistoryFixture::load();
+    println!(
+        "MEASURED fixture provenance: {} addresses (cluster={}, collected_at={}), {} aged + {} fresh_verified_zero.",
+        f.aged.len() + f.fresh_verified_zero.len(),
+        f.cluster,
+        f.collected_at,
+        f.aged.len(),
+        f.fresh_verified_zero.len(),
+    );
+    println!("methodology: {}", f.methodology);
+    if let Some(sample) = f.aged.first() {
+        println!(
+            "  e.g. aged: {} -> {} real signatures (verify: solana confirm / explorer, cluster={})",
+            sample.pubkey, sample.signature_count, f.cluster
+        );
+    }
+    if let Some(sample) = f.fresh_verified_zero.first() {
+        println!(
+            "  e.g. fresh: {} -> {} real signatures (independently re-verifiable)",
+            sample.pubkey, sample.signature_count
+        );
+    }
+    println!("  full list: harness/fixtures/devnet_history.json");
 }
 
 fn interpret(adv: f64, baseline: f64) -> &'static str {

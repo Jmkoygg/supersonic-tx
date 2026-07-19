@@ -92,7 +92,8 @@ one, and the harness must *test* each one.
    arbitrary inputs (`sdk/tests/properties.rs :: instruction_is_structurally_uniform_across_legs`),
    so the structural channel carries **exactly zero bits** — a shape/discriminator/account-count
    attacker cannot beat `1/K`. The only channels that carry any signal are the amount (§4.3,
-   measured) and the destination address (§6, modeled).
+   measured) and the destination address (`harness/src/destination.rs`: modeled, and now also
+   measured against a real, third-party-verifiable devnet sample — see PROOF.md §3e).
 3. **Value signature — amount distribution (the subtle one).** How decoy amounts
    relate to the real amount is the whole game.
    - *Naive centering leaks.* Drawing decoys from a log-normal centred on the real

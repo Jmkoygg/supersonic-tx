@@ -4,15 +4,22 @@ version = "0.1.0"
 edition = "2021"
 description = "Adversarial proof harness for supersonic-tx: runs real classifiers against generated bundles and measures the attacker's advantage over the 1/K baseline."
 license = "MIT"
+default-run = "supersonic-harness"
 
 [dependencies]
 supersonic-sdk = { path = "../sdk" }
 solana-sdk = { workspace = true }
+solana-client = { workspace = true }
 rand = { workspace = true }
 rand_chacha = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+anyhow = { workspace = true }
 
 [[bin]]
 name = "supersonic-harness"
 path = "src/main.rs"
+
+[[bin]]
+name = "collect-devnet-history"
+path = "src/bin/collect_devnet_history.rs"

@@ -1,0 +1,121 @@
+{
+  "cluster": "devnet",
+  "collected_at": "2026-07-19T19:16:53Z",
+  "methodology": "Self-collected against Solana devnet (no mature account-cooker exists yet to integrate with directly): each 'aged' address is a freshly-generated keypair, funded by a single real transfer from the project's deploy/dev wallet, then used as its own fee-payer for a random number of real system-program transfers (1000 lamports each) back to the deploy wallet. signature_count is the real length of getSignaturesForAddress for that pubkey after those transactions confirmed (includes the 1 funding transaction). fresh_verified_zero addresses are generated and never funded or used; signature_count is the real (independently re-verifiable, expected zero) result of the same RPC call against devnet. Every number here is a live RPC result at collection time, not assumed or modeled.",
+  "aged": [
+    {
+      "pubkey": "DSpAetyq59ryJwYLAE1N6ZSKCR7GGWuxJntGuFybBy4B",
+      "signature_count": 6
+    },
+    {
+      "pubkey": "5xe2bG9x1eg5DukZkKDm3nxQV8wvyvMMFLiKNmpUf12v",
+      "signature_count": 15
+    },
+    {
+      "pubkey": "69Y42kTow5psRXXPqrM18cYsF8LDZZrwgjN6iiqz7RPU",
+      "signature_count": 5
+    },
+    {
+      "pubkey": "BmHJiLdLvrdczcEGmtXJFLQvmxpHt7QH9Z7EZNU1hrzQ",
+      "signature_count": 15
+    },
+    {
+      "pubkey": "D5UsC4e3N263C7PvXFG9RDhDQsxRBqMcCR9AsbWKgyyu",
+      "signature_count": 13
+    },
+    {
+      "pubkey": "3M9uvmC78vdfSPF1yiS2G5PdV4rbyK2KpLgN9wmRXwRe",
+      "signature_count": 11
+    },
+    {
+      "pubkey": "ACXGYZTfbF5zCPHncUTGgJtEA4wmYFq1geuztZUnQico",
+      "signature_count": 22
+    },
+    {
+      "pubkey": "8JNd7Uk9LGVzgvy4r9iP8qhjCbDdGMCPGWTbEZ9DCpk8",
+      "signature_count": 6
+    },
+    {
+      "pubkey": "8JeHbUHMbKWNAY8iTC1vPkbR5PYJf9xY9mEwxJcQeyH6",
+      "signature_count": 11
+    },
+    {
+      "pubkey": "5uLrw8zFmbza4X1WDFkQwxYTAuc2wpEsxKtqy7mpXnf9",
+      "signature_count": 7
+    },
+    {
+      "pubkey": "AHoRmcZvX6S8XGE4DF8ZD4feaTSuSdZym8Y8bDAfmMSQ",
+      "signature_count": 18
+    },
+    {
+      "pubkey": "9WerDW289yipCBvTE1TDb9BL3Se2K15PwuLVLjV3ATBV",
+      "signature_count": 6
+    },
+    {
+      "pubkey": "NhmJA4FwD7x2Qmj4eL7eVKYEFrtmPcDBZXfx8HcUgY7",
+      "signature_count": 9
+    },
+    {
+      "pubkey": "BD1922A6FasBEoia7pcHVvZ1vuW6xm4cEkhWFM3az75H",
+      "signature_count": 9
+    },
+    {
+      "pubkey": "6fPcYJgr7aWE7VgJz37zLNkmVP9BFDVwSuN3qsvfs64J",
+      "signature_count": 18
+    },
+    {
+      "pubkey": "5L3qbUewdnxhyZvqncSdA9XiDsiixZrnwHqst2Hxh9zt",
+      "signature_count": 5
+    },
+    {
+      "pubkey": "6FSDuhhQiXWhYoZji9ZSJeMFvca6UknPL6xvgX4wXKHN",
+      "signature_count": 13
+    },
+    {
+      "pubkey": "3euD6wGdv7HyVpnHSGKe1RYERmQqSaVSKCKggwzoMbcQ",
+      "signature_count": 21
+    }
+  ],
+  "fresh_verified_zero": [
+    {
+      "pubkey": "3cvK8m9VC6TihSySg6xZyptwsKdqfVhN1RdmDFewFYWL",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "4ywvNJBS5nnHedtuxcCGdEAvJMHXkyosY4P2fgQ4f9f8",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "E79mYJt3yy72LYvGC3pgAsz8hGF98HYsqmwUNMzkwvbx",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "9LYNjGwnBfzaroMeEw3PwGMQQ7BZc4BnGYeG3VLrQq2v",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "9gsdjBjL3pLj1fwy974L1fNyLogr65JYhvujePPnNK2c",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "9h6KVuuBSPCqTfD388oX3eiow2TUYNjA1YeZ2EmfPyaL",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "G3Y6GNBFLDcHBmTEJkq3wzbua4e6R41Ee2tKJvNwQLeW",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "6CAvs5XCETm7yMR8ikdvxYxf5vX7jg2z5CdtGPUqCqV3",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "FreagDrrXRNQQECMaGPxRUFd8aTFwPtW6Z21jMAvZyCN",
+      "signature_count": 0
+    },
+    {
+      "pubkey": "3XwXRU8e7Y6fa7E7pM3EUQsve7xxKwDHAeC3FRYjLTKV",
+      "signature_count": 0
+    }
+  ]
+}

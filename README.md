@@ -72,11 +72,11 @@ round real then leaks at **+0.35**; reproduce with `--round-match 0.0`). Use the
 you can afford**.
 
 The harness also quantifies two channels the tool doesn't close on its own — the
-**recovery-linkage** channel (naive sweep leaks; `recover --disperse` drives it to 0) and,
-modeled, the **destination-history** channel (fresh decoys leak the real leg near-totally;
-a companion `account-cooker` that pre-warms decoy destinations drives it to ~0). Both are
-reported as numbers, not promises. Full evidence, including live devnet transactions, is in
-[`PROOF.md`](./PROOF.md).
+**recovery-linkage** channel (naive sweep leaks; `recover --disperse` drives it to 0) and the
+**destination-history** channel, both modeled *and* measured against 28 real devnet addresses
+(fresh decoys leak the real leg near-totally; a companion `account-cooker` that pre-warms decoy
+destinations drives it to ~0). Both are reported as numbers, not promises. Full evidence,
+including live devnet transactions, is in [`PROOF.md`](./PROOF.md).
 
 **Live on devnet:** program
 [`BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn`](https://explorer.solana.com/address/BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn?cluster=devnet).
@@ -138,9 +138,10 @@ The tool defends two channels and is explicit about the two it doesn't:
 - **Value channel** (the amounts and their arrangement) — closed by the generator and
   **measured** against the nonlinear forest adversary; small, bounded advantage (table above).
 - **Destination-history channel** (a real payee with prior activity vs. fresh decoys) — not
-  closed by this tool alone, but **modeled and quantified**: fresh decoys leak near-totally, a
+  closed by this tool alone, but **modeled and measured**: fresh decoys leak near-totally, a
   companion `account-cooker` that pre-warms decoy destinations drives it to ~0
-  (`harness/src/destination.rs`, modeled — not measured on real chain data).
+  (`harness/src/destination.rs`; the measured version bootstrap-resamples 28 real,
+  independently-checkable devnet addresses, `harness/fixtures/devnet_history.json`).
 - **Timing/cadence channel** (when you cast) — addressed at the SDK/operational layer, not
   measured here.
 
@@ -160,13 +161,16 @@ claim; "defeat every copy-trading signal" is not.
   (an `account-cooker`).
 - **Per-bundle metric.** The `1/K` guarantee is per bundle; repeated use across many
   bundles leaks a behavioral prior. Stated, not solved.
-- **Destination-history channel (modeled, and mitigated by a companion tool).** A real payee
-  with on-chain history stands out against fresh decoys — the strongest attack on the tool
-  used alone. The harness models it (`harness/src/destination.rs`): naive fresh decoys leak
-  the real leg near-totally (advantage up to +0.94), and pre-warmed decoy destinations (what
-  an `account-cooker` provides) drive it to ~0. Modeled with synthetic history scores, not
-  measured on real chain data — the load-bearing result is the *relative* drop, not an
-  absolute number.
+- **Destination-history channel (modeled AND measured, mitigated by a companion tool).** A
+  real payee with on-chain history stands out against fresh decoys — the strongest attack on
+  the tool used alone. The harness both models it and measures it for real
+  (`harness/src/destination.rs`): naive fresh decoys leak the real leg near-totally (advantage
+  up to +0.94), and pre-warmed decoy destinations (what an `account-cooker` provides) drive it
+  to ~0. The measured version bootstrap-resamples a real fixture — 18 devnet addresses funded
+  and transacted for real (2–25 real txs each) plus 10 confirmed-zero fresh addresses,
+  `harness/fixtures/devnet_history.json`, every pubkey independently checkable — and agrees
+  closely with the synthetic model across 4 seeds. No mature `account-cooker` exists yet to
+  integrate with directly, so this is a minimal self-built stand-in, not the companion tool.
 - **Framework (Anchor) is a measured choice, not a default.** The shipped program is Anchor;
   [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in Pinocchio and measures the
   tradeoff (Pinocchio is ~34× smaller and ~33× cheaper to deploy — verified `.so` sizes and

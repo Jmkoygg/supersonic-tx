@@ -54,6 +54,12 @@ pub struct KResult {
     /// account-cooker gave decoys plausible history too (channel closes).
     pub naive_history_advantage: f64,
     pub prewarmed_history_advantage: f64,
+    /// Same channel, but MEASURED: bootstrap-resampled from a real devnet fixture
+    /// (`history_fixture.rs`) instead of a synthetic distribution. See
+    /// `harness/fixtures/devnet_history.json` for the exact pubkeys/counts and
+    /// collection date.
+    pub naive_history_measured_advantage: f64,
+    pub prewarmed_history_measured_advantage: f64,
 }
 
 /// Sample a realistic "real intent" amount in lamports.
@@ -166,9 +172,14 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
     let naive_consolidation_advantage = crate::consolidation::linkage_advantage(&test, true);
     let dispersed_consolidation_advantage = crate::consolidation::linkage_advantage(&test, false);
 
-    // Destination-history channel (modeled), with vs. without a companion account-cooker.
+    // Destination-history channel: modeled (synthetic, regression reference) and
+    // measured (bootstrap-resampled from a real devnet fixture), with vs. without a
+    // companion account-cooker.
     let (naive_history_advantage, prewarmed_history_advantage) =
-        crate::destination::eval_history(&test, seed);
+        crate::destination::eval_history_modeled(&test, seed);
+    let fixture = crate::history_fixture::HistoryFixture::load();
+    let (naive_history_measured_advantage, prewarmed_history_measured_advantage) =
+        crate::destination::eval_history_measured(&test, seed, &fixture);
 
     KResult {
         k,
@@ -182,5 +193,7 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         dispersed_consolidation_advantage,
         naive_history_advantage,
         prewarmed_history_advantage,
+        naive_history_measured_advantage,
+        prewarmed_history_measured_advantage,
     }
 }

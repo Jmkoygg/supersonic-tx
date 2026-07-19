@@ -1,5 +1,6 @@
-//! Destination-history channel — modeled, and quantified with vs. without a
-//! companion `account-cooker`.
+//! Destination-history channel — quantified with vs. without a companion
+//! `account-cooker`, both as a synthetic model (below) and as a real measurement
+//! against devnet (`eval_history_measured`, see `history_fixture.rs`).
 //!
 //! The amount channel (the rest of the harness) is what `supersonic-tx` itself
 //! controls. But an observer has a second channel the tool does *not* close on its
@@ -11,22 +12,29 @@
 //!
 //! This module makes that concrete and shows the mitigation as a *number*, not a
 //! promise. The companion `account-cooker` in this same bounty keeps decoy
-//! destinations alive so they accumulate their own plausible history. We model two
-//! regimes and measure how identifiable the real leg is from the history channel:
+//! destinations alive so they accumulate their own plausible history. Two regimes,
+//! measure how identifiable the real leg is from the history channel:
 //!
 //! * **naive** — decoys are fresh (zero history), the real payee has history. The
 //!   attacker wins almost completely.
 //! * **pre-warmed** — an account-cooker has given decoy destinations plausible history
 //!   too, drawn from the same active-address distribution. The channel closes.
 //!
-//! **This is MODELED, not measured on real chain data.** History scores are synthetic
-//! draws from a plausible active-address distribution. The load-bearing result is the
-//! *relative* one — how much pre-warming closes the channel — not an absolute number.
+//! `eval_history_modeled` draws both regimes from a synthetic log-normal — kept for
+//! regression comparison. `eval_history_measured` draws the same two regimes from
+//! `HistoryFixture` — a real, third-party-verifiable devnet sample (see
+//! `harness/fixtures/devnet_history.json` and its `collected_at`/pubkeys), via
+//! bootstrap resampling (sampling with replacement from the real observed values,
+//! not fitting/assuming a distribution shape). No account-cooker exists yet to
+//! integrate with directly (external dependency, out of this project's control), so
+//! the same self-collected `aged` pool stands in for both "a real payee with prior
+//! activity" and "an account-cooker-warmed decoy" — the two roles it would fill.
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
 use crate::eval::Bundle;
+use crate::history_fixture::HistoryFixture;
 
 /// Standard normal via Box–Muller (no distributions crate).
 fn standard_normal<R: Rng>(rng: &mut R) -> f64 {
@@ -57,8 +65,9 @@ fn predict_by_history(scores: &[f64]) -> usize {
 }
 
 /// Advantage of the history-channel attacker under both regimes, for the given
-/// bundles (uses only each bundle's `K` and `real_index`).
-pub fn eval_history(bundles: &[Bundle], seed: u64) -> (f64, f64) {
+/// bundles (uses only each bundle's `K` and `real_index`) — synthetic model, kept as
+/// a regression reference. See `eval_history_measured` for the real-data version.
+pub fn eval_history_modeled(bundles: &[Bundle], seed: u64) -> (f64, f64) {
     if bundles.is_empty() {
         return (0.0, 0.0);
     }
@@ -77,6 +86,60 @@ pub fn eval_history(bundles: &[Bundle], seed: u64) -> (f64, f64) {
         // Pre-warmed: every destination has history from the same distribution, so the
         // real leg is exchangeable on this channel.
         let warm: Vec<f64> = (0..kk).map(|_| active_history(&mut rng)).collect();
+        if predict_by_history(&warm) == b.real_index {
+            warm_hits += 1;
+        }
+    }
+
+    let n = bundles.len() as f64;
+    let base = 1.0 / k as f64;
+    (naive_hits as f64 / n - base, warm_hits as f64 / n - base)
+}
+
+/// Bootstrap-sample one `signature_count` from a real fixture pool (sampling with
+/// replacement — legitimate for estimating the attacker's advantage under the
+/// pool's real empirical distribution without assuming its shape).
+fn bootstrap_one<R: Rng>(rng: &mut R, pool: &[crate::history_fixture::AddressSample]) -> f64 {
+    let idx = rng.gen_range(0..pool.len());
+    pool[idx].signature_count as f64
+}
+
+/// Same two regimes as `eval_history_modeled`, but every score is a bootstrap draw
+/// from `fixture` — real `getSignaturesForAddress` counts collected against devnet,
+/// not a synthetic distribution. `fixture.fresh_verified_zero` backs the naive
+/// regime's decoys (confirmed-empty, not merely assumed empty); `fixture.aged` backs
+/// both the naive regime's real payee and the pre-warmed regime's decoys+payee.
+pub fn eval_history_measured(
+    bundles: &[Bundle],
+    seed: u64,
+    fixture: &HistoryFixture,
+) -> (f64, f64) {
+    if bundles.is_empty() || fixture.aged.is_empty() || fixture.fresh_verified_zero.is_empty() {
+        return (0.0, 0.0);
+    }
+    let mut rng = ChaCha20Rng::seed_from_u64(seed ^ 0x6D_EA5_0117);
+    let k = bundles[0].amounts.len();
+    let (mut naive_hits, mut warm_hits) = (0usize, 0usize);
+
+    for b in bundles {
+        let kk = b.amounts.len();
+        // Naive: real payee's score is a real "aged" sample; decoys are real
+        // confirmed-zero fresh samples.
+        let mut naive = vec![0.0f64; kk];
+        for (i, s) in naive.iter_mut().enumerate() {
+            *s = if i == b.real_index {
+                bootstrap_one(&mut rng, &fixture.aged)
+            } else {
+                bootstrap_one(&mut rng, &fixture.fresh_verified_zero)
+            };
+        }
+        if predict_by_history(&naive) == b.real_index {
+            naive_hits += 1;
+        }
+        // Pre-warmed: every destination's score is a real "aged" sample.
+        let warm: Vec<f64> = (0..kk)
+            .map(|_| bootstrap_one(&mut rng, &fixture.aged))
+            .collect();
         if predict_by_history(&warm) == b.real_index {
             warm_hits += 1;
         }
