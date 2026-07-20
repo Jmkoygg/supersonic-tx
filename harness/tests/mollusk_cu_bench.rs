@@ -23,7 +23,7 @@ use solana_instruction::{AccountMeta, Instruction};
 use solana_pubkey::Pubkey;
 use supersonic_sdk::{execute_bundle_data, plan_bundle, DecoyConfig};
 
-const SBF_OUT_DIR: &str = "../../target/deploy";
+const SBF_OUT_DIR: &str = "../target/deploy";
 const PROGRAM_NAME: &str = "supersonic_tx";
 const PROGRAM_ID: &str = "BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn";
 const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
@@ -117,6 +117,6 @@ fn cu_scales_with_leg_count() {
         .bench(("execute_bundle_k8", &ix8, &acc8))
         .bench(("execute_bundle_k16", &ix16, &acc16))
         .must_pass(true)
-        .out_dir("../../target/benches")
+        .out_dir("../target/benches")
         .execute();
 }

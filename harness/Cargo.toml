@@ -23,3 +23,20 @@ path = "src/main.rs"
 [[bin]]
 name = "collect-devnet-history"
 path = "src/bin/collect_devnet_history.rs"
+
+[dev-dependencies]
+mollusk-svm = "0.14"
+mollusk-svm-bencher = "0.14"
+# Mollusk 0.14 pulls a newer generation of these crates than our SDK/CLI (solana-sdk
+# 2.2) does; pinned here to the versions Mollusk actually expects, since Instruction/
+# Pubkey aren't interchangeable across the two generations (see
+# tests/mollusk_cu_bench.rs). Kept as a harness (host-side) dev-dependency, not a
+# dependency of the on-chain program crate: Mollusk's own dependency graph needs a
+# newer Cargo edition than the Rust toolchain bundled with the pinned Solana CLI
+# version supports, and `cargo build-sbf` builds the program crate's own graph — so
+# keeping Mollusk out of programs/supersonic-tx/Cargo.toml avoids that conflict
+# entirely rather than fighting toolchain versions.
+solana-pubkey = "4.2"
+solana-instruction = "3.4"
+solana-account = "4.3"
+solana-sdk-ids = "3.1"
