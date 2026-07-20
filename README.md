@@ -169,8 +169,13 @@ claim; "defeat every copy-trading signal" is not.
   to ~0. The measured version bootstrap-resamples a real fixture — 18 devnet addresses funded
   and transacted for real (2–25 real txs each) plus 10 confirmed-zero fresh addresses,
   `harness/fixtures/devnet_history.json`, every pubkey independently checkable — and agrees
-  closely with the synthetic model across 4 seeds. No mature `account-cooker` exists yet to
-  integrate with directly, so this is a minimal self-built stand-in, not the companion tool.
+  closely with the synthetic model across 4 seeds. To be precise about what that shows: the
+  ~0 in the pre-warmed regime follows from the sampling construction itself (every leg draws
+  from the same pool, so it's exchangeable by definition); what the real fixture adds is that
+  the underlying counts are genuine RPC results, not invented. No mature `account-cooker`
+  exists yet to integrate with directly, so this is a minimal self-built stand-in, and it does
+  not validate that a real account-cooker's warming pattern is itself indistinguishable from
+  organic activity.
 - **Framework (Anchor) is a measured choice, not a default.** The shipped program is Anchor;
   [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in Pinocchio and measures the
   tradeoff (Pinocchio is ~34× smaller and ~33× cheaper to deploy — verified `.so` sizes and

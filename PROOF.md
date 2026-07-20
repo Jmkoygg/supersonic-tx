@@ -69,34 +69,44 @@ Deploy success
 
 ### 3b. Cast a bundle (K=8): real 0.02 SOL hidden among 7 decoys
 ```
-$ supersonic send --to F58dg5YM7wSArwwJe5uS5UXXKBQNHzH131VNRU3CEvH5 --amount 0.02 --k 8 --bundle-id 301
-    [ 0]  10000000 lamports -> DR1Vbb…
-    [ 1]  10000000 lamports -> KVAxKr…
-    [ 2]  20000000 lamports -> F58dg5…   (the real leg)
-    [ 3]  10000000 lamports -> HNLLfH…
-    [ 4]  10000000 lamports -> 3omRYy…
-    [ 5]  20000000 lamports -> CBpZZE…
-    [ 6]  10000000 lamports -> A2zhRG…
-    [ 7]  10000000 lamports -> DU2w5U…
-   signature: a2d8ivWJ5UN8Axy5aooaijZgCyppLEV8y4nGF1GgpvNZGCX1y7AJB5JwZF5799m8TfWbNHuPJNSRGz6hbToviFi
+$ supersonic send --to BV3Hs4SV2HKMJLdP9WdjZZAei9vkDYcy6anaEdReZVaV --amount 0.02 --k 8
+    [ 0]  10000000 lamports -> ExirzN…
+    [ 1]  10000000 lamports -> 6sBSyd…
+    [ 2]  10000000 lamports -> EPmQ94…
+    [ 3]  30000000 lamports -> CLNdrh…
+    [ 4]  20000000 lamports -> 8ZTLzg…
+    [ 5]  20000000 lamports -> 4b5GYh…
+    [ 6]  10000000 lamports -> 2DfbSQ…
+    [ 7]  20000000 lamports -> BV3Hs4…   (the real leg)
+   signature: 2eQM7uCtp5aZou7p5mwaBMKXLHfvu4w34F3Fe1KdKU6xKuNiH24W3QAd23dKXD89nCApQAWKkWzSe6gyjSs3Gzgr
 ```
-The real 0.02 SOL leg landed at index 2 and shares its exact amount with another decoy leg
-(index 5) — an observer sees six 0.01 SOL legs and **two identical 0.02 SOL legs**, and
-cannot tell which of the two was the real payment. Every amount sits inside the plausible
-band (the generator's boundary-leak fix, §3e).
+The real 0.02 SOL leg landed at index 7 and shares its exact amount with **two** decoy legs
+(indices 4 and 5) — an observer sees three identical 0.02 SOL legs (plus a mix of 0.01 and
+0.03 SOL legs) and cannot tell which of the three was the real payment. Every amount sits
+inside the plausible band (the generator's boundary-leak fix, §3e).
 
 ### 3c. Dispersed recovery (mitigation as code, not prose)
 ```
-$ supersonic recover --bundle-id 301 --k 8 --disperse
+$ supersonic recover --bundle-id 302 --k 8 --disperse
 [disperse] sweeping each decoy to its own sink in a separate tx (no star).
-  decoy 0 -> sink 7zNm2H… (0.01 SOL)  2Ukjq2h9mnDS7ioGQ4o2N6pyAy1JGwJYYj8jXKfPB7AmHpuiX9N7fJhz8vrpnZ3p5Gt4GQKpo9ybRji79YHCYkD2
-  decoy 1 -> sink 7ZiAVY… (0.01 SOL)  4PjUFGwSNJX67u2dS1YMhDywnd1BrNBkmJVkUKU6XNGdnZYzJQU1spZoTVChoeyqvvDg1eQahRjQzNuRWUBkENDg
+  decoy 0 -> sink 8X7o22… (0.01 SOL)  nVX6oHoVGSqAUcBTh4f6e8GJgyZVKMArBbKbLk9Sov6K8zG2mJKNDxXVePkwHuRbGv82kCGJyuU6yBAaXhDFfHe
+  decoy 1 -> sink HZtPiX… (0.01 SOL)  dGKJJxE9jrwYZa6RroZhNqdxm4y4ExDnPvAQjU8jqukeYVepsSsi3y22E1BDn65Qxbn8QePRCt52k9MFRCueaeX
   … (7 separate transactions to 7 distinct sinks)
 ```
 Each decoy is swept to its own seed-derived sink in a **separate** transaction. An observer
 sees 7 unrelated onward transfers to 7 distinct addresses — no star into one wallet — which
 is what drives the modeled consolidation-linkage advantage to 0 (§3e). Funds stay
 recoverable (sinks derive from the master seed).
+
+> **On devnet retention:** these two signatures were captured and confirmed `Finalized`
+> immediately before this commit. Solana's public devnet RPC prunes old transaction history
+> (typically within days, not permanently, unlike mainnet) — the durable, always-checkable
+> evidence is the **program account itself** (§4, a live on-chain account that doesn't get
+> pruned) and the fact that the exact commands above are runnable by anyone against the live
+> deployment. If these specific signatures return "not found" by the time you're reading this,
+> that is expected devnet behavior, not a retraction — re-run `supersonic send` /
+> `supersonic recover --disperse` yourself against the same program id for a fresh, currently
+> live pair.
 
 ### 3d. The plain (consolidating) recovery also works
 `supersonic recover --bundle-id <id> --k <k>` (no `--disperse`) sweeps decoys back in one
@@ -164,7 +174,12 @@ adversary-favorable:
   `account-cooker` provides — drive it to ~0. The synthetic model and the real-devnet
   measurement (18 self-collected aged addresses + 10 confirmed-zero fresh addresses,
   bootstrap-resampled, every pubkey independently checkable) agree closely across all 4
-  seeds — the mitigation holds under a real measurement, not only in a model.
+  seeds. Precisely stated: the ~0 in the pre-warmed regime follows from the sampling
+  construction (every leg draws from the same pool, so it's exchangeable by
+  definition) — what the real fixture adds is that the underlying counts are genuine,
+  independently-verifiable RPC results, not invented numbers. It does not validate
+  that a real account-cooker's warming pattern is itself indistinguishable from
+  organic activity; that remains a stated next step, not something this measures.
 
 We report the bounded number rather than claim perfect indistinguishability. Full JSON:
 `PROOF/harness-report.json`. A separate framework benchmark (Anchor vs Pinocchio binary
@@ -173,13 +188,21 @@ size / deploy rent) is in [`BENCHMARK.md`](./BENCHMARK.md).
 ## 4. Third-party-verifiable references
 
 All actively confirmed on devnet (each `solana confirm … --url devnet` returned
-`Finalized`):
+`Finalized` as of the timestamp below):
 
 | What | Reference | Check |
 |---|---|---|
 | Program account | [`BCrR3J…YeYabn`](https://explorer.solana.com/address/BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn?cluster=devnet) | `solana program show` → BPFLoaderUpgradeable, 185016 bytes |
-| Cast K=8 (bundle 301) | [`a2d8iv…viFi`](https://explorer.solana.com/tx/a2d8ivWJ5UN8Axy5aooaijZgCyppLEV8y4nGF1GgpvNZGCX1y7AJB5JwZF5799m8TfWbNHuPJNSRGz6hbToviFi?cluster=devnet) | `solana confirm` → Finalized |
-| Dispersed sweep (decoy 0) | [`2Ukjq2…YkD2`](https://explorer.solana.com/tx/2Ukjq2h9mnDS7ioGQ4o2N6pyAy1JGwJYYj8jXKfPB7AmHpuiX9N7fJhz8vrpnZ3p5Gt4GQKpo9ybRji79YHCYkD2?cluster=devnet) | `solana confirm` → Finalized |
+| Cast K=8 (bundle 302) | [`2eQM7u…3Gzgr`](https://explorer.solana.com/tx/2eQM7uCtp5aZou7p5mwaBMKXLHfvu4w34F3Fe1KdKU6xKuNiH24W3QAd23dKXD89nCApQAWKkWzSe6gyjSs3Gzgr?cluster=devnet) | `solana confirm` → Finalized |
+| Dispersed sweep (decoy 0) | [`nVX6oH…DFfHe`](https://explorer.solana.com/tx/nVX6oHoVGSqAUcBTh4f6e8GJgyZVKMArBbKbLk9Sov6K8zG2mJKNDxXVePkwHuRbGv82kCGJyuU6yBAaXhDFfHe?cluster=devnet) | `solana confirm` → Finalized |
+
+The **program account** is the durable reference (a live account, not prunable transaction
+history — checkable indefinitely). The two transaction signatures above were captured and
+confirmed immediately before this commit; devnet's public RPC prunes old transaction history
+after a retention window shorter than mainnet's (typically days, not permanent). If they read
+back "not found" by the time you check, that is expected devnet behavior — re-run
+`supersonic send` / `supersonic recover --disperse` against the same program id for a fresh,
+currently-live pair (§3b–3c show the exact commands).
 
 ## 5. What this proves
 

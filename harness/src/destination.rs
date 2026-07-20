@@ -29,6 +29,18 @@
 //! integrate with directly (external dependency, out of this project's control), so
 //! the same self-collected `aged` pool stands in for both "a real payee with prior
 //! activity" and "an account-cooker-warmed decoy" — the two roles it would fill.
+//!
+//! **What the pre-warmed/measured result does and does not establish.** In the
+//! pre-warmed regime every leg draws from the *same* pool, so exchangeability — and
+//! therefore an advantage of ~0 — follows from the sampling construction itself, not
+//! from a property discovered in the devnet data; that part would hold for any i.i.d.
+//! pool, real or synthetic. What the real fixture adds is *provenance*: the specific
+//! counts (5–25 real confirmed transactions per address, independently re-queryable)
+//! are genuine, not invented, so the claim "the number itself isn't fabricated" is
+//! checkable. It does **not** validate that a real account-cooker's warming pattern
+//! (funding graph shape, timing, who pays for it) is itself indistinguishable from
+//! organic activity — `signature_count` is a single scalar, and a real account-cooker
+//! integration remains a stated next step, not something this measurement covers.
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
