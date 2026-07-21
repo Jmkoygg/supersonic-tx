@@ -64,7 +64,7 @@ fn active_history<R: Rng>(rng: &mut R) -> f64 {
 /// Attacker over the history channel: pick the destination with the most prior
 /// activity (ties resolve to the lowest index — unbiased, since the real leg's
 /// position is uniform).
-fn predict_by_history(scores: &[f64]) -> usize {
+pub(crate) fn predict_by_history(scores: &[f64]) -> usize {
     let mut best = 0usize;
     let mut best_s = f64::NEG_INFINITY;
     for (i, &s) in scores.iter().enumerate() {

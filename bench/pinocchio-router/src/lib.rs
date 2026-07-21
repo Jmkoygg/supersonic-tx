@@ -4,7 +4,13 @@
 //!
 //! Instruction data layout (a compact manual encoding — no Borsh/discriminator):
 //!   `[count: u8][count × u64 LE amounts]`
-//! Accounts: `[0]` = payer/signer, `[1..1+count]` = destinations (in leg order).
+//! Accounts: `[0]` = payer/signer, `[1..1+count]` = destinations (in leg order),
+//! `[1+count]` = System Program. The program's own logic never reads that last
+//! account (`Transfer::invoke()` only takes `from`/`to`), but the runtime still
+//! needs the CPI target present among the calling instruction's accounts to
+//! resolve it — confirmed empirically via Mollusk (dropping it fails every
+//! successful transfer with `NotEnoughAccountKeys`), not assumed from the
+//! pinocchio-system source alone.
 //!
 //! This is a benchmark artifact, not the shipped program. It exists to measure the
 //! framework overhead (binary size → rent, and compute units vs. Anchor), which the
@@ -36,7 +42,11 @@ pub fn process_instruction(
     if data.len() != 1 + count * 8 {
         return Err(ProgramError::InvalidInstructionData);
     }
-    if accounts.len() < 1 + count {
+    // Structural uniformity, matching the Anchor program's `dests.len() ==
+    // legs.len()` exactly: not just "at least" (the original check), extra
+    // accounts are rejected too. `+1` for the trailing System Program account
+    // the CPI target resolution needs (see the module doc).
+    if accounts.len() != 2 + count {
         return Err(ProgramError::NotEnoughAccountKeys);
     }
 
@@ -55,6 +65,11 @@ pub fn process_instruction(
             return Err(ProgramError::InvalidInstructionData);
         }
         let dest = &accounts[1 + i];
+        // Matching the Anchor program's `dest.key() != user.key()` exactly: a
+        // self-send is an economically pointless tell, rejected fail-closed.
+        if dest.address() == payer.address() {
+            return Err(ProgramError::InvalidInstructionData);
+        }
         Transfer {
             from: payer,
             to: dest,

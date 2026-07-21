@@ -15,6 +15,11 @@ rand_chacha = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
+# Raw JSON-RPC for collect-mainnet-profiles (getBlock transactionDetails=accounts
+# isn't exposed by every typed solana-client version). Pinned to 0.11 to match the
+# version already resolved transitively via solana-client, avoiding a second TLS
+# stack in the dependency graph.
+reqwest = { version = "0.11", features = ["blocking", "json"] }
 
 [[bin]]
 name = "supersonic-harness"
@@ -23,6 +28,10 @@ path = "src/main.rs"
 [[bin]]
 name = "collect-devnet-history"
 path = "src/bin/collect_devnet_history.rs"
+
+[[bin]]
+name = "collect-mainnet-profiles"
+path = "src/bin/collect_mainnet_profiles.rs"
 
 [dev-dependencies]
 mollusk-svm = "0.14"

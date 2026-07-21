@@ -17,6 +17,8 @@ mod eval;
 mod forest;
 mod history_fixture;
 mod learned;
+mod mainnet_channel;
+mod mainnet_fixture;
 
 use eval::{eval_k, KResult};
 use serde::Serialize;
@@ -74,6 +76,7 @@ fn main() {
 
     print_table(&results, n);
     print_fixture_provenance();
+    print_mainnet_fixture_provenance();
 
     let report = Report {
         n_per_split: n,
@@ -136,6 +139,30 @@ fn print_table(results: &[KResult], n: usize) {
         "destination-history MEASURED = bootstrap-resampled from a real devnet fixture (harness/fixtures/devnet_history.json)."
     );
     println!("Both regimes: a companion account-cooker that pre-warms decoy destinations closes the channel (number, not promise).");
+    println!();
+    println!("  K  | mainnet destination-history: naive -> warm | mainnet funding-graph: naive -> warm | mainnet token-holdings: naive -> warm");
+    println!("-----+---------------------------------------------+----------------------------------------+----------------------------------------");
+    for r in results {
+        println!(
+            "  {:>2} | {:>+8.4} -> {:>+8.4}                 | {:>+8.4} -> {:>+8.4}                    | {:>+8.4} -> {:>+8.4}",
+            r.k,
+            r.naive_mainnet_history_advantage,
+            r.prewarmed_mainnet_history_advantage,
+            r.naive_mainnet_funding_advantage,
+            r.prewarmed_mainnet_funding_advantage,
+            r.naive_mainnet_tokens_advantage,
+            r.prewarmed_mainnet_tokens_advantage,
+        );
+    }
+    println!();
+    println!("mainnet channels above are MEASURED against real, passively-observed mainnet-beta");
+    println!(
+        "addresses (harness/fixtures/mainnet_profiles.json), evaluated only on that fixture's"
+    );
+    println!(
+        "`held_out` split — `calibration` is reserved for whatever mechanism (e.g. an SDK-side"
+    );
+    println!("warming pool) fits something to the data, kept disjoint from what measures it.");
 }
 
 /// Print where the MEASURED destination-history numbers actually came from, so the
@@ -165,6 +192,40 @@ fn print_fixture_provenance() {
         );
     }
     println!("  full list: harness/fixtures/devnet_history.json");
+}
+
+/// Same purpose as `print_fixture_provenance`, for the mainnet fixture: make the
+/// MEASURED mainnet-channel numbers checkable, not just labeled.
+fn print_mainnet_fixture_provenance() {
+    let f = mainnet_fixture::MainnetFixture::load();
+    let held_out_aged = f.aged_held_out().len();
+    let held_out_fresh = f.fresh_held_out().len();
+    println!(
+        "\nMAINNET fixture provenance: {} addresses total (cluster={}, collected_at={}), {} aged \
+         + {} fresh_verified_zero ({} aged + {} fresh in the held_out split actually evaluated \
+         above; the rest is `calibration`, reserved).",
+        f.aged.len() + f.fresh_verified_zero.len(),
+        f.cluster,
+        f.collected_at,
+        f.aged.len(),
+        f.fresh_verified_zero.len(),
+        held_out_aged,
+        held_out_fresh,
+    );
+    println!("methodology: {}", f.methodology);
+    if let Some(sample) = f.aged.first() {
+        println!(
+            "  e.g. aged: {} -> {} sigs (lower bound if capped), funder={:?}, {} token accounts, split={} (verify: solana transaction-history <ADDRESS>, cluster={})",
+            sample.pubkey, sample.signature_count_lower_bound, sample.earliest_funder_proxy, sample.token_account_count, sample.split, f.cluster
+        );
+    }
+    if let Some(sample) = f.fresh_verified_zero.first() {
+        println!(
+            "  e.g. fresh: {} -> {} sigs, {} token accounts (independently re-verifiable)",
+            sample.pubkey, sample.signature_count_lower_bound, sample.token_account_count
+        );
+    }
+    println!("  full list: harness/fixtures/mainnet_profiles.json");
 }
 
 fn interpret(adv: f64, baseline: f64) -> &'static str {

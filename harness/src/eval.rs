@@ -60,6 +60,15 @@ pub struct KResult {
     /// collection date.
     pub naive_history_measured_advantage: f64,
     pub prewarmed_history_measured_advantage: f64,
+    /// Destination-history, funding-graph, and token-holdings, MEASURED against
+    /// real mainnet data (`mainnet_fixture.rs` / `mainnet_channel.rs`), evaluated
+    /// only on the fixture's `held_out` partition (see that module's doc for why).
+    pub naive_mainnet_history_advantage: f64,
+    pub prewarmed_mainnet_history_advantage: f64,
+    pub naive_mainnet_funding_advantage: f64,
+    pub prewarmed_mainnet_funding_advantage: f64,
+    pub naive_mainnet_tokens_advantage: f64,
+    pub prewarmed_mainnet_tokens_advantage: f64,
 }
 
 /// Sample a realistic "real intent" amount in lamports.
@@ -181,6 +190,17 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
     let (naive_history_measured_advantage, prewarmed_history_measured_advantage) =
         crate::destination::eval_history_measured(&test, seed, &fixture);
 
+    // Same three channels' mainnet-scale counterparts: real signature depth,
+    // funder-diversity proxy, and token-holdings, all against `MainnetFixture`'s
+    // held-out partition (see `mainnet_channel.rs`).
+    let mainnet_fixture = crate::mainnet_fixture::MainnetFixture::load();
+    let (naive_mainnet_history_advantage, prewarmed_mainnet_history_advantage) =
+        crate::mainnet_channel::eval_mainnet_destination_history(&test, seed, &mainnet_fixture);
+    let (naive_mainnet_funding_advantage, prewarmed_mainnet_funding_advantage) =
+        crate::mainnet_channel::eval_mainnet_funding_graph(&test, seed, &mainnet_fixture);
+    let (naive_mainnet_tokens_advantage, prewarmed_mainnet_tokens_advantage) =
+        crate::mainnet_channel::eval_mainnet_token_holdings(&test, seed, &mainnet_fixture);
+
     KResult {
         k,
         n_train: n,
@@ -195,5 +215,11 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         prewarmed_history_advantage,
         naive_history_measured_advantage,
         prewarmed_history_measured_advantage,
+        naive_mainnet_history_advantage,
+        prewarmed_mainnet_history_advantage,
+        naive_mainnet_funding_advantage,
+        prewarmed_mainnet_funding_advantage,
+        naive_mainnet_tokens_advantage,
+        prewarmed_mainnet_tokens_advantage,
     }
 }

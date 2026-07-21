@@ -11,3 +11,8 @@ rustc-ice-*.txt
 
 # local CLI bundle records
 .supersonic
+
+# security-tooling scratch output (regenerable, not part of the deliverable)
+.xray/
+cargo_audit_full.txt
+*.ll

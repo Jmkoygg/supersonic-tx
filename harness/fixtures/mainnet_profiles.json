@@ -1,0 +1,4302 @@
+{
+  "cluster": "mainnet-beta",
+  "collected_at": "2026-07-21T22:47:37Z",
+  "methodology": "Passively observed against Solana mainnet-beta public RPC (https://api.mainnet-beta.solana.com); nothing was funded or transacted by this collector (read-only). Candidates were discovered by scanning recent finalized blocks via getBlock(transactionDetails=accounts) and selecting writable, non-signer accounts whose lamport balance increased in some transaction (a real payment received), without parsing instruction data. Candidates appearing as a receiver more than 2 times in the scanned window were dropped as likely hubs/exchanges/bots (a degree-based proxy, not a validated exchange-clustering heuristic \u2014 no Solana-specific published method for this was found). Each surviving candidate was verified to be a plain System-Program-owned, non-executable account via getAccountInfo, then profiled: signature_count_lower_bound/exact from a single getSignaturesForAddress page (capped at 1000 signatures \u2014 a lower bound, not exhaustive, for addresses with deeper history); earliest_funder_proxy is the fee payer of the oldest transaction within that page (a proxy for 'who funded this address', not a semantic transfer-source parse); token_account_count sums getTokenAccountsByOwner over both the SPL Token and Token-2022 program ids. fresh_verified_zero addresses are freshly generated keypairs, never funded or used, with signature and token-account counts independently re-verifiable as zero via the same RPC calls. Every number here is a live RPC result at collection time. split (calibration/held_out) is assigned from a stable hash of the pubkey at collection time, before any measurement, enabling an honest disjoint train/test split rather than reusing one pool for both regimes. 5 candidates were excluded post-collection by an offensive-content guard (a vanity-generated funder address spelling a slur funded 5 of the sampled destinations) \u2014 content hygiene, not a research adjustment; any other address in the pool serves the measurement equally well.",
+  "aged": [
+    {
+      "pubkey": "ByRRgnZenY6W2sddo1VJzX9o4sMU4gPDUkcmgrpGBxRy",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DRnji2cd6fYsX7Tw2j8f7B83SZMKyqYZBVPkeANU6TnX",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FiyrdSQpzSEMBZTpDWsChzPyin2GnrUkd4drduR6MgN2",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2kWiuBfmjPkRmstQWyKFJiiJ82KdbgxuXZhSc37tJjQN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3KCKozbAaF75qEU33jtzozcJ29yJuaLJTy2jFdzUY8bT",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4sWPwW2BwGgGX7L4eGe5XCsAe4fLVU8yCjusH1icH6MW",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EdoDCSjer2J5yNbftVYB44T52gNvVAezbXzTxQULFxCr",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GUtqbMhgvuoqs6oYvNxdESZ9XGLaxkDWhxSjZ5JQVHnY",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GAozhWP1s9Y625HpdpVY8yjZ6WQB57BcPnqfybtMTj1J",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "67H8t18BZsn7YSdfEJqPCoWSqA9o2tFYPVNMLaPXw4Xg",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4DBNqFWveHVLjKmgGvAnWo3Cy4JoXvssKpC1XduZ7kHm",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4BfXAZZGYFqg6Lq7YqTKjGGfDrAqVJnnr2etcCC58tGQ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HG6hBo4vniw6UGpWhk4gEWLn7eQNi1zzNg2himp617qC",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HG6hBo4vniw6UGpWhk4gEWLn7eQNi1zzNg2himp617qC",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EeCSgSgNE1dTX5vbyJN5Mgz3eVUW9ZJfLP8QGYzKWDrH",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3nNgn9LHVB7UzNynJJph2mFE3EZ31zSiYH6piKyG27Hr",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "J1jnSfGcQM7jtZNtuqz33saMnPSAeGhbqntQANDko2KS",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DKVPiQZipNA4QQiWwX6X2P9WXkPBFNXGBhAYxnNFAytC",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "nozpEGbwx4BcGp6pvEdAh1JoC2CQGZdU6HbNP1v2p6P",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9YW7Rc8ongNLedz9YBp5hVYwdEJHuHbQkUf3fZocNkHN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7HeD6sLLqAnKVRuSfc1Ko3BSPMNKWgGTiWLKXJF31vKM",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4nzpZR8zSgDgL5fabixi6yZYo5YcmSWgUY1RzA4X7qqu",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 25,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AStRAnpi6kFrKypragExgeRoJ1QnKH7pbSjLAKQVWUum",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6WJfN1fqrEEMSVKnzZkR4vJTMTxBaqvka2KA7aQHJMfF",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DAGrWtRWQgghbexTcDHVcm5499e3zn7G77sf7HWiheE4",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4VfgxioFTfiK5jomYFGbUJfFpcnLLtGQ87Aqqtouo9EK",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 24,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "SpEediGKLbbXndSYTzwmz6Z3NDgHQLDcTDEvGFkSMH9",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8fTjdbprrSKDeYiAPEoUDE6MjtFbew2F2Vai1r7uEAiG",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5YktoWygr1Bp9wiS1xtMtUki1PeYuuzuCF98tqwYxf61",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "H7xhtM1jQ3oTjbTzM1CUvzDWv8NMFtEQQfWtZFUugyns",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "65gDv7pZQCZELsNpNYSFEBtNFpWZAbxmRFB6BGMqFkHH",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4sKqyCAx1dphE5C21fiFsxoXg2JbxPEJTsck5A4n2um4",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AH4nNu72cHX4L2jAzoAqw4dqeCximSe6YyDGW14LHiFG",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Fg43oAYTvASxSUUPQvNWXSUaFXkchCihYBhgfeEFPPqK",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HXEwYwjCDmoRSJEgakEyPURkwDqJb4SDvqPEvKjntG9A",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "74GbVPrjAQgX4AcHoSLqQhEb7Hngpd2AbDAkyMYmKgfH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2qDoKXbts4ePAv5NVhHZLuG7eFqB1ik58Nsb9aDArecj",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "38zXKNZHbPgU3jhLsqbdCwuTENTdp3GEGtMmXLVGautH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "jqvQkwWbqZY5C4gp5avEDnB7Mr3bfUuKqowe4UbBZwN",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "25x2koMhbWCTzpQUhQxUkbUjUuk96k6YTPVxu1R1Crf2",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3oLLNaSs6tGpV28g2q4JiKFtHFWXKLZnxNUHxJfqAVr5",
+      "signature_count_lower_bound": 575,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8bKxjkGJJUFjgwNxPgp7cyLn9ax3gy2qaBhvdA61sisG",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5K1aFU4skWoRzHEz71iahQUUzSLeHzYtD7Xrmt3xSi7s",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "CqudSy21sZGDFg6TXLKitchueeMbmfxBMzmk5CKbwKmD",
+      "signature_count_lower_bound": 681,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Bj1EBaYa1WGTiAZp4bV12BP7Xn8mTgRNejtREzY5n3GB",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Bj1EBaYa1WGTiAZp4bV12BP7Xn8mTgRNejtREzY5n3GB",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "astraEJ2fEj8Xmy6KLG7B3VfbKfsHXhHrNdCQx7iGJK",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GmNi3xSt4zSB3PEuwDmT41V7KobZBaPnCeN26sJX8DUs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Gn4fW4qmGxjzQZidkpuHZmnPrHCLA9Un1UbU4MGFpCtB",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7a12zVLT2ujwCZmBSo9HCvxpezySTi4VkoK7AHBJ8q7P",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "pfnSbG36fCGpT8WsB1NEbQ2BH11iog6qjFqMEVCZZgV",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HV6q16yGPMikpCqTTy1pyZV18ZpCs3X9JGyU78bUiGZ7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "J4DeM2vEEMoDCVoDzPLs6gN2C7vFupxQxQMdzUNnTFdr",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2dmci6c66RWebirSmv4Pd1q2ZPgxmoicTHWvpiJp3Uu2",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "7VGNQUExnxPH9PCmcUkeZdzgVTsCRNRfXhuEU6uDvtuY",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7VGNQUExnxPH9PCmcUkeZdzgVTsCRNRfXhuEU6uDvtuY",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "REfUndEd1DoYqRzHtjPpx1WYgTL2f2C86pnU44x1jgc",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7WdKrU2GKpNXckJbspHAnVSi19wttSyNAzrTE71Rhe3x",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "nozievPk7HyK1Rqy1MPJwVQ7qQg2QoJGyP71oeDwbsu",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "gWTmSBYYJhDf8kM9CKdej7pL96Jjq7rhTiBd6pyv2Yb",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "8ovyrAo1f3jBmq5F1njewpcgfUB12GpSiB2heWRUFS9T",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "J8eZrqA5jjsvqUdauja7yQ4ZMDDbuJmdUNFZLcZBjc8Z",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3XCBmEGtot44VFAoBXWoDoBDii7tCaVdQXA5pVV26qfo",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7iVCXQn4u6tiTEfNVqbWSEsRdEi69E9oYsSMiepuECwi",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "CtxSNYztbxD1mNcUVZToVjidfZs6ubQqQLQkxHCmBo7K",
+      "signature_count_lower_bound": 452,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2ScC3F3CyusoFheKD2kvusYvpw7fwV6ARXXyUPwjH2fg",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DRg3C1nVnvwugDW1J9gnhArcZpo7oyREwfugZCLjPJVc",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AndbHGz2Fyx1VJ28yMnbTfDFQ6mib6E1gW5KEpo3hNHL",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2nyhqdwKcJZR2vcqCyrYsaPVdAnFoJjiksCXJ7hfEYgD",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4sWPwW2BwGgGX7L4eGe5XCsAe4fLVU8yCjusH1icH6MW",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "pfnTcJ1i4mRYzbqGduF71RsooUCFkPSpk8UE7drCkjh",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6mW9UoanWQNFcmUnzzNCFyk6KCemATDEMEWeQ938jj6E",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "E7AVBw2emRkoureAQ3jqgz84dFpcbN1dd2r5CYpWPZVQ",
+      "signature_count_lower_bound": 3,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "AcU81zw1fGicThSBpNxpyZWYfZLNX2rSgU4WjXMYYkxB",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "pfnSbziLrSSVNqPBD9tpx3Ud4VtbxwsXjdfYv9SmBDx",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BpuSMK3CtgAqiH6veEnZVh8NfHwT2ijJgJEAWYaFQNRL",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "pfnXi2FdpFUUn6VyoxUohNyWk2Nup3ruguTgK8jaZaF",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Civ6KVQdBMnHHy4ViXGLRmMLh4Z4tJ6dprqWj4nEAyRh",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9gVXtYEJnvzAV7B2K7TBjxhs8Et2LBEvRr8kbyEzZSZu",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "321RUcfZwAS7q8oKGp6DdMM7xsde6TozprXBUu989i78",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "YYVEwYxUif4zSGdnBxLdHU1ej4kQTgxKrkD5VXDU8RC",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Bp7myTKPeHYUwqqBNuum4sCZ4ma8SiV1HciyjWM4WmAU",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5ouThmUGoKh5McwDPmiQykyQzougSptGpesUQBhyP5iw",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DhPYq6RZ6fDyLtUGadMzNRbVNpHgidzLdppboxtWjLC5",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7Wnwuo2uvnjfJJL4u2WaEEDombMfVZLk1UE41mW4h7Y4",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "ACTbvbNm5qTLuofNRPxFPMtHAAtdH1CtzhCZatYHy831",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Ex1AxFCipXGfSxgvXPPT3nPQUARddCduHwKR6jHiXAaT",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Ex1AxFCipXGfSxgvXPPT3nPQUARddCduHwKR6jHiXAaT",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 27,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9EpJTeTN8eEX1NttGvoRCL4xGumrxTQf5Krq5fo6aiEx",
+      "signature_count_lower_bound": 623,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "5WQ9zY79fSEyJ9is3gk5rDAw1aYBL6AXCZoduSeSr9eN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GFjosysChF25z2RhUTiqzAhBiehfvYLsGm6gJtUhytAX",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DhPYq6RZ6fDyLtUGadMzNRbVNpHgidzLdppboxtWjLC5",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2TFSWno7iey95H4hvCYdKu5YTRttVd3xuqor7YCreape",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Br3X31qhsftDCQQxLSzVWLU8fh3dkQMx3PJ9epUw3DwA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HXxqUCCmBDHqCyMhby3TFCDFzA9HuJdKBAZHCrA62hWv",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BL5a68JBhRNgxEFMdurtDJmUnuAHZwHM17X1b2zHvsax",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "astra9xWY93QyfG6yM8zwsKsRodscjQ2uU2HKNL5prk",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "49JtQw2YnwjTFMiZdTAJAeiU8g5awdYudfKcJXjMZ4qe",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "BWgb8wR1FEGiu1jCDSKuHKf752W27b4iN6SvoNCiK4qp",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5kqED8FYypmKfYPoubGA5GfsM2HgnvxyM2EzBPjNqff2",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "66N1M2aaDSdJFZ1d7YoVN4EU45ju6XiscapLVHn5FLms",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DVRhVcrR9mwpuCyFFjuToXstaBkWyBrnmMDZbEH8f4NT",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2oB5JB7gzjMhSVG71H6PFmu7CFto9nRFN5xHTwxTNQSH",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2DzNEe793ScjCeJMysNLYuuA2CkmzmQiTAYxDjnyzHm6",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4XjzLKgH5RHdf5qqSsze4dhTKs4e7CATDoGhckyzk16L",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2aErPyKRhuNeaoZsQXe4tpbfJJvJvxd6a7fKLdhfA5NK",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5Lg9ckyrtj22vtGppiVRUtnQkL1dtwCQ6thciMLPtyv1",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "G7VaiaXigqQky2XHPBSWNQbb4Z9cC2p7VK8hsjmZJVf3",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "DhkvC2tPvc8J8ft7nWEPSoXFD5reo4nPexFWXUnvbKZS",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9mrXGvZSgsCsTLh3XSmntn6Ws3dHbLez7kPgeuiYwbHH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7VsV8ji1nUp7PXuWf3ZVFRPSBwATd6XR2NJrGretm4ET",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Gq1RQQcvbZu9Ud2wVRy6Krh9RsS1ZYbLBsBuMuvCgyRU",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HLyeM7zsRwDmNJQpwknp6RJCWF6ZcoJaqQbHwbbCocDd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BhFnM7vSoN5GhkDXKgMnRae6CuMqPrAn5tFBnAiXtPMU",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GjerS5RUhFq3aYDidgquYbjJCEjaFJZni7bXz9Z4ikWe",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Em8J3gBWapfVBGVhVipwQnLrqCvnWBnLajw6XFsFECPF",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AKNMM5bqpmD1G6uyd278PdQFktsSzPGbLFpMYD7vWPkW",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AhKMhfkRR3wNXZUC9rCHKAcibZUcdErdnkmJ6ewoVmBL",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2v7abH44qFAxyUkafoMZ6hF3o1tvDx3MddQhmvZeUsTe",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "E2EYmvXuhZgtdzAnfXfQQ3SGTjMfPusgLHuvp6fBPYBF",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DHYVdjc9UqJv9zuieHfxq52XZRXX3s4TJtUGXDA54s4U",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DHYVdjc9UqJv9zuieHfxq52XZRXX3s4TJtUGXDA54s4U",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9e9BZzAdTCRdXGXXAMvWGW7PV2y59XJMrDBpJaEn2QXe",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9e9BZzAdTCRdXGXXAMvWGW7PV2y59XJMrDBpJaEn2QXe",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CKgKtFBQqGtgiXDbP66nDNC3eyBLnUzTSewS8vge4fNQ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6X21Z6z4Awbfekhna746LgUmExaS1CgrhaypH69ats6X",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2jwHNxavSoMZMEDbT1eV9PcPt5dDcayCqM6MkgaPpmWQ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4eWvuym6atJo35PTWnER9HkMkVSqMsxpKdCYoUupCXe4",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "B8cVgfN3KRVJcVreK15XYqJVs8QSapbeAEHH8oTmKY3S",
+      "signature_count_lower_bound": 532,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "AaZkwhkiDStDcgrU37XAj9fpNLrD8Erz5PNkdm4k5hjy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 99,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "C9CHgYZeGQ1EQpwf98Szfb4cMaLNFCUdb8oyZbyyc2ZK",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "C2QnNoGRe4dTaSsPSbFemMjmHi3wRiF8nzaxCQ4nskZw",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "8hbyfpjKnt5NsVoTrBYigXqVUGf6oJor5BVKuDVSrscf",
+      "signature_count_lower_bound": 156,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "DBRcgABPRT9g9rE9UdRbqK55NSPzpVbogEH4H32AAke6",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9RBivmnQyhf78wxXFJZgTJFc1cRJ5U7FpQ4XbKUYiZBi",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Bp7myTKPeHYUwqqBNuum4sCZ4ma8SiV1HciyjWM4WmAU",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "pfnSAoQWtJCDKnjmR8oduqbZYXr69Q4cFQ6VhgFkvgT",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BsE1jMUtSe5kY2Hf13VfzLEjJqEtgKu5yFF5MiYUskRn",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BJgbYMZgqm79gNrmm31tV3L8GQorw91XFm4m7evyfPjr",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BUM8fpNWZ4BDYeYtMWSMN8d5U7SqKeU3S9B83f86nd54",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "57314eWva7RsP4bJANfVfWdSgdLMDGVcbGHCsVB7MRvf",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7d6dshEPDUYrb3ZbDmohNZCjkfbv7d1DAhaLuR5opxGM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "dBhdrmwBkRa66XxBuAK4WZeZnsZ6bHeHCCLXa3a8bTJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "A1SZzm6agYkzNFNBY7MSeDP7FVvdpCJ2yTauJet6QXV9",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "9bFNrXNb2WTx8fMHXCheaZqkLZ3YCCaiqTftHxeintHy",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9WL2A89YBr6X47ABKYNzPentWiBA3H8tpaiuf5CaYHx6",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 6,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Eb2KpSC8uMt9GmzyAEm5Eb1AAAgTjRaXWFjKyFXHZxF3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7C8ph3B72P9gfVZsvYsBjqDrMbqBLGf8nDZHZiACdLXT",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 10,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6e3sAGNGqe1KyqwEHaRvKieaoyvhx1Ty14jkNo11Fk2J",
+      "signature_count_lower_bound": 213,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "Hr8JDnr1KZ3amdtZdbaJLKDUrpaZaHY3jam82xroMWi8",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6CyhZxn2ZKHZTq6ATPtTw62YXRMc8XkP9qr7uqR8Rxdr",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8uoZzuMdCjSemyDipMtaaqPad5CJfThEVZhoQo6s4UY6",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "D77Ya8xL3bzrZt66BMNoa23pMMg8kiwXQiGs3n469WYb",
+      "signature_count_lower_bound": 458,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "54YCVD5uTRii31utQycNJvH1ptBhu45n3nebZiVKfa8S",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 7,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "A9SFYn1kqLmeomBtAatKKgn74Cn19j2YXVtAFA6qXs7P",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2im8zemHQExkyTB6fHWyZEFir6ayVf2vC7j2aXF7hGrP",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3XNAGp84pw6JfcMmUMXPGBTZAp9Br3DEEPbDCRXDCu1t",
+      "signature_count_lower_bound": 299,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "HuSEUh84tZGdvMc8VAw8AV8Vrqf5FZf5boCSG2H3WhRx",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2HqyDM2PtdaDKEUAnUpdknVGhMaDrCr4xARrMGaSeDGw",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FVpmthNx2NwCrzSoWU3Z2po5CAxgV5FYoqH757BMzbqb",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5K5RtTWzzLp4P8Npi84ocf7F1vBsAu29N1irG4iiUnzt",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7HCBbcSQ9n4oksGxCcvLXrS4R5Qdi87yNbfScEenUaJe",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1402,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AVahywMVNRYzdgWrufSWrtdGXAeNEvfpJFxhVFK516mT",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BRG9RWEetKN6oAegfJwX8xpRXqzeFQLdmi8jhwoPi6UC",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ste11p7e2KLYou5bwtt35H7BM6uMdo4pvioGjJXKFcN",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7ovu7sqYQGcHwUnLfVfwjCx5VGBCiJmBrsrBv2ab1Ltx",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "tw1JnReVCzvBoqoEkopPzGuC6S682qWTEBfGKHDSzwF",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DxVLq8oEizx7Sz5WcbVUiQX8fLL3y1Jj8rMGEXEDi5oH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9yj3zvLS3fDMqi1F8zhkaWfq8TZpZWHe6cz1Sgt7djXf",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BqSa9TZfjb4tDD7hX55zWAbXmbWfXg6H38MjtFwpPGNz",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 135,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "twBhDDN3CfaGt8t4euyDfYq4N5mfezF9HK9mqBfMGZQ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EuDsCvZW29TYYeffXp9j4ya1oAfPbm1unKbhtTWckZKs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3wJM94wKz2YdSvjXZ4nHXssYJZ4WctgyhWysKByqF2f7",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4sWPwW2BwGgGX7L4eGe5XCsAe4fLVU8yCjusH1icH6MW",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7nFkbKooThkybP6NJLDEhayK54JHA9ziSSgcv3FG33ND",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BNFwUeMfQwC97rqcNib6fLproZ4ka4tSLinQyLYxiwm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "CeSFoWfWLPXeKXx2gJS9EKHwL61ZvB9NRVU7nquDrPf3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "465E9vhEYU6BmkRXsEfALXsj3nkT7Ao9PvX3oLbgad5f",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "8Xn4YW9vTrW3MXkLdT2vbxd3ykcpMQK5iy9RuD146H6y",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4Jcfj95xgbpKcP8SgQ5FLfWJgeBU2We7G7of3ff65ztE",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 101,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9pytafY4iHjLficgoG8eejLd2YHAMM54a3GcaveETDXw",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Ag28fGtwtpnqassHURUBsQ1WfiyaWWzDDNs4Q28qHRjv",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5PoBPdJNxyHPQPYGMMcpfZ5o4HKHDCZwwfJ3AzocxCwN",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2EncPMA4pn6HXGhHoKEytQBvLNtRcsU87nxNX7maViH2",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "nozc5yT15LazbLTFVZzoNZCwjh3yUtW86LoUyqsBu4L",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "H8UKNvUeaqpVT7DZ8TXJVreSQEXDjTA7fEv8hjD3FzHm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8bwPcEgufCHNp2T8AB1kei9XjWBLXDmGLfmAtkM1CWQ6",
+      "signature_count_lower_bound": 952,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "7GVMixMKAB2J9bp8Ji4KXgNFrk368xwhCz9uhZm73phH",
+      "signature_count_lower_bound": 564,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AstrABAu8CBTyuPXpV4eSCJ5fePEPnxN8NqBaPKQ9fHR",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7C8ph3B72P9gfVZsvYsBjqDrMbqBLGf8nDZHZiACdLXT",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "39azUYFWPz3VHgKCf3VChUwbpURdCHRxjWVowf5jUJjg",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6iPahKgzFBQphxDrzD81etdExgR2qNDJUDECGDzqtBpv",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 211717,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2G2gqDaF261hm7iwqkZNRVAYtFPqbuonyh4LbPHQDDiP",
+      "signature_count_lower_bound": 453,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "BKKRYy6sqWomg4LynyPpzWpyLE7L5iuRG9tp2jVtvP7N",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 63,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "12kfqFShWytV2WudJ5fuExJ4xnncHnDv8TmQqMgKzSnt",
+      "signature_count_lower_bound": 715,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3b6ybayqVMP6rexc1PWjAxSP3z8TzDNmT7obP62Hsbkz",
+      "signature_count_lower_bound": 26,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7qcfncJgJR8uvB7x2FFp1yteBTphLLFZj6XvgraJUFRK",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "B1HkS94ad5WMDP9KwhXVZVwSCuxV9LbVdkbhhgVwLmhq",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "F71njDc9uRjiAKtzqB77NXiwQDXPT9ZdQFNTKrgCQN2Z",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "H8Uzm47MS3Jm6TNXKC8GtZYxcnfbVVcZm5fhFtiAGqQX",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CYYE1EVdHuenXmjn21eQVQAZc5nXApJUpdfyx87EmRR9",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2Wiy3LYqCWVSVsdfo8xeoX2q7YicAGfJLQz7MKsSdsJA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "pfnaxrmMoemfvbhXek6offTNXas11GtepGQMN9UF3gk",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4ucDzC2ZTRZo7VxmvC6J8u6xAH8RJsdqyhhPJ3pnDpwm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "7tgbPNtTrVTfgi7DDMeiEjtTuy7wReDhTpayF3c5Jhxo",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3MvVyVExX1zxUYa9SzgvYNas8fW4hCg3toYsrZWQ5ioH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Cix2bHfqPcKcM233mzxbLk14kSggUUiz2A87fJtGivXr",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "gWTmSBYYJhDf8kM9CKdej7pL96Jjq7rhTiBd6pyv2Yb",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 9,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HjuvLWkeoRVuiDCVjZeWrj3cYzG2KV9CExqEJqJQJqJA",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CKDTNWpS2NTBCCqJbxn9DJSjePNtepQEZqkKMsbdtUsY",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 7,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Ai197jF3Ab2WeFD6DS3d3mnXNjLyj4eJ2mZ1PYd7QgfJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EkXxonwVB27DoBqSEnYYjNPmF83trANHNZkq6ffkRA62",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "8d5jPhXwjEa9cPkQG2aFHw5cwE6KjytnPFJbmH1RgN1M",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HYESHjr6Laq51iTWvBaDauAd989HZqVs14AfYm3TS6YY",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AFXtPJ5t9jA3H1hCdDX1FxF4V1NdF8XZrKZSdeZU34WX",
+      "signature_count_lower_bound": 14,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "8QCVZ7KL65pBhUxbvfwbyyg4ronxNAEXbDrGLYLrRNn5",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GPaw9vwdjgCdwqqEftDJ65gH97NJVaPRCgy9wPQyMxhj",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Gygj9QQby4j2jryqyqBHvLP7ctv2SaANgh4sCb69BUpA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2FHEiSKnXeCkK8ioxM7nV97PZsGYauc6sd2XEBySr7g2",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "28eGXeTNGrhWm4cAL3feEnu5gpuxSsbtxv6iXnrRUfUv",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6rYLG55Q9RpsPGvqdPNJs4z5WTxJVatMB8zV3WJhs5EK",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "gWTmSBYYJhDf8kM9CKdej7pL96Jjq7rhTiBd6pyv2Yb",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Euznbr2WLEqm3j5V7ZHtuRGkARD32wBpDe4ofUns5DAQ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BBSxG1AFEFVaSojbMWCVJgTkqKbuJansy3So9MrqAyQw",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "H2jNJUE2vWMT248KLyRMrpKjFsuepW91EMAvPuMcq8ZP",
+      "signature_count_lower_bound": 14,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "5F1seMKUqSNhv45f6FhB2cFmgJbk8U1avJw7M6TexUq1",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ANYC1XVdLsRwAwroyYztTWgiN1g8ynUSTdACtiEzZKVg",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "ANYC1XVdLsRwAwroyYztTWgiN1g8ynUSTdACtiEzZKVg",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 204,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ApKLiGDSV7wixSiUutwDgHTJTkuhGzSMUJ61KBjoWSHq",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "ApKLiGDSV7wixSiUutwDgHTJTkuhGzSMUJ61KBjoWSHq",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 788,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2PR1N6ZjDXmBBeFhdwtp5wdPV9q8mjnMWQ8XaHbKDho3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "H5TWx2W3gG27bRs75nU4iv4eBVoRRoM6CFHkuY2zn8Tp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3rXRVo9hPjtWNJEhsN6WDmxD8ubBjTjHXugRVYyH5gC3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8WFEH1c7oFjGSH5T5jR5UsVNGa6BceoGanT5sRLfTWDE",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ste11p5x8tJ53H1NbNQsRBg1YNRd4GcVpxtDw8PBpmb",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EBLANtX7A7aKnakoB9qbqBqLV8y6z1ts8rw8a2RVrHJs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9UD9Fwr5qXASA4ZgfE5dYxAEh5DDqpwhNri4YPQ3z4z1",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8izEZDbUUMqx2yd9occFio11DFaCokfxeu9h48AXRbdn",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "D5HmkMYwVgPpA86WXBS91894SPgiMzy3BJxodQJ82htQ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "D5HmkMYwVgPpA86WXBS91894SPgiMzy3BJxodQJ82htQ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 11,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2t1SkVqvp9uJHQ25UcDw33t6FKVnTQHpBmMUYGeBo1yW",
+      "signature_count_lower_bound": 134,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "G3djUh9QqYGGcKBomFZ8z1yWZiKdwqmZNTBFe1WqFoUJ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Aa5YRCAKbRhFEvS9zbrk4V921cCpvCTcxQuJ8yA8ZrTj",
+      "signature_count_lower_bound": 153,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "29fidB7mq1qRZ6NLiGAcTP5Lykcq2CkatTkUwRyjyERh",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BriHYc6gJM7xRdBpKD6Z2ascUF4BcGFH2nGR9adJpej5",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7eHxPQyMVRUN4go5m6LcgKm6Qid4fUr9JoaatKUwmoCU",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 7,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8HuZXJbnRMErTzhtjnuTVhBuUaZs5KDj2tVWhyzvov2g",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "26u1ZTVLU2sW61ZFBQKXTq95GGP22YNUxDXa7fV2nFfc",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Hxy4oqxnuAQxyNC8cNE3sYuuFvtnbuKS1QvmiBKfyk3M",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5tWgZiexSsNn94n61B73AbbYNBWaEmtaqoMSovTHaS7b",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "gmgnpkxVcSYnREsFamJygtcqo5QLbZCYNSJJVP7e2XW",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FkWWf67rktJnKUsJpevFLyVshxJrmjwbJ1etvYPaXQFs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "GigmM8pZVWe5ppbjDbEPj96axZU8snebE27MBr2FJiYd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5sabx8ngTeXD8CQAeFuHQqeGKUKUtqxKfShr9AV2NqpS",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 9,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "95cfoy472fcQHaw4tPGBTKpn6ZQnfEPfBgDQx6gcRmRg",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Dxm74DtsrTmgdQXMrffzrRdaRhxpbWVhLcFVgwBbeTLN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CyfyiDSi7cK4cbjWJUJXvuNPtAG1vP5mUq9U1zar9rn2",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CXSrHBWe8GsE5BXGKFvpLpK6eCgASN1nMecJs6sVcVPr",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5T3Pa13Z2biHg4Bbzmen7iAJCqqvSZrhFEb4Knwk4TXd",
+      "signature_count_lower_bound": 7,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "9M85Sib1AHrhCiQngJaiTJPLmmGUa4tLd2P2a8jbPvcD",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Bhp82XByPj4oWzfze58KcVyBmzq26ws4QqnHEAbtVdJS",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DymeoWc5WLNiQBaoLuxrxDnDRvLgGZ1QGsEoCAM7Jsrx",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7X8u3kTjaaoLuQbpVz7yNdUWFzCg4GW1Pa96BnGs5aMM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HyxPLyQJ7sv6XWfjPbt3zUNhc78rcGHsgxQNV1Rmg1P8",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7d6dshEPDUYrb3ZbDmohNZCjkfbv7d1DAhaLuR5opxGM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BvH5CteddzPsNquinN4NKTHqcUtAnxDjVtFeGrx9E8jQ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DRnji2cd6fYsX7Tw2j8f7B83SZMKyqYZBVPkeANU6TnX",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "NexTbLoCkWykbLuB1NkjXgFWkX9oAtcoagQegygXXA2",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Dxm74DtsrTmgdQXMrffzrRdaRhxpbWVhLcFVgwBbeTLN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3CDMwERUxYGtyT69wYaWyZiv11eaREmao8bG9bAFQZsu",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Chi3JgCnApLepS9zcVkLdD1kUpvyZAJqNaf1EqLB8vm7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3H8M4NSXYCnq6mEdQeYSJ4kMhSBcyDUdEhcTzmKCRrNe",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3H8M4NSXYCnq6mEdQeYSJ4kMhSBcyDUdEhcTzmKCRrNe",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5uwHJx1cHvDYBNddmSq4g7gg61TwVSwtkh9HxGELAQrd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5uwHJx1cHvDYBNddmSq4g7gg61TwVSwtkh9HxGELAQrd",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6fQAx1mgH81SGETttVeTGFJPCMLdPKkgSb43qw2ZaLvh",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Chi3JgCnApLepS9zcVkLdD1kUpvyZAJqNaf1EqLB8vm7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6LYk4czwgYEeDMZormUA4qLodT1J5oAZtYxf8Wsddj3i",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6LYk4czwgYEeDMZormUA4qLodT1J5oAZtYxf8Wsddj3i",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6mXJRQHzh3A3SFD2yJzFTFRz5ZiTUFKUPpoTiSX23UW2",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EAPJ7P9Zz4DQC7WWpiZMTai18uEoC2u1BU1tEnsS9N9Q",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7rnXDt5m2YpP6v4tXNgX3Ry6WTc7hktBFH43ASJFW493",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7rnXDt5m2YpP6v4tXNgX3Ry6WTc7hktBFH43ASJFW493",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9cJjwpybfzFHmoqynJnVUWbVAiuunbNGTTn9w68DQNax",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9cJjwpybfzFHmoqynJnVUWbVAiuunbNGTTn9w68DQNax",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AW5cCS2c1Ke3T4REnWmrLnAC5V61Uino2K2JW31juM6n",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "C7HaUt9CYZSd3LW2pdBMHiDo6Q52H6DJU7Ar3M5xFgCM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "b91o97QEpAfuJWpiboyaJB8iWwqcMKukF9hTvkiDTng",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "b91o97QEpAfuJWpiboyaJB8iWwqcMKukF9hTvkiDTng",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BNNUGkPwFqcegJnhvwNnTMqSbvZJiP23iSWQRcY38yRS",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BNNUGkPwFqcegJnhvwNnTMqSbvZJiP23iSWQRcY38yRS",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BUb166K3M5Ht4Bw4sb2kY55DZCCmcWn7ThEoMJipk1Y4",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BUb166K3M5Ht4Bw4sb2kY55DZCCmcWn7ThEoMJipk1Y4",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DMGYiXfWPUpeunqGewYL6R27i7FB8ptJBagJngZdhqov",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DMGYiXfWPUpeunqGewYL6R27i7FB8ptJBagJngZdhqov",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EAPJ7P9Zz4DQC7WWpiZMTai18uEoC2u1BU1tEnsS9N9Q",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EAPJ7P9Zz4DQC7WWpiZMTai18uEoC2u1BU1tEnsS9N9Q",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FmEUnbvQXXDc3Vjb1F9unGGCXbtg3yRX88cCpuc1Hyu3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FmEUnbvQXXDc3Vjb1F9unGGCXbtg3yRX88cCpuc1Hyu3",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Fzkd85qJwc2SQf7na4JvuegU5Vb6jogZLtEHnhtRmX8c",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Fzkd85qJwc2SQf7na4JvuegU5Vb6jogZLtEHnhtRmX8c",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GejMZRNVorXK1oAyNuCHR6rSCxsJ96aiP2E9N5sE2XjL",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GejMZRNVorXK1oAyNuCHR6rSCxsJ96aiP2E9N5sE2XjL",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CmSZVUYsEdWjfGi4m1jgijxor5MVayQuo1zsbrEe8VMi",
+      "signature_count_lower_bound": 280,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8hfKG642J9mNMptSmyz3rMxqBQhuuXK93P5NTBCRCqbv",
+      "signature_count_lower_bound": 296,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Hd6RFbUx6DAjE5tThmNpiq8YSZ26Rp3SEWWwtKQ4fntH",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CJCKjL6ZGWbiGJVhMTnCBwnbo6cHWpE9kNBtHCbJtVhp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6YUToMWPHMqgxoCFEDBXAAynqrgCTE82x2Fdh8iVnDJn",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "kkMrXRWnhkR9vgzmjPSLZTV7N7LsMeyXifPiW1HFWMn",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BctQ6rmqtUTnshtkA1zB3anoMju8ZRyFPg5Lr9zd6kqd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "QxyVreMiU4m8eMiMMVxUdryoatCSnhfTUN9Yv28XzaZ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 25,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6Z8Kq4RCjZte5g4kNtT18VCRPFwErd5Qp3kBipyzprro",
+      "signature_count_lower_bound": 276,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2WZRzMH1reeMceVsR8J7YMT1x3v4JimkimxiwvTLxaLW",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8HvfGdKrgy5iiG9MjR7cQQmfjPNUT2iE7kqH83bJgaPm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "35z6erL42vyLMYDqmnzBYooqRVqWeCuw6SD2sU2pDQCE",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CSpqYMtBtx9dkttkufg8tjeVsFXHKuscCr8fSGi4cbtH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "C9iGKeM3Tzmz2Gwc6GQxNrvpRRkqKSzAp1Tk3jCXGcuo",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8HvfGdKrgy5iiG9MjR7cQQmfjPNUT2iE7kqH83bJgaPm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ECqNJcXcuSQAnJY8M6eXyHPTqVcap8fpyh1p4RxvMow7",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4pAKTwFEv1HVdMTj7BtEoNdu69Xyuh9R2eTN5eVXyRHZ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EWqJUJoZvy1JvLFUCrkZXwHH9XqtRCdbzSrqDXcxsbge",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3vXF8VjpnF7S3f7ZPQbPLZnnx2VnY4rDxWR57DCtdyof",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Fg4pcMDwrvujjTzmjzAuYckte1tUGVXTiqS1mWvEGdSv",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HL4mxRc42MnoMNSgb6XNNG2uysCcp9R9cnhUfMYFK16n",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EXrXP5shACmj2fs6x4jVWwxdvbitx9YSfopmntHAA6ah",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AnrFgg6W7UAes55NUzJt6T6SXC33bbkFYmy8C8VDm6Za",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "1nSM7VA3P982RCAz7UC5D47LC7DQB7RdB3qmtUxSxFt",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "1nSM7VA3P982RCAz7UC5D47LC7DQB7RdB3qmtUxSxFt",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "23LGQWV8f7acFrzRwqdA8G4PnHxpnRs7t8BcYd7LBMRG",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2pR2JjhLd9zuHv1LcuWDFtSSnfH6bFnLzpMmu4mHxLgW",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "D9YoWNDeG3tvHwsBVr5jdnY9tGhbH695nf1846FPay2C",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "D9YoWNDeG3tvHwsBVr5jdnY9tGhbH695nf1846FPay2C",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EAYZ2B9RDCJ7ByFU3NU127Zr4ntgv4aJbSDHwQAoUS3q",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "ASEAU2X7VW5DrJaLLPhH6cBAB5nieJbyLE7r6AxSXLHM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HdAzgnF18zbs4hVadUSdaPBQ4rLPrmgYxFpfa5bMKA7W",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "B7nLUHzyrQ7xGKuSWrkiLcChY2ugys2TGf9Yc5KnMoQD",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DMC4cGFPnjznhgS45DcFyJ3qkm8Hu2YLBTVAJSHBNNCk",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AEArA2LC37CVnB3fu83P545sfzLWFuqhVTEMtHk3RRtL",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "61Hh4hd5ZsRr4Gi2pHerk1bJdA6w6G93eQUWbzXga38E",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "61Hh4hd5ZsRr4Gi2pHerk1bJdA6w6G93eQUWbzXga38E",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 6,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9TFHAowAEo1Xf2qD9KBBEzNuoaYNGjD2AhV8iYEdrkpc",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "ERymzGw137HrwvRAtQn2dioTwjBTukTYEDjN5qgACtAd",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 6,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AJwrjU2n7ac7Ho318pUyKfKhpH3JwX2MEpv3cyR8E3rk",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "G9Cbo2T4xAvXcKnto8bjRGLFaMJdKL9GZFnHcZkUfeP1",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5B31PXYfgjMHCTRQoYaySRR5534SxvSfx2FnPrFxvA1b",
+      "signature_count_lower_bound": 2,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "BV3BXhzkg1dJkMvTuduSnZv4bJCqYNsvqxw7VFGcrqzQ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "astra4uejePWneqNaJKuFFA8oonqCE1sqF6b45kDMZm",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "sorrYxbzT3sPnB63AVhfk3HveUzGB1Kqwp35asTJ455",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6mCFqwSEsA2hWPwpgEXgpEguVnfhquiB4x8Xqskdvhp7",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7Km1zXXwb9CesnEqyyU9naDXBngKXVC3TvBrYXZX85as",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 7,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9N5LLyLiQf9NiqRNAtArbHaqJAnDrVfM4UNYZ2TGBeYe",
+      "signature_count_lower_bound": 3,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "42wGZNuDDRmJeCiNDM851RM4fCPC5pa4aLvF2ryadvXV",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "9yZPy1G3XkbBHSvwubPLzQk9PbNYeKpjEsocYiuHA4hz",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6HJWWayKvMYAGhjbn1unYmsxdf6SKp4t8KrAzmgdoyJS",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3RdnE6wB2RcaXLbvdijdMZs4BE1Cgb7xB8RjzwEbYXUJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FLipG5QHjZe1H12f6rr5LCnrmqjhwuBTBp78GwzxnwkR",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2EpHmj6CLGQJBLYB4Gbse5mC9VCLwRA5Lp26PGMyvvvm",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2EpHmj6CLGQJBLYB4Gbse5mC9VCLwRA5Lp26PGMyvvvm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AsTra79FET4aCKWspPqeSFvjJNyp96SvAnrmyAxqg5b7",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7jephusSLPBf5fQoW1mz6sDRCKTxXCWtzTeeFGjkdg8W",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3i8q4qkp2RwE97hz7aTvxqctTKdVsmuYPM54Wk1DKojL",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FJj9MgFFMX4Pa5kC7dP5uakJEB2UdsJsZ9VWKaeusWy8",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6pcjNi1pywACZcNtUfX2AEpKx5k35AnqY18wZJemVc3C",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "ne9v7FFAusaTHt7GxsJLCD2sLumnhA6m2nNJ3JWzmm7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "9muw9N6zT3PQff8iztKCqbFLMbv3hUp7v7QtKbgnex1S",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FXY7mtmb17koukTsGDoNKxcoZQxVH14CVw3ViiutviYe",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Cx7LtgGRhP32G4nypBjzEF6hD4JmLSugqPL48PuUYemX",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8HvfGdKrgy5iiG9MjR7cQQmfjPNUT2iE7kqH83bJgaPm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FZh1YEbjeTeY4hiqNpdzFP2BkVAGDM7sgYgMNtxFCCfi",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5g6bKo3pGFqyi51GtPAfS21UinMgGA9NXL3XFqscrBv8",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Astran35aiQUF57XZsmkWMtNCtXGLzs8upfiqXxth2bz",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7AXtTHKkXvq5U5cCmfrVQrGcqNehsiRpA2Dw6rQVn4aA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "BcwDXFmq3GYUr5MViFbDpbbDaQrw3RYucigwgnbE97oy",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BLsXifsyQKbicuRUiEnvsrKa4uCtP3XqyKVQaaiuXuHL",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "D18VkDf3hCuoobdrEwBorBZPn2iTuo6WbBe6Jmmv6ti",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BLsXifsyQKbicuRUiEnvsrKa4uCtP3XqyKVQaaiuXuHL",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Hx2e9cqrwAjb5TNqhwkw29CM6uL6iVCqQrTpXhmwX4M7",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HwEKcgZhVgyQMsw12eQH3JLotGBxqVdbiTEbHeFATXPR",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BcY1CN4v3D4E9H9VztzXLYTM4rSPFXgLqfk3rycEKzBR",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3xHcsKngiRZHJQyqW8PUnYcCrhQhat6uvzsuiUvUpFB7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DXfkEGoo6WFsdL7x6gLZ7r6Hw2S6HrtrAQVPWYx2A1s9",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6Qt8a3Y6B4nekSRQ1p2e5yqP5bSCbE6HzUTdWwdfYXmR",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "GaRXSetYz7MMnFitHA3D1HGEMih6dnyXhtd3q4jWX6oS",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Em8J3gBWapfVBGVhVipwQnLrqCvnWBnLajw6XFsFECPF",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6AUXdaeod2NRTPpKFLcxMesTKtxAATaK8QTdUuyE7ixt",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5t4nUKbXJ9UJB9cyuSHEnzaM3qfek6XwLFADGdw4sETb",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "h2oMkkgUF55mxMFeuUgVYwvEnpV5kRbvHVuDWMKDYFC",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "68Wxs1PNPZK6QPtPVTxViuvR9j1aRkJKubAdY3W998ES",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 16,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "modn84SAs1ccUAmxtmRY85yPz44qixgGrUwi276WYy1",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "68Wxs1PNPZK6QPtPVTxViuvR9j1aRkJKubAdY3W998ES",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 35,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "52XHKRHELcqzWNXvTt1rBVQHoCeeMymDEXhhyZK4J8h3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "52XHKRHELcqzWNXvTt1rBVQHoCeeMymDEXhhyZK4J8h3",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "24cSEooNV5o4avAxLP4J6gmENcTvLSCnUqQF6nuK36Ft",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GWnwqgJsN3BhbFXMUV7Mu7R4Z9zo1LeVnhNjtLnuuAWR",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "CQm61T6irUEBgHvutShhArNjKWjRrkyaV7CnuzsSaqtC",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "22DDzViA26ouFyE8BmWrCykZgAZa6cnErsZKz8ASEevM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "GSyXx6WRm2o6Qu4RWxTH17swLZKpTKQdQTS2uGcus1NF",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BUv44cVtsdvU9z2BfFGk6s5JZZWrmVnq5qCaii5ARyyB",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "ASTRaoF93eYt73TYvwtsv6fMWHWbGmMUZfVZPo3CRU9C",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GJvewfRjqTUPtx6WsBSUnaFbdgXwgXnWfpDyLm65T4YA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "ma57KCXCggBiiUepZRHTNbuUaL6qQZydrKsQBaLUhRd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AUamstAU8nJVgNnJB2BZKc23fT3jR7okBFfRGCLDLbg",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4g3o1ifpxDapet63tViQmecSZ7k2sFUtRYsEapUXjfZj",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8qxCozQCE9BLrJzjAMZTNawFLDY7S8G2PJiy9C8s61u7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GffwJecfN3F2WTLCigDGJswt76tdV9hEf6BAqE4FANdi",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8jGe1hKX38N5S7hrBWCMsX3npQyudbYfNxyZztqkMAYX",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "46isDpDx4RBChheS85e9TdiX3oZESM3skeVqxmfcSaQE",
+      "signature_count_lower_bound": 291,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GwPA7DJjmNWmTMDcamikRa9DazSANxUm2fHwNiG5cup1",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FC1RZf6MTebDXdKFpPfhkiftU8TFz333g8ugbsPJ1Wbd",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4txd6YJXfqxKpURL3cZrUPYeVpzUQTHqwJcq7ByGxpYg",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7wUyDZ6Wj77wdmWmPkr8SAnRQEgFa5HRtA8BrWFTxCH3",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8TCYVGXx8SDFdrX515wXdQeKpAaNuSDRTvaSCoikJvVd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8TCYVGXx8SDFdrX515wXdQeKpAaNuSDRTvaSCoikJvVd",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FV6QeMM7xbHhHqtdn5SuyNGAkxGkZHiKmPqs3GLfnwze",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FV6QeMM7xbHhHqtdn5SuyNGAkxGkZHiKmPqs3GLfnwze",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Gkyob5JfdGsLqNrgPm3GDhhHB2B6jpw5rRXXTXSJr7n5",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Ar6Ye66tCHCeH67XNzw55P1VTSXpJtqjSK9ECzXKvay9",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HeLgVUFRA5kjLGXgd93TmyHQV1AaDTWJNvHUvXrCyHnK",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CLyfrRLjzjztJ95EA7933bx9cwyfYpXaGvPKggRbQGbT",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "moon26Sek222Md7ZydcAGxoKG832DK36CkLrS3PQY4c",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9CaQLdhZ8t4bzRVsqbA5kdB864zxYyvhp3yPBQvUHP71",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "56HVPv1WeKhTAzDWCXYfxxSihZGK9iupcRQoo9eFJcmB",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FzKLV94EGgqD3H7hKjP4i9Z13PGpA3Mma4gduQgQomyn",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8GV86MhDQST6rh56oTMU9v5TdHwRtXnFQ3zdGD3WT3mG",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "44RoofN7V17TfRFfLgjF8vYZgex5xktNyViooaNLbdb4",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "69xpHRvBFzG5UooTszUEEcNvdEvKZeUdbxLE2wXUbLar",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DyZXuDHTZBQ7py96uuXz88dQs44VFCEgDgptGRi6x9x5",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 240,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "J9jVw8vaSHstzDPib7csykWBPpuvbubjjKEXJwBNo6eJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DwiwD8wFpKaCgNZKTUYjjL6rjq3mm7bC67ftrQuCvbuo",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "75amCPfPecHipzFeE7gsBi8rLptXCEQGewon7jePpwHP",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "37f9HDUGPXv3sC2twYrrah5uiZTGTPYqLzxgs92TUQ9H",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3XDMzo36qwHtzxZ1xVpoVLYw6Jyfr7GxAhJYHPQCgd5t",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BNtMBKdAzGsM75CheaXxsSpQoVbCppu2LDVDDtpryBTJ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ArbHfNb1NiPYYsX3CFk8veqY78vk1UngQabPFzSwpgPb",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9pQ6tz6aDfh7LSmuiq4UU93oLW3xgHqdEcwryTvxYAs6",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 90,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7jyaiFTdmYFk59W4iv1dkMLoGNHiwHEU3TaG53v1zgHn",
+      "signature_count_lower_bound": 429,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "Ef73eHfUezJwziJ33woqurspp3GZDbyrSxmWLiKYdyBr",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HbBHuvgWoChfztoqz2izLRF5mSoLKQXfU68kueBmhcmL",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AgrqtVYLZ5fs2F9d8TBLgDRrcZHYwZsfizzjJkkHN2cY",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4772,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AU5zsuFjq8Aa27mZotAAdLNYNfT3AxEzVqdmszvWoneg",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DT8XnpJbyQ7QDxLoZyNECwTM8RnpyuDEeiYGvy5Kgwci",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3273,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EKRffYHnW3n8tRezWWbVGJf1faPZS6VducMyJTFHDu4p",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9K8DNwZhVzDzvRXZhxfn1w63g8BoHHsVshuMYpnUSMuJ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 10,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5ZYrecfeS7dwA18LPqhAYVpLUUUsjuFpY1sE2VQmEVqW",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4askDNUn44sdVqt7TQ5XcE6BD1SE2Vj7FJdm2NcAtVio",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "CtEf7s7ARojfG7k4YWo4nrF36yWodRBzX3fcN9Le5psd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EoJNnacUNjYDU3hWn5NiWxDL4di4jcU22r3UVoSGSvFi",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HARzUCdyMLzSWqkhuCTKMXgNtoKhaK47ofWEbUwmuhpA",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9Aw6N9uw6YjiFaBUTAnkNybiSEueiRvLTxjcT1E7H6MM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EBWy3DzLyz8JhM4SV6kWjP8KUV9wWpFuqSXP8bofhwzB",
+      "signature_count_lower_bound": 294,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BBQjtfgzGchN7qwrCr3U3rWD9QcxyVjAqsrzuuFTzm3t",
+      "signature_count_lower_bound": 294,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DPteDGkQfNKpuuY9m9fZ6NNiMswZbYyfLi5JRDVdshik",
+      "signature_count_lower_bound": 11,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "5HQZd9ovzAF1TLnHRAq1zcSnXC9HAp3EwhoxMHvo8rxB",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EU3rrviSqaHi4mTAGc4s7R5i3pGuqTQzGyg2uwjgjueK",
+      "signature_count_lower_bound": 79,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "FfxU1AEhdz2q16TAmzgG6wdYP3NKsFz5gkYt4DprYBsH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3xhaA1wRK2NeFo3oP5xwbkEsgh4bvYED9siNTLShtMUw",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AwyNEny9aDbCdCpEt7dmpLhQcwmUwYHp52aq6dns434f",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AjpCAHZHSzSfHQ1wvWnVSSD6NNL1RwoucUySRMasvFud",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4SEbcHEUgumJc38FmbMVNNPGqve35jXgTgfYPqxSi56o",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DCxbuC7g8W6v4zrhwNVb5x6nSGmmTdW8VJWkuYucxs4p",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8HvfGdKrgy5iiG9MjR7cQQmfjPNUT2iE7kqH83bJgaPm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EKw97Z4jFEhEYT9E21MZ1fpSfnM3uR7fVNBa7VzCnmCd",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "ENubMRx8jvauJtNfMzruVavG8HsVXtjKYdvC1hbaxWjR",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "J4eMXDTeA98pkgYWw4xQRPd9nmEsezTZ4jwHYLN7FArN",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6cQA8MHZGU49PjWQXA9eGVZDfuXLqP6i9RCDPHr1qfrj",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "astraZW5GLFefxNPAatceHhYjfA1ciq9gvfEg2S47xk",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "VLXFRyxhAndY21gS4ys6ZWyJKHeP9DQgoqHhq3ARs2H",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HQMPUYfpngKv7k3DvD4MEjNmHvf287DzaXi3SgZNBTEU",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HHfT8UbbMtGVn9oFjvZdCYm4ndBJa8zZWegU26pNW3Du",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "astraRVUuTHjpwEVvNBeQEgwYx9w9CFyfxjYoobCZhL",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "B7XwXUuZn9zkRSV17mcn35J77hv91GJpK5jMH3Y7kk5R",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "pfn6dyanKiTTinHs887D7qe2S4727wzK7xi7ERGaizC",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EtZWfmdyziLMK4kwYs56DWEz4Gfj1z7oDs4XPKGDyre",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FDRre6egamtn4GhNAjEEoRyXB8GqrT83KchFwQG1SaxB",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5g7yNHyGLJ7fiQ9SN9mf47opDnMjc585kqXWt6d7aBWs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7FeFBYbewCqXG7LP6gC8Fnqzk7hmQFMtntXVRqnXi4g6",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Bkk5v2khkg6A1e4Jt8jm4nEUkqDKP6uoNia2vEYekmCg",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3en2ErbUxaTSZDtj5CosL61QBAPRgnZgvgijKDdSdEMC",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9vV4YKTkCngjQYb8phaSXXDs8PurqcXXEgXet7ExEGw5",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 20,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CH5jhgNAb15UypNJxCUYU3RYK2FBkeojE5SCsrvTgAdD",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HL4mxRc42MnoMNSgb6XNNG2uysCcp9R9cnhUfMYFK16n",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2DwTCtAQeRP3BP88a4nfwDte7cqGP45BzrPWxVzMFR1Z",
+      "signature_count_lower_bound": 4,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "E4HmWphpfDmkVmJiFQoPZDdS9MwAmfkMiYbzm4vfNDgC",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ASTovWqSz84ngjcVMxkUmbv6XAUFv1SuRmNCMhShQ9Et",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FHBB8DN1eE9gyzyNarWPDP311ZUuMhReNTB8px9JASiM",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FyBNhGmRT9qkGM1RcgKCYuNBs8sV6zy8KSHVb9NdXTEJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FC1RZf6MTebDXdKFpPfhkiftU8TFz333g8ugbsPJ1Wbd",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4TQLFNWK8AovT1gFvda5jfw2oJeRMKEmw7aH6MGBJ3or",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EBLANtX7A7aKnakoB9qbqBqLV8y6z1ts8rw8a2RVrHJs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "8R5n4nyuNbPfdzCRWKXGgDk1kZgrRamcdQ4E1ojQsobf",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4meALVrGXB7P32TXCZuK5Y5bvE2Y8sx55TEVZRMsbZZ2",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HrMfuQdaM2mu3Krx7ZZ7TrTQyVaKra7sFgb7Cds3bif2",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GVer74dMjrfaYJu5bZRUSD4e69hsnARXrTkh1jDuxAFp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FfiWVakCK3dPm7AGyxkuaagbQETzvsaDx3PbCfUmExNt",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "B1HkS94ad5WMDP9KwhXVZVwSCuxV9LbVdkbhhgVwLmhq",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "dkRvy5F9UjcRmwEeogYTf77UcdoGWPj9z9wqJwJH52Z",
+      "signature_count_lower_bound": 279,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "DzrYVeiKz55ASsP2GiUxBpZrGsRxhjKpv6jVdpRwYWE1",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8jhWXEL7xbfVhmmTUsJVfKn7o74jDy3uPARPA9TjsZd2",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 24,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FzJvdXoiQLdC99vvkfEDLDjCZwZL9X3roGKUZQ1b5GmW",
+      "signature_count_lower_bound": 281,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Cd8XGYwot9rvaiGjmQiGoRMhdqLYiYKpW5CEUWfMNk6C",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GEPiePuVYQcbShk7ACa2YASeLuRHqvcSZpS89keWZecG",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AsTRADtvb6tTmrsqULQ9Wji9PigDMjhfEMza6zkynEvV",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7WXBkjy68W4rzxEUnnbFG5ZfUWAPJzZtSA5xzc4tWjJH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3gcvnM4eVNFjs4nm1g9JVrw1k6D6QF28cGtnbsVCYC4J",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3gcvnM4eVNFjs4nm1g9JVrw1k6D6QF28cGtnbsVCYC4J",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 13,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3yeW6znXDMjYgbyZrZtckeNKEb98RCPFFY11Z5NnKwFt",
+      "signature_count_lower_bound": 36,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "CZ2R74BnKNHhjVw83jPV1FRx1CUvZjaz5DGMUS5tK4Aj",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6GZVKMaoWry4UFiydjeQU9nmAxj3hEARAStQ7Hc2z6TB",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "oY7Z4ZZeB6jLsXVK2h144GCJAV89iYSzfCN7BA7pi6y",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 14,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "noz9EPNcT7WH6Sou3sr3GGjHQYVkN3DNirpbvDkv9YJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7iAFnmyLTYNBrVtrwYGqJAbwja5VxJh4HcS5ani3MFYK",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "GdfjwdU8YFo8TSSg8tSZEwiHHVVoAgEkCSYaxaGktqj8",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GdfjwdU8YFo8TSSg8tSZEwiHHVVoAgEkCSYaxaGktqj8",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "moon7fwyajcVstMoBnVy7UBcTx87SBtNoGGAaH2Cb8V",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4iBbavcJ5jV3Z6BE6zfxzNQaT7fwZMpFwz21nxjtQAKH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9aMiomgj31GFzJysq28p3axy66irdvw9ZWQsJxDDKcKB",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BMq4XUa3UCneuw84GBr4DZ5Awam42tefLwxj9q1pGxqG",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9Wn6aGx9RvZQB3ziiiSRFBWzdQBSGAagvkEkLvfyi6VH",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BVC9wzqduVCpdfRmS2Qauo5A8qJXHdkrp4kJZwWdkk7x",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EJgQ3Y1s3uS7kjT8bZn518qzCXTTNRQBdnC8eLHTNfjJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EJgQ3Y1s3uS7kjT8bZn518qzCXTTNRQBdnC8eLHTNfjJ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EKKNyaE3kSngEUWRQ2zFJeNpgTw9feNpAZrLJwi3TgYc",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "C846KvbjTpjz6sGHLUSaM5tgWJwdbiQYkCnXVkLDCBHu",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EUpTQiF8Z11wyjStyZ4H9Et7aUGhuHinWAV7Lv5rMpd3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EUpTQiF8Z11wyjStyZ4H9Et7aUGhuHinWAV7Lv5rMpd3",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6eiFKRXLqQDdfV6ogkYMgskAvDQBaBSigy43NKgAxu6P",
+      "signature_count_lower_bound": 2,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "BV3BXhzkg1dJkMvTuduSnZv4bJCqYNsvqxw7VFGcrqzQ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Bx3jzzEeCTKxC7iGJDZFdbLHe62hckeu26th4qARvkEr",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5zM1Q2UjV7n6d1PkHtZZXzZA5y6zsBTzfjVuqJHkxvxz",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AstrA1ejL4UeXC2SBP4cpeEmtcFPZVLxx3XGKXyCW6to",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3KvsoNxgn64nsuHKPBHQJsguef3DgEkP2izE49k6CSAZ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "8czqYfYpQV6WM4C3ycR1LSwYC5gd5D5RAS5AHK7yvnC9",
+      "signature_count_lower_bound": 49,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "HBxZShcE86UMmF93KUM8eWJKqeEXi5cqWCLYLMMhqMYm",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 9,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AeM1StPoL8ygXuNBrvoN1wzhUznWMxQCFARw9cShiHNt",
+      "signature_count_lower_bound": 206,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "E9vf42zJXFv8Ljop1cG68NAxLDat4ZEGEWDLfJVX38GF",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 16,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2dXsEt61YddwP69bnM916JV7Au2an3ouEJcJyiKjQLAH",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2dXsEt61YddwP69bnM916JV7Au2an3ouEJcJyiKjQLAH",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 10,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6SiVU5WEwqfFapRuYCndomztEwDjvS5xgtEof3PLEGm9",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GmNi3xSt4zSB3PEuwDmT41V7KobZBaPnCeN26sJX8DUs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8FdVJHZCxFx7rzzPEmYQWxVXNitDUehoJfnjzb2k3u7y",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8FdVJHZCxFx7rzzPEmYQWxVXNitDUehoJfnjzb2k3u7y",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "A7xdUZLyismHehtAVSwd5SkKsYM6R7Zdgt9ubqBCJRTh",
+      "signature_count_lower_bound": 285,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "qGs8S6yAyu7meRUF17Ns1wUqsJfML7Q7cp2DsVNxKT8",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Em8J3gBWapfVBGVhVipwQnLrqCvnWBnLajw6XFsFECPF",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FYRAgTmQ8GrAidNEkvCkYhekQsrYynxgM5mbZKeFXcAv",
+      "signature_count_lower_bound": 280,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EDLmxQARBfMdaAqG2QqtcMWV3KuSVPCYz5iu43RxmsKT",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EDLmxQARBfMdaAqG2QqtcMWV3KuSVPCYz5iu43RxmsKT",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 15,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3jbKz5LB2ZnrTHkjeFooUDzxTAa1G4gRx8yQcstH79Bi",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9bmRDdvLaTaBAkrXdU788ucxL7XSQDq3mdMsGm7F1T3o",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 280,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2Z7Q7JJkUcMQNBioYoLBLoBndjABtxFT7Bg86QmWDGfz",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AL7fbrv8k4FGtWAzcuK4wCJ7sNzGuzRNgHvtAvPwHnyd",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "NoqPdBtyz8xCeTQtj4FcnKpF39Td2cBnw1DrFWFTkS7",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "NoqPdBtyz8xCeTQtj4FcnKpF39Td2cBnw1DrFWFTkS7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 38,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3Gp6mpiVsaWyQBqzM9W3vV7bRW8WT7941PGhyF6brATK",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3Gp6mpiVsaWyQBqzM9W3vV7bRW8WT7941PGhyF6brATK",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "C93H5C8Ws3zZqmUGa92pu6Qa2N3uGKibFPs38Z33dEBz",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HAWK3BVnwptKRFYfVoVGhBc2TYxpyG9jmAbkHeW9tyKE",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "7uTT8Xi5RWXzy7h9XL244GRgEycDYDhLjr3ZyNdXi8pZ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AgmLJBMDCqWynYnQiPCuj9ewsNNsBJXyzoUhD9LJzN51",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 15,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "p1t7DL88SS8yZhtEby5Pp73CC68d8NjaX5ycFpRfyhZ",
+      "signature_count_lower_bound": 2,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "3X12dNn8fDNkna95XniKJA6S8Sap8V1JYaSPEuxnRpTD",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Am8Wat6ju5RsWPM6R71jrqcEm1nPAWA1Fw6SwScW9T5t",
+      "signature_count_lower_bound": 282,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "ADd2vuVH3q2Wg2SuzkFqzthUiqTa2scBrys7JZar9AYB",
+      "signature_count_lower_bound": 290,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5xF2j3ZFzGACoaNZa4ndzAYJ4Rnyip1cpabQMugQFmGC",
+      "signature_count_lower_bound": 277,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "63Cw1bUhfKXo4G8RgoRD1zwwQ6wyk4xjqRvpLXwqDUn9",
+      "signature_count_lower_bound": 603,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "fr6yQkDmWy6R6pecbUsxXaw6EvRJznZ2HsK5frQgud8",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "mTxAYHd5QqyKXEmA2nDrnN21KXpoNDziiVpET2s4jDi",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2JCq1C3kGpZjpXar14fp4d79HrjQacYHLDws8vBuPkr7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ASTUjkdrWH7XurRJ8W1kS3DjeCKXuyBgFknw4YeX9P7k",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "C4eNLxxC7XLUivghMi35YUeSfvACgnvKB18115uPUqjg",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "moonKfftMiGSak3cezvhEqvkPSzwrmQxQHXuspC96yj",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Fgej4SPuW282TdrQRfizRHAeRasNqCtAWZizL3jDqMdS",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4J4XduyqQjjQ5nfz9bccBuzr4Vy1vn1w5eLuMnDfaRcU",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DvS2gTB6bRxuZeey7HgKhWT6uVdkfGUEUy2ULPamcCEi",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "H9bSW2VTrRU7LuT5Zo5XEx3uuGhLDTeAJdEUxQX39314",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4w7HzF73v6mhd4Jf4Cx6VVNDPJn3aVCiJDV7SfqqaWEk",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "CjfMmJiuC4xkZEfq9f8QbLDMdJTv7eotXPrUa6zF6Kxq",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9Br9huBvMaW2XYxcWdA6wnhtyZ4Ew2DUzJMb5mSTTR8W",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "7C87fdSwMZz6zXwAFumkjPnpiVLsP1m3wgi3b6tCwAVM",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FC1RZf6MTebDXdKFpPfhkiftU8TFz333g8ugbsPJ1Wbd",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "ALdcozyPcezWh7qu2HHmQb8iMXRdd9Qncf2r6f4386F4",
+      "signature_count_lower_bound": 682,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "GoTnS44BxnXKH1t3Fx5ErtQfLS7vF19r9JfJjLByrJP9",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DdZBXTfg3G7o7jAnFq39zPLavV5y63poDHDw2m1VT7qn",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7esVoTs8myr9S15oXHZhWyFRK7VMdkWQczg8SmVGmSkp",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7esVoTs8myr9S15oXHZhWyFRK7VMdkWQczg8SmVGmSkp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 18,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AHofGcZ6cPBaZWmy6MPeCDpm3g5EWYiuEQfP5d8wst8h",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BTYmT5FJznzQP3govaFRetXCqd4VM1fxoacgCCG9Yyja",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4n3fMQvnectt4KjLkA8xq71KAFyh14uvK2hFgxWGchdb",
+      "signature_count_lower_bound": 44,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "GsZHxEz792ibtNt6QzxbuFwQkEzvoo7HBsETSLbtgXcp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "97rSMQUukMDjA7PYErccyx7ZxbHvSDaeXp2ig5BwSrTf",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CzZeXw5h9b2ncqWJMCFX5toYUyKSM5rjYrZhs1yhdDtx",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 13,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Gf6iY4g3QjWT9DZixDfLAxZJSEATYpEZ1gCP7Rm7KpJj",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FLipG5QHjZe1H12f6rr5LCnrmqjhwuBTBp78GwzxnwkR",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 13,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HnyuHuhde93BkXZcsRZyJe4R2qRt7Zgx8HjS5hAT1wni",
+      "signature_count_lower_bound": 3,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "4nDAZKzjfyTXnProZL6L4hsfX25nyLA1DtDQyN2RUgHG",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "J6w1vL2EqMTKFG2XWPwx5JYqagzsjKrC2ZpBtWkdr5Zy",
+      "signature_count_lower_bound": 584,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "AnQpaxxxmGvSkTF83jee1foQLkWer5XHmk2WbiXS4RGn",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5hXrwTnsis2Y7vC32RBsm4t3da1UZ65yMYYA6UxeyjrL",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Gku8cuthhvfoPoG18rg1EULt58xB7j1fgPoifJcyh411",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "V4yjxSPEzzm7SgtN6eWFqmcpb8cE2Kjb7CHUViLsEaM",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AxiomRYAid8ZDhS1bJUAzEaNSr69aTWB9ATfdDLfUbnc",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "zepheezjmeDmLLUFCZ6P8Zbsba5ej1ySDc3hY1Hus8t",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HW1wbyPSa7QTqjRzD4kCKZyBbXFzR8cA7sJqBrzrJ6o4",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Hec3f8iwAroauvk6SJnq9DftdSxdzw4qhiZJbMLiUaFn",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HL4mxRc42MnoMNSgb6XNNG2uysCcp9R9cnhUfMYFK16n",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "gmgnC6MFUDAUPzqPeHB7JC6oB49Kv3tHHbQQiMzPuSY",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CJy1z595zLPsaveN2Qu5LEyQQ3gDTohZSUUUkFwnwMrx",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HGhccGfHWwoMdK8aP8LdUUpZhRJWRVcKgrFiqwCSUVfh",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AxiomRYAid8ZDhS1bJUAzEaNSr69aTWB9ATfdDLfUbnc",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 43,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5oGbNoHtBtDvabccVgHKcPqtn8htQrXBMpSkFh7bLwUm",
+      "signature_count_lower_bound": 751,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9tTNDwKavbwgt8qfcrY7BDxt49cpXiGKkMbghn48UHLG",
+      "signature_count_lower_bound": 728,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "6uqxgxbsVJWLWJfKipEJ5n21Jq51nYba9aVSjnEdXSPy",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5DnCPVhPUgCZNjwCXVARH7sxEikPyf5YYcPWYBqqGWBU",
+      "signature_count_lower_bound": 157,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "AHXDVNdFAaMrBMnSiBLQT6MGsvPS4aSne5FV7DSP4BWt",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FLAshyAyBcKb39KPxSzXcepiS8iDYUhDGwJcJDPX4g2B",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8SbBvV92Awo88qdgcdMJrCBRJWhsVGvsrUzPtwXCvtfa",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8UzqdBCdJgQJM7cCiKHP87wAEQYGNgEPGQHhgzgUdQvJ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6RZdWFQMpworTqfHE7wL6uogAXhjdkvxjEdRahZqVGbW",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "F4ETZZepw4PLeKxcbKoquBF25qBpm7j8zxzDPGZkc312",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "FBQ23w6WVetKYJMLCrtxqPn9pKg9rZbB8GcW4MT63YzA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "burn68h9dS2tvZwtCFMt79SyaEgvqtcZZWJphizQxgt",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9591Ydb7SEnSWkMwpdnJVSUXb2weR7kA9uphrLsQkdfQ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 65,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "rN1fVnPtx1dQveyzmR5tLa9vFv5bLhPWZjNVz6V8M87",
+      "signature_count_lower_bound": 206,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "QVtWcAX3R7Cr51VhAxFSYntoCAmTQzK8Hf4R1TrKNQ4",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "1LKFvbm5KPKregH2knWsLS9Gqq6fw48veZFs7M3NB5z",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "9GhBVUNRnYTx6wEoMdRyDkrddC64R4pFppj8hsXfJb7m",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3w65WBbxL9nQA6Qwjsc2sjsrAY3CeHuoNHwFWNXtvcMz",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CyUop2bgK9qmFxQPF5KoYkLXEvNNLHVgWTYeArTpommb",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5GWigW7osU922CZYyYXAr2t79YfsdffxsJQkaGiUjArZ",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2PcpCGMFppGf3Qs7nR7buCRYtvWiRBkHm55NxifToMzx",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AQNyT2P8e5WBXEPPsC2YcP3rqmpR4taVci1VE6dxFDNS",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AQNyT2P8e5WBXEPPsC2YcP3rqmpR4taVci1VE6dxFDNS",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "vfAdS1yMRswA7WJ7LZQgiMpRStqc9md4Ph6c5gFnS2V",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "CCyYKtnsnkkktZw9KuUrdRWZ4qv9rn3pcNB3LouFMY5Q",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HhgBQmx2Ja7hRRxVA53xVxY9jaWTt3GsNiVKcHHYn51F",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HhgBQmx2Ja7hRRxVA53xVxY9jaWTt3GsNiVKcHHYn51F",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FdeHzjSw24zmeo3AxsRQPwUL95YeWyk9NUjgMmcr9NWG",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3PpgE1PkUoftrPkZ5TcYzqaVHJs27baJsd4WathmNkuP",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HxfyyYfsVXiJPRWXf18BCmqYTSnSpnbFBctharGVCiki",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "HMTEKDXvxXsQY5hz2sLnp7yFEUWjZzwXZdD3FRADAT1R",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5KoVA9x6rwgZi1CnRKr4MLFS21dnqAooN1avECN8LaUX",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DggAfVAGaTN6WGBH2APEuweKX4UjKmAnbN1xvMVQ7bmb",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "astrawVNP4xDBKT7rAdxrLYiTSTdqtUr63fSMduivXK",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "EaRAXkcXv6TYRcz94RiiBaRFqUW43AtfVxFUgjasAn54",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6VKAsKRaSjqAbRMY3hEnpj5cmtZ7M2AxveC92XZNmzc9",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Asv93YcxAm5DXJ69hcBrmSnb7V8okFAqUkm3MpAens4i",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3NPokFcKhU6MYbLFet6pt6nbn7ncgLWayQJSc74ETg8f",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "B4pM6t6RJrgf8TCiGr2kQ869f3RY2zEgUvfu79DHTzYs",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6B3Knd1M4ZU9bz4irYDtwfnuAbX6ZbEizTbDKWyxpx3b",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GMUtmanMZdwVtvPxQFXc4LhCs3CZK1zZgS2rra1sW8Hp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "7xZmrFZTKxfPXVWmYR7uBokHWk4yUvK4ciC57XsA5HVj",
+      "signature_count_lower_bound": 33,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "3Gp6mpiVsaWyQBqzM9W3vV7bRW8WT7941PGhyF6brATK",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BBStxbUjJUtifFF1zzGz45aXE8y5nSGfWWRkPHd66hLL",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AxiomRXZAq1Jgjj9pHmNqVP7Lhu67wLXZJZbaK87TTSk",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 17,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6xurtS3KTrfEbevM3b4yMGEu3hYh5LzFd9bD4bnWekw1",
+      "signature_count_lower_bound": 11,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "iGdFcQoyR2MwbXMHQskhmNsqddZ6rinsipHc4TNSdwu",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3Tn4NoanfP1ZEhw8rGX6WpqdvvHLtZG6WbZqKk7LtdPE",
+      "signature_count_lower_bound": 34,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "8isk46D8Thuyyv9ABn4pdWk3ejHWow7pVaHvoY1UjBuN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6CdmzSvxamQNbXkVY4TSh7ZtUkN6BP5BUiLDoVpqXhp5",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6CdmzSvxamQNbXkVY4TSh7ZtUkN6BP5BUiLDoVpqXhp5",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "74b7nkFYnFNb9FWgWgcE3oa7XJk8zLocY3Pj4di6AJmR",
+      "signature_count_lower_bound": 136,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "8WoR9GReaCTgbS8omDdKn4U26a9fzpPyjFo6eZTMtYuQ",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "9vKJ3eHmVZfhn45hE1bRHCayUBA2qnPH1oDuo3NgzsNy",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "QPXVFihFs2aAxnEzcgEKQQk3KwjrFBjkKcVFEpG5FrY",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "D9cNg1dm95oPxWxPKDntMUnbdQ11DWbMXrWBPFR9vX5w",
+      "signature_count_lower_bound": 809,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "3Non1qbEnubXa7B22gXxxWCYzdarDJn8iKFdErBNUviV",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 25,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6o4XvqXswb1WrEhLKx5RVD1uJTgkcjbfR6VKiwpmN5oG",
+      "signature_count_lower_bound": 213,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "Grm3TaqQvq9vZmPdeBRKWxjsrtDctj18t6F4N2saabw8",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5h6d8vtWVeYZsBrjKCuFvkxbineEdbicFMmsVGbmAsPQ",
+      "signature_count_lower_bound": 3,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "BEvVuHFbxAuQS1AkvVE1xG6Q5rJ9NWK3TDR1SpwtqbyB",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "pfn9b35be4L7xh7G8P2jUzWsJAigrKDSoBeRMiyg75p",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DBRcgABPRT9g9rE9UdRbqK55NSPzpVbogEH4H32AAke6",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Gv22PKdW8MhovQZ4fhMSH8g5XHF9XJQMS5JzANk4wfk5",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4QZCZNRsHswXaw4xrMMtBP4HUHMvJPT1xxyz6gSTXhnz",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AsTRAEoyMofR3vUPpf9k68Gsfb6ymTZttEtsAbv8Bk4d",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "7jephusSLPBf5fQoW1mz6sDRCKTxXCWtzTeeFGjkdg8W",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AjoiJ915efqqHnHuwauQKvikSAbsUT8v8BK5gQA5fm86",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Bp7myTKPeHYUwqqBNuum4sCZ4ma8SiV1HciyjWM4WmAU",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "GEPiePuVYQcbShk7ACa2YASeLuRHqvcSZpS89keWZecG",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GEPiePuVYQcbShk7ACa2YASeLuRHqvcSZpS89keWZecG",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 42,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6D8hN4ypVqSdnBYTYpztUkB7sbGKoK5p4bXSVoMmCunA",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "6D8hN4ypVqSdnBYTYpztUkB7sbGKoK5p4bXSVoMmCunA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "C8GbEHuyr62SAPuBLZkYsSqx9xCANcJqVhxSnUbE71M8",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BMq4XUa3UCneuw84GBr4DZ5Awam42tefLwxj9q1pGxqG",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "C8QR53QYZUgdNr3dJP1L9TKv3iD7qpNXzGyDh9GPcDyp",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "2mQ2CLP4GRpwxb21X8gkLmEmpnUrpkX3xFt4by8hVupp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CgE4pH9EepxQDzouSaDyrQNpnMBNGLN23CEGA4wBngK3",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BrZNnz98AUkdT6GpBXtaZVJmadRgcFs4eWG59PV9fyp",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EfcviASicvft9NCwT2LVRhnaDDY9z4kMPPvRPAwUYS99",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "AjADtXDsSFsCuSCKoNNddKHu8ADFEdyptgHrqwnMm3XV",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6TYd5ytzKVDUP4jsuXyUA6BA8SmN57mzwJjw5XvnXqmG",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5JKXiNfV4bzhsy9vh5Mq2k4Kgx7Dse8C4Wgvf9uAG9fq",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "gmgnKdu5P2ZbU5MooAQsgh38zExN6o3hWMTtiUMyec8",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "G5Bm4XLxwtitg7dZ4a6nwmDqzSRPcg1Xoh46QfGY8GMW",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GoEfBi2x9mnEtzta7Sd7WLBHXimBEaUTjpPFMSRAkzrk",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "GqEbGDr6KbzzFDdGAbq1HAYQNcKKh4hJZ3oyW2xrds2G",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 5,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "DMXgiupyz7S6Cp6U1RZStWEL3uohrHjdr5t1rDmD9oFD",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3rjbXfbB5njy2HX9yq3acqWp1Kge2iGHV7tymAFLSaq3",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BFGRVLT6qTid7mZz9aPjNXhpL6Jbw5TJa9Kadcbhsc4t",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "BFGRVLT6qTid7mZz9aPjNXhpL6Jbw5TJa9Kadcbhsc4t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 37,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AVbpiGNKUDVXfne6BsEn6XDYFVKARw5QxNFfAdEsnicN",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "DDk3B6SHPtDRAJ7Zk9FJXB7BgVu9kHzziHL6dWLu5n8R",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 3,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "7EpMDEhVAV2BjZyXAetq3bJWmxKLPmQCJb9ih8eC7po2",
+      "signature_count_lower_bound": 58,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "9oeuZekNvkh3Jxs3M18kRUDqaP5gBTu7nFS7A6GqJcLh",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4VtPHzeuJaNVHjANJChcUf3qzN8sEbW7SCfZbSVtGiij",
+      "signature_count_lower_bound": 173,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "FuzZxnkMwR1VQGC9xH7u8KzvzvPbDVTzhJgaThM3bpaj",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "3cuFanjUaFxiGT6VA53nVVwJJMXF2Dx4HRKBzFj5yjkm",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "3vdQ87eqPgubTaMXZZuJERo9KBvKkfmxobJMnxc4CjoN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "BswTMWEbnE9ietCJp9MAX1MjLyFY4xHgFJ9Q8nCgHrYA",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "86wGP3U2bHPGALnzW9NE5E2AxHYQipr9csKefns4Yrp9",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4jNgAii6mDKq1myjdMuBsa26idqucHygVHSoqPX5hoZ7",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "4jNgAii6mDKq1myjdMuBsa26idqucHygVHSoqPX5hoZ7",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "K7ykbqL81reyis9zR5YCgRsUAHSSoXAS84RGyzZSTUN",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "K7ykbqL81reyis9zR5YCgRsUAHSSoXAS84RGyzZSTUN",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 4,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4J3Tw9sYpjB1uTMXzApjkR6CdxWAqMiJrwrarAQGoX1i",
+      "signature_count_lower_bound": 208,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "D89hHJT5Aqyx1trP6EnGY9jJUB3whgnq3aUvvCqedvzf",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 8,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "moonXwpKwoVkMegt5Bc776cSW793X1irL5hHV1vJ3JA",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Fgej4SPuW282TdrQRfizRHAeRasNqCtAWZizL3jDqMdS",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FLAsHZTRcf3Dy1APaz6j74ebdMC6Xx4g6i9YxjyrDybR",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "8SbBvV92Awo88qdgcdMJrCBRJWhsVGvsrUzPtwXCvtfa",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Ar171tjvWCXRhSwfoopBPSwnuhkvpwvneaWRajCxyV8J",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "5JJVC4FymjTkp6ihPsSg6esFEqoHkcDeivnycdqoio9R",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 2,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AKDFXd3gJpnMkvpfvsCyP1TBYkStYKjCyS3fhBvcqPs5",
+      "signature_count_lower_bound": 1000,
+      "signature_count_exact": false,
+      "earliest_funder_proxy": "Gygj9QQby4j2jryqyqBHvLP7ctv2SaANgh4sCb69BUpA",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HvojHv5duRBVgkCA1X974LSadsF9VL2DK5XR1ggikwfG",
+      "signature_count_lower_bound": 288,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6hEAUQXSR2dvPksJT4xcL5G5ZXv56XcK7Y284MWkZY1n",
+      "signature_count_lower_bound": 283,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": "2dK258cUsHT7Ybo88bsSuDuTkg9vV8DC4kXawv36dK2t",
+      "distinct_funders_lower_bound": 1,
+      "token_account_count": 1,
+      "split": "calibration"
+    }
+  ],
+  "fresh_verified_zero": [
+    {
+      "pubkey": "7jC2XWRnLt47v9qYYGkgubqspHa9N2Q1Ggx9Hhui6B8a",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "a7eKqAT9CiThbo3DKzht1w1ty1MsA9WcgN8NtEFVSxN",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Hq5WVVPX9JdqkKU9oiFuoMFTwRNEAF2PSsQnEhdbY3ui",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6yGYZ4BpSzyqiPcLFj9ynbmoQFw8dWytiXgiLCpYMqqH",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "BL5ajbUpp4KC5r9BQN1S5kJCuAGg9EGFqHAPBbfKiYny",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4zdDXuT9VzQk8CG8ToEzVT4McwPLWFiSw99wtvYXjvrV",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "KcdTneRDtZRRehRMj1xV6vS2GJXfTqXTEE8RcCQGYq3",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AryUMDEZMbsDurxD2HdbtKfhq8w4HA6sikobvPGSVCjU",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "J3VkSeez6PDGa4JHUQtEgdL79Xb72hwUcYHzbEDvfvAH",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Dw3wzf5sy534J4bLEwGWukh5vE3xqBwZRf7TPDG3aGmD",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4Y3p9DyMBFqPfAjrRw3Bxixva31rDedjEhZ1PRvrELUQ",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4uQ3tMdr3LCRca1rCCgrGiwtgZK4FGBFF99n9FWdoAct",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Bq2WKTJkGsWpXQ11wRGbR6cSk9pXWpPDEoHhtieH29F9",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GmNAWPbkzS98nwanhhMRnazCRYVGfhsDtQJ1wYqv3Nta",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2LGYAXywmq3g3Vdj37r7MuUvK5oxDuiEq67sFPeL7D6W",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "DSXZvtR9vg32JuPJBNRaMvN4VexuSAESMX8iLb1hLtjN",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "DihitGXU52t9Ccm5tWmBorig4bEDoYfKBrWou9TyUPrW",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "GQxx4vFxVJaz6yyfZgavANwEzbmAWGmrYFqmdsC4AwuM",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8MLZW5sgeUa7cnsL9xCYW7D6d2MBMy4dhXFXWzUqW5nq",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "ExJqFefiojwSte6cSvnEmJQQ7VfYzf8akWSMR3o51YRK",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5g8qNLD6FGwmrvPHWb5fUtxZWjm9ryjUhWR2rZzeYeEf",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "AETiktnpiajDfs2JjhedXBu5xTDdYDRus8nN4Lt3SLLd",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4v4ZFNg4E1KTgqnckchLTWYj7Y6ZzY898ZsYeP2X5x5t",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HWZ9HiLDepGzWyX2Q3efC9K5KYks77BEAHApq9xyBMhn",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "H6Cx6ShActUw1pTtAvshYvMaHbLKTBjib87bVKF7pr3z",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "EXzXowUTw5Zo7VSSPhwagbmd7HFTpkw78kCA2GEsTGxp",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5LcRx8mw7Bb62krRjAv3NB1FLdVSwp4NwynMdVBTC61V",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6fMj1kBC6obYtbvqtXPdvfQX8dVqcpEUPnxBZN1K9QF",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CFVDcq69sXDwXHrnKgii3qgubXEPFnvGwB8cHq8xp2g3",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GyKVrbTnzS7mgpixnzs3Dkv7afanTWgUQNbn3uPJfW8s",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3VjPuF6z5YKUbeqafiBmoL6f9w3a297yZBWY4CuLEawf",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8ANABwPQBq51VRLWRJwztDkQAJV2zRD9ckHviFYvdvT7",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6b1nM4v7Qvx7b4dSAiexU3RNYFVgw5dLfmYY9RVxrnFc",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FY8ZCS7wUC4Bu32ShUDkKL6vf2r9GHWzzAiYWK9Uo7xX",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BpWjMT2AK4u2rita7UjCQTL172oP7t1nhkWZy7tvAKiX",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4Y3C56RMHwRpkWsFdQtBRuq23WmkbSAk63eGHLd1DCEM",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8bveVJQCFzZnTCXx1DbSKmz9xctsCX8Gz8mGW6fiRsJY",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5u7xFrMNSqcwe2g14eZzUzreVr353u8Di2inBGMQTVri",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HXodY3qmddfJFGnJ4KSCZ7EMxL6dr8UCANBQXegG8fvE",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Eb7mmvzQ3K36fp3VPHBUChPffiXBBm9sKfXuSzn1EuzD",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4YTraAzX6ztDa9cT7k1W1nsW3iWCxBL3BcRCPmJVJUop",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5rV1yQCc7aLKBqvtysRY5YRwx71M5U1HxPNCcMHekRcB",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "BFqTfTRhrGV4hj6tNXJycwWeFrXzqPJWfo76veJPyrVy",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4NPhogT33kXpNuNEZqmpuAfo14ZKt5AsWdrGLqzbH4yA",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "XuRGBG6my52c2wqz6eb8NchDCQNmJDThCsR5R6ed4SB",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "C9Jb1bP4ztKEg1KMyn8MKVLwyChAKBJPJpeZxAsnbKCR",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7LrGTddGj6PAyZQggaxbQ9KyycfGtW8ydzVoMT1DhJtM",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2vmvVqD2vhkCjyqxpcwZtPAQkKQSBYJ7r9yntirn96rq",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5NvMLaeMbTUw1ADEiX5fCBLLLiMw1wf8FcnYhVPhrSAY",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "APs1miftY41DuJSaTJVM5VmYrfcf2n5Yb4XrF1Da6sHm",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "k5QcWR7d9xTcdd3X67EQCs4QeSRRMsKySegh7BxbPEf",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "SRzQoioFf5F6hSLLuygjDXhQHvRUPqEk65JQCdYoYtM",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FnMRpghSjRTqmjzD1ta7HMqxrjWW4i8AgsNK6oHKEXqX",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "2vLUtKjjgkDSHruWg2caAc7yx4EMgYij8vdS39NzVGCu",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "6vXihHNi3f3pt9w6Z2UnFBBSTCaHBsJGBukBnMsoKaun",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "ARTMJsmKv1UyRb4MFXhsnoRS8bsJmgzbnc72UcP61zY1",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "8HahntH3noGR7dUCyH5yB5fkHexfkSbnLooyDkHSbKNY",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Bo5XSkwLTC6eMFnwkhwTjePo26bbJNQ1CNoaTTNEosfX",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "FJdFLJo2fNzhTGr4sEKbnsvQgmYFHvTy22Tx434hEJvq",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "21zkYE22wbxvxCtafr1gkRacjryhHazHaecxrcwvuonk",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "Ax6tAnkBuVtmgbiTy5KXDpFz6Sxby9WHr1GXtU42bnKr",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "HqjSwV2QEJFfQLd9du5LdGuM4uCeYhfnrQWgyV2uqnzd",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "36FGLGeheXbNNxpHJKHb7K22HSskC9Tn8Y9gDPdE4KDX",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "6ZhJCrbQgRShpUkWGSL17pkk6UhDJUSKHn9u9f9qRQFk",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "2qp3uYEjKaJLwEviaq4X8GBXXgTxyACipyaBzpEa45t3",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "9KUmytoCufPTD5uKpem6At1wvFTWyoZCt79uNq1A3BfB",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BFR4kvxB1YgvDreX8cTTyydwATm23ydEKQowNJX3yZEV",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "BvHBuQKrartKR5svsEf6eK1D96gfN4B42cmeJg4oh4Bm",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "CJywVKFDh4z6gbaj8Bynh4dFzSMXdTq4EJRKKYEXwEaM",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "E2J8ceEGzypXFgFUrBXFDfXdWL2L6jcrZSDQGSL3jEGk",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "4vSyDYxnD4vRyuaTb67HehggVvx8j3jnXmZoC5C9Hp2p",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "75RNptVxbnsMt52hgmbGAHjSmBhcfzdXbi7isd3YMmjX",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "PLFh6ivYbWJuR3tFoJ3wJmgkkEACpmM2asqEMVhKUMg",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AFgACM3vVBvEpQFPdtNhQtJV5Re1q9ECWocNMdCgtVjA",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HePS3NdGaRZHFtYPt6fxfMzfSrVuZDLsTqXMKQL9XMDT",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AsPXs6RiottrEMeWyN2SYyEeAMc6GrwnHvrVUiQ9kFic",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GMEVVqkz6r8KvjHc9SK4udUV7z29Ss32TmWvX4FEiQMB",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DKA46eQ4HrinsmYrzcrxjhjKoUeSz3T9jSUj4bXv5Zg",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "AgH5ZV5WZE18XkTobUQC4XbAkbVcfdUuTYTqBcRdScWU",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "5b9kgE3QUmpPbVHhPXpjDep7ARKtwx5u281rj84KjtSu",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "7DFhCgkoffokpyT6By1ffHkuUWi4krCBbhTsfGZCacKa",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "21WFpBKcm3rL9Yn6zhAZapiFesjVponoRn3xVahzu6V3",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "58VQS6bKcePyj8887gUR48fwZc4P6EtoubqoFyR3o65R",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Dc6oUMrVHGuqp1YLNmQiFGg6ytHhXfCAFegbfxknwBeK",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "GyurcoKUQFCcjbFjq2QK8T8XyWYuYbhBA6xXQJUiTAjK",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "9qZ5vSfbmF6HryTpEzujXERXHJnLzuUZnAeYkATsH8z4",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "DsshiVRSpjWhKjBbpGiBHruKaVc8zCe6giNP2KJpP67q",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "EkUqzQew15PxYoXevQQiwSh3BgT9tTVvMcFakZ4azvWc",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "CE6zz3Yb9AYxNgYVjG7AdtQghqsFsYP1LfZW4WPVRTYk",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "5J87UA4nVdSwpbmiZSnW2A96g9gsjiApR9a63hbj34YY",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "DbRF48m6eow7PbVg47uqPtARWT7SeJPbyppybiXC4V1X",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "4JooFakA3rPUWBGeGY5uWQvRtt6wzogH1PL7xY2Wr4jz",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "bjhwRtAX2WdLDCJ5QBHAjBSJMBuTz1pF2FuZjszrmSr",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "Bw5zRuj2SEuUYLybHY1tgD52y6hLYkiwtKJNdzp2s5Pi",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "FWqRRyYFKmWGiAxkHeSsdiRa2DdY5bDb1n9LgoEC7agv",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "HySSkz2NKzxAPWBQBLzDbnQHWVHj3RhCDjFUD2xtv27c",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "94p8iVU57bbf9my8YvLqenLqiMVCVXVe4rCeX1Sy8onh",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "9cV22wcRMAt18XhRsz9uhzc83N4B1e7RXmisHS5nnhtJ",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "held_out"
+    },
+    {
+      "pubkey": "3szAvAXBGKzCsoQ2y7hp5APKHLu9vVaudvUAy2J3Yuc5",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    },
+    {
+      "pubkey": "69JAjn6YmdxnHsrnhmRvmxzYBFS6KR9Je3Hk2m5LB7Q7",
+      "signature_count_lower_bound": 0,
+      "signature_count_exact": true,
+      "earliest_funder_proxy": null,
+      "distinct_funders_lower_bound": 0,
+      "token_account_count": 0,
+      "split": "calibration"
+    }
+  ]
+}
