@@ -25,8 +25,9 @@ use solana_sdk::{
     transaction::Transaction,
 };
 use supersonic_sdk::{
-    build_instruction, derive_decoy_keypair, derive_sink_keypair, plan_bundle, BundlePlan,
-    DecoyConfig,
+    build_instruction, derive_decoy_keypair, derive_sink_keypair, plan_bundle_with_mode,
+    warming::{derive_pool_member_keypair, select_pool_slots},
+    BundlePlan, DecoyConfig, DecoyMode,
 };
 
 /// The deployed router program id (matches `declare_id!` in the program).
@@ -71,12 +72,48 @@ enum Cmd {
         /// consolidating them all into your wallet at once.
         #[arg(long)]
         disperse: bool,
+        /// Override the decoy mode instead of looking it up from the local
+        /// record (`~/.supersonic/bundles.json`) — needed only if recovering
+        /// without that local record (e.g. a different machine).
+        #[arg(long, value_enum)]
+        decoy_mode: Option<DecoyModeArg>,
+        #[arg(long)]
+        pool_size: Option<u32>,
     },
     /// Show locally-recorded bundles.
     Inspect {
         #[arg(long)]
         bundle_id: Option<u64>,
     },
+    /// Build up real signature history on warm-pool decoy slots ahead of time,
+    /// so they aren't zero-history the first time they're used as a decoy (the
+    /// destination-history channel, THREAT_MODEL.md). Each slot gets a small
+    /// real self-funded round-trip transfer, same construction as the
+    /// harness's mainnet-history collector methodology, not synthesized.
+    Warm {
+        /// Number of warm-pool slots to (continue to) warm.
+        #[arg(long, default_value_t = 32)]
+        pool_size: u32,
+        /// Real round-trip transfers per slot this run (each adds 2 signatures
+        /// — a fund-in and a sweep-back — to that slot's history).
+        #[arg(long, default_value_t = 1)]
+        rounds: u32,
+    },
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, clap::ValueEnum, Serialize, Deserialize)]
+enum DecoyModeArg {
+    Fresh,
+    WarmPool,
+}
+
+impl DecoyModeArg {
+    fn to_sdk(self, pool_size: u32) -> DecoyMode {
+        match self {
+            DecoyModeArg::Fresh => DecoyMode::Fresh,
+            DecoyModeArg::WarmPool => DecoyMode::WarmPool { pool_size },
+        }
+    }
 }
 
 #[derive(clap::Args)]
@@ -93,6 +130,14 @@ struct PlanArgs {
     /// Bundle nonce; defaults to the next counter for this wallet.
     #[arg(long)]
     bundle_id: Option<u64>,
+    /// Decoy destination source: `fresh` (default, never-used keypairs) or
+    /// `warm-pool` (drawn from a warmed pool — see the `warm` subcommand).
+    #[arg(long, value_enum, default_value_t = DecoyModeArg::Fresh)]
+    decoy_mode: DecoyModeArg,
+    /// Warm-pool size, when `--decoy-mode warm-pool`. Must match what you ran
+    /// `warm --pool-size` with.
+    #[arg(long, default_value_t = 32)]
+    pool_size: u32,
 }
 
 fn main() -> Result<()> {
@@ -120,12 +165,75 @@ fn main() -> Result<()> {
             bundle_id,
             k,
             disperse,
+            decoy_mode,
+            pool_size,
         } => {
             let client = rpc(&cli.rpc);
-            recover(&client, &keypair, &master_seed, *bundle_id, *k, *disperse)?;
+            let (decoy_mode, pool_size) = resolve_recover_mode(*bundle_id, *decoy_mode, *pool_size);
+            recover(
+                &client,
+                &keypair,
+                &master_seed,
+                *bundle_id,
+                *k,
+                *disperse,
+                RecoverSource {
+                    decoy_mode,
+                    pool_size,
+                },
+            )?;
         }
         Cmd::Inspect { bundle_id } => inspect(*bundle_id)?,
+        Cmd::Warm { pool_size, rounds } => {
+            let client = rpc(&cli.rpc);
+            warm_pool(&client, &keypair, &master_seed, *pool_size, *rounds)?;
+        }
     }
+    Ok(())
+}
+
+/// Build up real signature history on `pool_size` warm-pool slots: `rounds`
+/// real fund-in + sweep-back round trips per slot, each adding 2 signatures.
+/// Same construction as `harness/src/bin/collect_mainnet_profiles.rs`'s aged-
+/// address methodology (a real transaction history, not synthesized) — the
+/// difference is these slots are the actual addresses `DecoyMode::WarmPool`
+/// draws from in production, not a measurement-only fixture.
+fn warm_pool(
+    client: &RpcClient,
+    payer: &Keypair,
+    master_seed: &[u8; 32],
+    pool_size: u32,
+    rounds: u32,
+) -> Result<()> {
+    const DUST_LAMPORTS: u64 = 5_000_000; // 0.005 SOL, comfortably above rent-exempt minimum
+    for slot in 0..pool_size {
+        let kp = derive_pool_member_keypair(master_seed, slot);
+        for r in 0..rounds {
+            let bh = client.get_latest_blockhash()?;
+            let fund_ix =
+                system_instruction::transfer(&payer.pubkey(), &kp.pubkey(), DUST_LAMPORTS);
+            let fund_tx =
+                Transaction::new_signed_with_payer(&[fund_ix], Some(&payer.pubkey()), &[payer], bh);
+            client
+                .send_and_confirm_transaction_with_spinner(&fund_tx)
+                .with_context(|| format!("fund pool slot {slot} round {r}"))?;
+
+            let bal = client.get_balance(&kp.pubkey())?;
+            let bh = client.get_latest_blockhash()?;
+            let sweep_ix = system_instruction::transfer(&kp.pubkey(), &payer.pubkey(), bal);
+            let sweep_tx =
+                Transaction::new_signed_with_payer(&[sweep_ix], Some(&kp.pubkey()), &[&kp], bh);
+            client
+                .send_and_confirm_transaction_with_spinner(&sweep_tx)
+                .with_context(|| format!("sweep pool slot {slot} round {r}"))?;
+        }
+        println!(
+            "  slot {slot}/{pool_size}: {} -> +{} real signatures this run",
+            kp.pubkey(),
+            rounds * 2
+        );
+    }
+    println!("\nwarmed {pool_size} pool slots ({rounds} round-trip(s) each). Use --decoy-mode warm-pool --pool-size {pool_size} on `plan`/`send`.");
     Ok(())
 }
 
@@ -136,13 +244,14 @@ fn build_plan(master_seed: &[u8; 32], a: &PlanArgs) -> Result<(BundlePlan, u64)>
         return Err(anyhow!("amount too small"));
     }
     let bundle_id = a.bundle_id.unwrap_or_else(next_bundle_id);
-    let plan = plan_bundle(
+    let plan = plan_bundle_with_mode(
         master_seed,
         bundle_id,
         to,
         lamports,
         a.k,
         DecoyConfig::default(),
+        a.decoy_mode.to_sdk(a.pool_size),
     )
     .map_err(|e| anyhow!("plan failed: {e}"))?;
     Ok((plan, bundle_id))
@@ -187,6 +296,31 @@ fn send_bundle(
         .context("send bundle")
 }
 
+/// Figure out which decoy mode to reconstruct with: explicit CLI overrides win;
+/// otherwise fall back to what was recorded locally at send time; otherwise
+/// `Fresh` (today's default, and what every record predating this field used).
+fn resolve_recover_mode(
+    bundle_id: u64,
+    decoy_mode: Option<DecoyModeArg>,
+    pool_size: Option<u32>,
+) -> (DecoyModeArg, u32) {
+    if let Some(m) = decoy_mode {
+        return (m, pool_size.unwrap_or(32));
+    }
+    let s = load_store();
+    match s.bundles.get(&bundle_id) {
+        Some(r) => (r.decoy_mode, r.pool_size.max(1)),
+        None => (DecoyModeArg::Fresh, 0),
+    }
+}
+
+/// Which decoy source a past bundle used, resolved from either an explicit
+/// override or the local record (see `resolve_recover_mode`).
+struct RecoverSource {
+    decoy_mode: DecoyModeArg,
+    pool_size: u32,
+}
+
 fn recover(
     client: &RpcClient,
     payer: &Keypair,
@@ -194,11 +328,20 @@ fn recover(
     bundle_id: u64,
     k: usize,
     disperse: bool,
+    source: RecoverSource,
 ) -> Result<()> {
     let n_decoys = k.saturating_sub(1);
-    let decoy_kps: Vec<Keypair> = (0..n_decoys)
-        .map(|i| derive_decoy_keypair(master_seed, bundle_id, i as u32))
-        .collect();
+    let decoy_kps: Vec<Keypair> = match source.decoy_mode {
+        DecoyModeArg::Fresh => (0..n_decoys)
+            .map(|i| derive_decoy_keypair(master_seed, bundle_id, i as u32))
+            .collect(),
+        DecoyModeArg::WarmPool => {
+            select_pool_slots(master_seed, bundle_id, n_decoys, source.pool_size)
+                .into_iter()
+                .map(|slot| derive_pool_member_keypair(master_seed, slot))
+                .collect()
+        }
+    };
 
     if disperse {
         return recover_dispersed(client, payer, master_seed, bundle_id, &decoy_kps);
@@ -302,6 +445,17 @@ struct Record {
     k: usize,
     real_index: usize,
     signature: String,
+    /// How this bundle's decoys were sourced — needed by `recover` to
+    /// reconstruct the right addresses. Defaults to `Fresh` for records
+    /// written before this field existed (`serde(default)`).
+    #[serde(default = "default_decoy_mode")]
+    decoy_mode: DecoyModeArg,
+    #[serde(default)]
+    pool_size: u32,
+}
+
+fn default_decoy_mode() -> DecoyModeArg {
+    DecoyModeArg::Fresh
 }
 
 fn store_path() -> PathBuf {
@@ -345,6 +499,8 @@ fn record_bundle(plan: &BundlePlan, a: &PlanArgs, sig: &str) -> Result<()> {
             k: a.k,
             real_index: plan.real_index,
             signature: sig.to_string(),
+            decoy_mode: a.decoy_mode,
+            pool_size: a.pool_size,
         },
     );
     if plan.bundle_id >= s.next_id {

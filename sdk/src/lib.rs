@@ -35,6 +35,7 @@ use solana_sdk::{
 };
 
 pub mod amounts;
+pub mod warming;
 
 /// Maximum legs per bundle — must match the on-chain `MAX_LEGS`.
 pub const MAX_LEGS: usize = 16;
@@ -86,6 +87,23 @@ impl Default for DecoyConfig {
     }
 }
 
+/// How decoy destinations are sourced for a bundle.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DecoyMode {
+    /// Today's default: every decoy destination is a brand-new keypair derived
+    /// uniquely for `(master_seed, bundle_id, index)` — never used before, so it
+    /// carries zero on-chain history (the destination-history channel,
+    /// `THREAT_MODEL.md`).
+    Fresh,
+    /// Decoy destinations are drawn from a warmed pool of `pool_size` stable
+    /// addresses (`warming::derive_pool_member_keypair`), a bundle-seeded
+    /// distinct subset per bundle (`warming::select_pool_slots`). Members
+    /// accumulate real history once actually used/warmed (`warm_slots` /
+    /// `supersonic warm`) — see `warming.rs`'s module doc for why the
+    /// selection is randomized per bundle rather than a fixed prefix.
+    WarmPool { pool_size: u32 },
+}
+
 /// One planned leg of a bundle.
 #[derive(Clone, Debug)]
 pub struct PlannedLeg {
@@ -95,9 +113,11 @@ pub struct PlannedLeg {
     pub amount: u64,
     /// True for the single real leg; false for decoys.
     pub is_real: bool,
-    /// For decoys, the derivation index used to recreate this destination during
-    /// recovery. `None` for the real leg (its destination is user-supplied and is
-    /// never swept).
+    /// For decoys, the index used to recreate this destination during recovery
+    /// — a fresh-derivation index under `DecoyMode::Fresh`, or a warm-pool slot
+    /// under `DecoyMode::WarmPool` (see `BundlePlan::decoy_mode` for which).
+    /// `None` for the real leg (its destination is user-supplied and is never
+    /// swept).
     pub decoy_index: Option<u32>,
 }
 
@@ -108,6 +128,10 @@ pub struct BundlePlan {
     pub legs: Vec<PlannedLeg>,
     pub real_index: usize,
     pub bundle_id: u64,
+    /// How this plan's decoy destinations were sourced — recovery needs this
+    /// to know whether to reconstruct via `derive_decoy_keypair` or
+    /// `warming::derive_pool_member_keypair`.
+    pub decoy_mode: DecoyMode,
 }
 
 impl BundlePlan {
@@ -186,6 +210,29 @@ pub fn plan_bundle(
     k: usize,
     cfg: DecoyConfig,
 ) -> Result<BundlePlan, SdkError> {
+    plan_bundle_with_mode(
+        master_seed,
+        bundle_id,
+        real_dest,
+        real_amount,
+        k,
+        cfg,
+        DecoyMode::Fresh,
+    )
+}
+
+/// Same as [`plan_bundle`], with explicit control over how decoy destinations
+/// are sourced (`DecoyMode`). `plan_bundle` is `DecoyMode::Fresh` — this is the
+/// entry point for `DecoyMode::WarmPool`.
+pub fn plan_bundle_with_mode(
+    master_seed: &[u8; 32],
+    bundle_id: u64,
+    real_dest: Pubkey,
+    real_amount: u64,
+    k: usize,
+    cfg: DecoyConfig,
+    decoy_mode: DecoyMode,
+) -> Result<BundlePlan, SdkError> {
     if !(2..=MAX_LEGS).contains(&k) {
         return Err(SdkError::BadAnonymitySet(k));
     }
@@ -202,15 +249,30 @@ pub fn plan_bundle(
     // Decoy amounts around the real amount, roundness-matched to hide a round real.
     let decoy_amounts = amounts::generate_decoy_amounts(real_amount, n_decoys, &cfg, &mut rng);
 
+    // Decoy destinations: either freshly derived per (bundle_id, index) — never
+    // used before — or drawn from a bundle-seeded distinct subset of the warm
+    // pool (see `warming.rs` for why the subset is randomized per bundle).
+    let decoy_indices: Vec<u32> = match decoy_mode {
+        DecoyMode::Fresh => (0..n_decoys as u32).collect(),
+        DecoyMode::WarmPool { pool_size } => {
+            warming::select_pool_slots(master_seed, bundle_id, n_decoys, pool_size)
+        }
+    };
+
     // Build decoy legs with deterministic, recoverable destinations.
     let mut legs: Vec<PlannedLeg> = Vec::with_capacity(k);
-    for (i, amount) in decoy_amounts.into_iter().enumerate() {
-        let kp = derive_decoy_keypair(master_seed, bundle_id, i as u32);
+    for (amount, idx) in decoy_amounts.into_iter().zip(decoy_indices) {
+        let dest = match decoy_mode {
+            DecoyMode::Fresh => derive_decoy_keypair(master_seed, bundle_id, idx).pubkey(),
+            DecoyMode::WarmPool { .. } => {
+                warming::derive_pool_member_keypair(master_seed, idx).pubkey()
+            }
+        };
         legs.push(PlannedLeg {
-            dest: kp.pubkey(),
+            dest,
             amount,
             is_real: false,
-            decoy_index: Some(i as u32),
+            decoy_index: Some(idx),
         });
     }
 
@@ -230,6 +292,7 @@ pub fn plan_bundle(
         legs,
         real_index,
         bundle_id,
+        decoy_mode,
     })
 }
 
