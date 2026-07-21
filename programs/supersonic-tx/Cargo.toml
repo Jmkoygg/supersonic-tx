@@ -26,3 +26,14 @@ litesvm = "0.6"
 solana-sdk = "2.2"
 supersonic-sdk = { path = "../../sdk" }
 
+# anchor-lang's macros (#[program], #[derive(Accounts)]) emit cfg checks for
+# build-time flags (custom-heap/custom-panic/anchor-debug feature gates, the
+# solana target_os) that this crate never declares itself. Without this,
+# clippy's unexpected_cfgs lint flags macro-generated code we don't control.
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = [
+    'cfg(feature, values("custom-heap", "custom-panic", "anchor-debug"))',
+    'cfg(target_os, values("solana"))',
+]
+

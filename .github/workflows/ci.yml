@@ -20,13 +20,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
+          components: rustfmt, clippy
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
       - name: Format check (host crates)
         run: cargo fmt --all -- --check
+
+      - name: Clippy (host crates, deny warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Install Solana CLI
         run: |
@@ -42,7 +45,7 @@ jobs:
       - name: Build on-chain program (produces .so for the invariant tests)
         run: anchor build
 
-      - name: Test workspace (24 unit/integration + 4 property tests)
+      - name: Test workspace (31 unit/integration/property/bench tests)
         run: cargo test --workspace
 
       - name: Reproduce the adversarial proof numbers

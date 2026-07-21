@@ -125,7 +125,7 @@ pub fn trailing_zeros_base10(x: u64) -> u32 {
     }
     let mut n = 0;
     let mut v = x;
-    while v % 10 == 0 && n < MAX_ROUND_LEVEL {
+    while v.is_multiple_of(10) && n < MAX_ROUND_LEVEL {
         v /= 10;
         n += 1;
     }
@@ -153,7 +153,7 @@ pub fn snap_to_roundness(v: u64, level: u32) -> u64 {
     // Break any extra trailing zero so the result has exactly `level` of them.
     if level < MAX_ROUND_LEVEL {
         let m10 = m.saturating_mul(10);
-        if snapped % m10 == 0 {
+        if snapped.is_multiple_of(m10) {
             snapped += m;
         }
     }

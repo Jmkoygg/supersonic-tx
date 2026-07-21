@@ -129,7 +129,7 @@ pub fn eval_history_measured(
     if bundles.is_empty() || fixture.aged.is_empty() || fixture.fresh_verified_zero.is_empty() {
         return (0.0, 0.0);
     }
-    let mut rng = ChaCha20Rng::seed_from_u64(seed ^ 0x6D_EA5_0117);
+    let mut rng = ChaCha20Rng::seed_from_u64(seed ^ 0x0006_DEA5_0117);
     let k = bundles[0].amounts.len();
     let (mut naive_hits, mut warm_hits) = (0usize, 0usize);
 

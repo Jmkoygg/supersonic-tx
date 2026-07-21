@@ -38,6 +38,7 @@ fn setup() -> (LiteSVM, Keypair) {
 /// Build (and try to send) an `execute_bundle` tx. `dests` are the per-leg
 /// destination accounts, appended as writable, non-signer remaining_accounts in
 /// leg order.
+#[allow(clippy::result_large_err)] // foreign LiteSVM error type, not ours to box
 fn send_bundle(
     svm: &mut LiteSVM,
     user: &Keypair,

@@ -27,6 +27,7 @@ pub(crate) const N_FEATURES: usize = 23;
 ///     clustered);
 ///   * **order-statistic rank** — normalized rank within the bundle;
 ///   * **collision multiplicity** — how many legs share this leg's exact value.
+///
 /// Feature standardization happens in `train`.
 pub(crate) fn features(amounts: &[u64], idx: usize) -> [f64; N_FEATURES] {
     let k = amounts.len().max(1);
@@ -122,8 +123,8 @@ impl Standardizer {
                 mean[j] += x[j];
             }
         }
-        for j in 0..N_FEATURES {
-            mean[j] /= n;
+        for m in &mut mean {
+            *m /= n;
         }
         let mut var = [0.0; N_FEATURES];
         for x in rows {

@@ -89,8 +89,8 @@ fn build_tree(rows: &[&Row], depth: usize, rng: &mut ChaCha20Rng) -> Node {
             lo = lo.min(r.x[feat]);
             hi = hi.max(r.x[feat]);
         }
-        if !(hi > lo) {
-            continue; // constant feature in this node
+        if hi.partial_cmp(&lo) != Some(std::cmp::Ordering::Greater) {
+            continue; // constant feature in this node (or NaN, treated the same way)
         }
         for _ in 0..THRESHOLDS_PER_FEATURE {
             let thr = rng.gen_range(lo..hi);
@@ -108,7 +108,7 @@ fn build_tree(rows: &[&Row], depth: usize, rng: &mut ChaCha20Rng) -> Node {
                 continue;
             }
             let wg = (ln as f64 * gini(ln, lp) + rn as f64 * gini(rn, rp)) / n as f64;
-            if best.map_or(true, |(_, _, bg)| wg < bg) {
+            if best.is_none_or(|(_, _, bg)| wg < bg) {
                 best = Some((feat, thr, wg));
             }
         }
