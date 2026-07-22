@@ -206,6 +206,16 @@ fn warm_pool(
     rounds: u32,
 ) -> Result<()> {
     const DUST_LAMPORTS: u64 = 5_000_000; // 0.005 SOL, comfortably above rent-exempt minimum
+    const MAX_TOTAL_ROUND_TRIPS: u64 = 2_000; // sanity cap: ~pool_size * rounds, see below
+    let total_round_trips = pool_size as u64 * rounds as u64;
+    if total_round_trips > MAX_TOTAL_ROUND_TRIPS {
+        return Err(anyhow!(
+            "pool_size * rounds = {total_round_trips} exceeds the sanity cap of {MAX_TOTAL_ROUND_TRIPS} \
+             round-trip transactions (~{} SOL touched, {total_round_trips} blocking RPC round-trips). \
+             Run in smaller batches (lower --pool-size or --rounds per invocation) if you really need more.",
+            lamports_to_sol(DUST_LAMPORTS * total_round_trips)
+        ));
+    }
     for slot in 0..pool_size {
         let kp = derive_pool_member_keypair(master_seed, slot);
         for r in 0..rounds {
@@ -221,8 +231,17 @@ fn warm_pool(
             let bal = client.get_balance(&kp.pubkey())?;
             let bh = client.get_latest_blockhash()?;
             let sweep_ix = system_instruction::transfer(&kp.pubkey(), &payer.pubkey(), bal);
-            let sweep_tx =
-                Transaction::new_signed_with_payer(&[sweep_ix], Some(&kp.pubkey()), &[&kp], bh);
+            // `payer` (not `kp`) must be the fee-payer: `kp` only has exactly `bal`
+            // lamports, and a transaction's fee is debited from the fee-payer
+            // before the instruction runs — if `kp` paid its own fee here, moving
+            // its full balance would always fail by exactly the fee amount. Same
+            // fee-payer/signer split already used correctly in `recover()` below.
+            let sweep_tx = Transaction::new_signed_with_payer(
+                &[sweep_ix],
+                Some(&payer.pubkey()),
+                &[payer, &kp],
+                bh,
+            );
             client
                 .send_and_confirm_transaction_with_spinner(&sweep_tx)
                 .with_context(|| format!("sweep pool slot {slot} round {r}"))?;

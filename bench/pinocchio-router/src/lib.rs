@@ -55,6 +55,13 @@ pub fn process_instruction(
     if !payer.is_signer() {
         return Err(ProgramError::MissingRequiredSignature);
     }
+    // Defense in depth: the runtime already refuses a system transfer whose
+    // `from`/`to` aren't writable, so this can't currently be bypassed — but
+    // unlike Anchor, this program has no framework asserting it on our behalf,
+    // so it shouldn't rely on that implicitly (auditor-skill AV-079).
+    if !payer.is_writable() {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     for i in 0..count {
         let off = 1 + i * 8;
@@ -69,6 +76,9 @@ pub fn process_instruction(
         // self-send is an economically pointless tell, rejected fail-closed.
         if dest.address() == payer.address() {
             return Err(ProgramError::InvalidInstructionData);
+        }
+        if !dest.is_writable() {
+            return Err(ProgramError::InvalidAccountData);
         }
         Transfer {
             from: payer,
