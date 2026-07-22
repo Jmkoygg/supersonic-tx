@@ -159,6 +159,28 @@ fn print_table(results: &[KResult], n: usize) {
     println!(
         "addresses (harness/fixtures/mainnet_profiles.json), evaluated only on that fixture's"
     );
+    println!();
+    println!(
+        "IMPORTANT — what `--decoy-mode warm-pool` (`supersonic warm`) actually closes vs. what"
+    );
+    println!(
+        "these numbers show: destination-history and token-holdings are closed by the SHIPPED"
+    );
+    println!(
+        "mechanism (warm_pool creates real signature history AND a real token account per slot)."
+    );
+    println!(
+        "Funding-graph's `warm` number above is an IDEALIZED ceiling — it resamples real aged"
+    );
+    println!(
+        "addresses' actual funder diversity, which `warm_pool` does NOT reproduce: every pool slot"
+    );
+    println!(
+        "is funded by the same wallet. This channel is NOT closed by the shipped mechanism; treat"
+    );
+    println!(
+        "the funding-graph `warm` column as an aspirational target, not a claim. See THREAT_MODEL.md."
+    );
     println!(
         "`held_out` split — `calibration` is reserved for whatever mechanism (e.g. an SDK-side"
     );

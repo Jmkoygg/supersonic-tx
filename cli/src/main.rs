@@ -17,11 +17,12 @@ use sha2::{Digest, Sha256};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::{
     commitment_config::CommitmentConfig,
+    instruction::{AccountMeta, Instruction},
     native_token::{lamports_to_sol, sol_to_lamports},
     pubkey::Pubkey,
     signature::{read_keypair_file, Keypair},
     signer::Signer,
-    system_instruction,
+    system_instruction, system_program,
     transaction::Transaction,
 };
 use supersonic_sdk::{
@@ -33,6 +34,55 @@ use supersonic_sdk::{
 /// The deployed router program id (matches `declare_id!` in the program).
 const DEFAULT_PROGRAM_ID: &str = "BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn";
 const DEFAULT_RPC: &str = "https://api.devnet.solana.com";
+
+// Well-known program/mint ids (same on devnet and mainnet — these are fixed
+// system-level constants, not something anyone deploys).
+const TOKEN_PROGRAM_ID: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+const ASSOCIATED_TOKEN_PROGRAM_ID: &str = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";
+const NATIVE_MINT: &str = "So11111111111111111111111111111111111111112"; // wSOL
+
+/// Derive the associated token account address for `(owner, mint)` under the
+/// standard SPL Token program, without pulling in the `spl-associated-token-
+/// account` crate (which would drag a different solana-program generation, the
+/// same cross-generation friction Mollusk needed pinning for elsewhere in this
+/// workspace — see `harness/tests/mollusk_cu_bench.rs`).
+fn derive_ata(
+    owner: &Pubkey,
+    mint: &Pubkey,
+    token_program: &Pubkey,
+    ata_program: &Pubkey,
+) -> Pubkey {
+    Pubkey::find_program_address(
+        &[owner.as_ref(), token_program.as_ref(), mint.as_ref()],
+        ata_program,
+    )
+    .0
+}
+
+/// The Associated Token Account program's `CreateIdempotent` instruction (data
+/// `[1]`) — creates the ATA if absent, succeeds as a no-op if it already
+/// exists, so warming the same pool twice doesn't fail on the second run.
+fn create_ata_idempotent_ix(
+    funding_account: &Pubkey,
+    owner: &Pubkey,
+    mint: &Pubkey,
+    token_program: &Pubkey,
+    ata_program: &Pubkey,
+) -> Instruction {
+    let ata = derive_ata(owner, mint, token_program, ata_program);
+    Instruction {
+        program_id: *ata_program,
+        accounts: vec![
+            AccountMeta::new(*funding_account, true),
+            AccountMeta::new(ata, false),
+            AccountMeta::new_readonly(*owner, false),
+            AccountMeta::new_readonly(*mint, false),
+            AccountMeta::new_readonly(system_program::ID, false),
+            AccountMeta::new_readonly(*token_program, false),
+        ],
+        data: vec![1u8], // CreateIdempotent
+    }
+}
 const MASTER_TAG: &[u8] = b"supersonic-tx/master/v1";
 
 #[derive(Parser)]
@@ -246,13 +296,49 @@ fn warm_pool(
                 .send_and_confirm_transaction_with_spinner(&sweep_tx)
                 .with_context(|| format!("sweep pool slot {slot} round {r}"))?;
         }
+
+        // Give the slot a real SPL token account (wSOL's associated token
+        // account — a real, on-chain-verifiable token holding, not merely a
+        // signature-history number) so the token-holdings channel
+        // (`harness/src/mainnet_channel.rs::eval_mainnet_token_holdings`) is
+        // actually closed by this shipped mechanism, not just measured under
+        // an idealized model. `payer` funds the (small) rent; the account
+        // belongs to the pool slot, not `payer`. Idempotent: safe to re-run.
+        let token_program: Pubkey = TOKEN_PROGRAM_ID.parse().expect("valid constant");
+        let ata_program: Pubkey = ASSOCIATED_TOKEN_PROGRAM_ID.parse().expect("valid constant");
+        let mint: Pubkey = NATIVE_MINT.parse().expect("valid constant");
+        let create_ata_ix = create_ata_idempotent_ix(
+            &payer.pubkey(),
+            &kp.pubkey(),
+            &mint,
+            &token_program,
+            &ata_program,
+        );
+        let bh = client.get_latest_blockhash()?;
+        let ata_tx = Transaction::new_signed_with_payer(
+            &[create_ata_ix],
+            Some(&payer.pubkey()),
+            &[payer],
+            bh,
+        );
+        client
+            .send_and_confirm_transaction_with_spinner(&ata_tx)
+            .with_context(|| format!("create token account for pool slot {slot}"))?;
+
         println!(
-            "  slot {slot}/{pool_size}: {} -> +{} real signatures this run",
+            "  slot {slot}/{pool_size}: {} -> +{} real signatures this run, 1 token account ensured",
             kp.pubkey(),
             rounds * 2
         );
     }
-    println!("\nwarmed {pool_size} pool slots ({rounds} round-trip(s) each). Use --decoy-mode warm-pool --pool-size {pool_size} on `plan`/`send`.");
+    println!(
+        "\nwarmed {pool_size} pool slots ({rounds} round-trip(s) each, 1 token account each). \
+         NOTE: funding-graph is NOT closed by this mechanism — every slot is funded by this same \
+         wallet, so an attacker correlating bundles by fee-payer would see one funder behind every \
+         warm-pool decoy. See THREAT_MODEL.md for the honest scope of what --decoy-mode warm-pool \
+         does and does not defend.\n\
+         Use --decoy-mode warm-pool --pool-size {pool_size} on `plan`/`send`."
+    );
     Ok(())
 }
 
