@@ -52,6 +52,17 @@ use (`compute_units_consumed` on the transaction result) and is the natural vali
 step **if** the production port is taken — but it would refine a number that does not
 change the conclusion. Binary size / deploy rent does.
 
+## Result 3 — same invariants, not just a size comparison (measured)
+
+A benchmark that's only ever been sized, never functionally tested, isn't evidence it
+*works* — only that it's small. `bench/pinocchio-router` now passes the identical 8
+invariant tests the Anchor program does (`harness/tests/pinocchio_invariants.rs`, via
+Mollusk): atomicity, fail-closed on zero-amount/self-destination/account-count-mismatch/
+insufficient-funds, and real value movement. Building this parity test surfaced two real
+gaps versus the Anchor reference that a size-only benchmark would have missed entirely:
+a missing self-destination check, and an account-count check that accepted extra accounts
+instead of requiring an exact match — both fixed, both now covered by a test.
+
 ## What this benchmark decides
 
 The framework question for *this* program is settled by Result 1, not by taste or by the
@@ -69,9 +80,11 @@ that justifies it.
 
 ## Honest caveats
 
-- The Pinocchio program here is a **benchmark artifact** — it implements the same core
-  logic with a compact manual instruction encoding, not the shipped Anchor instruction
-  format. It is here to measure framework overhead, not to be deployed as-is.
+- The Pinocchio program is **not deployed anywhere** and does not replace the live Anchor
+  deployment — it implements the same core logic with a compact manual instruction
+  encoding, not the shipped Anchor instruction format, and is offered as a
+  minimal-attack-surface *option*, tested to the same bar (Result 3), not a benchmark-only
+  artifact.
 - Binary sizes depend on toolchain/optimization flags; both were built with
   `opt-level = 3` + fat LTO and the standard `cargo build-sbf` / `anchor build` pipelines.
 - A pending network change (SIMD-0436) could halve rent-exempt minimums generally; that

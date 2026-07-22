@@ -71,12 +71,14 @@ symmetric with the real leg's exact value. Turning roundness-matching *off* is f
 round real then leaks at **+0.35**; reproduce with `--round-match 0.0`). Use the **largest K
 you can afford**.
 
-The harness also quantifies two channels the tool doesn't close on its own — the
-**recovery-linkage** channel (naive sweep leaks; `recover --disperse` drives it to 0) and the
-**destination-history** channel, both modeled *and* measured against 28 real devnet addresses
-(fresh decoys leak the real leg near-totally; a companion `account-cooker` that pre-warms decoy
-destinations drives it to ~0). Both are reported as numbers, not promises. Full evidence,
-including live devnet transactions, is in [`PROOF.md`](./PROOF.md).
+The harness also quantifies three more channels the value channel alone doesn't close: the
+**recovery-linkage** channel (naive sweep leaks; `recover --disperse` drives it to 0) and, at
+**mainnet scale** — measured against 377 real, passively-observed mainnet-beta addresses
+(`harness/fixtures/mainnet_profiles.json`, not devnet, not synthetic) — **destination-history**
+and **token-holdings**, both closed by a shipped mechanism (`--decoy-mode warm-pool`, below).
+**Funding-graph** is measured too, and left honestly open — see
+[Scope of the privacy guarantee](#scope-of-the-privacy-guarantee). All numbers reported, not
+promised. Full evidence, including live devnet transactions, is in [`PROOF.md`](./PROOF.md).
 
 **Live on devnet:** program
 [`BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn`](https://explorer.solana.com/address/BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn?cluster=devnet).
@@ -112,6 +114,29 @@ supersonic inspect
 Defaults target devnet. The recovery secret is derived from your wallet key, so the same
 wallet always recovers its own decoys — nothing extra to back up.
 
+### Warm-pool decoys (closes destination-history + token-holdings)
+
+By default, decoy destinations are brand-new keypairs (`DecoyMode::Fresh`) — real, but
+with zero prior on-chain activity. `--decoy-mode warm-pool` draws them instead from a pool
+of addresses you pre-warm with real history and a real token account:
+
+```bash
+# Build real signature history + a real token account on 32 pool slots
+supersonic warm --pool-size 32 --rounds 1
+
+# Cast using the warmed pool instead of always-fresh decoys
+supersonic send --to <REAL_PAYEE> --amount 0.02 --k 8 --decoy-mode warm-pool --pool-size 32
+
+# Recovery figures out which mode a past bundle used automatically
+supersonic recover --bundle-id <ID> --k 8
+```
+
+Each bundle draws a distinct, bundle-seeded random subset of the pool (`sdk/src/warming.rs`)
+rather than a fixed prefix, so the same handful of addresses don't visibly recur as decoys
+across every bundle from the same signer. **What this does and doesn't close:** see
+[Scope of the privacy guarantee](#scope-of-the-privacy-guarantee) — destination-history and
+token-holdings are closed by this mechanism; funding-graph is not.
+
 ## Composability
 
 Other tools "cast through" `supersonic-tx` two ways:
@@ -121,13 +146,16 @@ Other tools "cast through" `supersonic-tx` two ways:
 - **In Rust:** call `plan_bundle` / `build_instruction` from `supersonic-sdk`. A runnable
   example of a *third-party tool* composing a bundle with only the public SDK surface —
   no router internals — is in [`sdk/examples/compose.rs`](./sdk/examples/compose.rs)
-  (`cargo run -p supersonic-sdk --example compose`). A companion `account-cooker` (not yet
-  built) would generate real intents to route here *and* host decoy destinations so they
-  stay live, mitigating the consolidation tell below.
+  (`cargo run -p supersonic-sdk --example compose`).
+- **Proven externally:** a separate contributor's `account-cooker` work
+  ([PR #3](https://github.com/solanabr/supersonic-tx/pull/3)) routes a real devnet
+  transaction through this exact router using only the public SDK — not a hypothetical,
+  a working third-party integration.
 
 ## Scope of the privacy guarantee
 
-The tool defends two channels and is explicit about the two it doesn't:
+The tool defends four channels for real, quantifies two more, and is explicit about the one
+that remains open:
 
 - **Structural channel** (instruction shape, account roles, data width, CPI target) — **closed
   exactly.** Every leg is byte-identical in structure; real and decoy differ *only* in amount
@@ -137,16 +165,29 @@ The tool defends two channels and is explicit about the two it doesn't:
   ≈0 — the structural advantage is exactly 0 by construction.
 - **Value channel** (the amounts and their arrangement) — closed by the generator and
   **measured** against the nonlinear forest adversary; small, bounded advantage (table above).
-- **Destination-history channel** (a real payee with prior activity vs. fresh decoys) — not
-  closed by this tool alone, but **modeled and measured**: fresh decoys leak near-totally, a
-  companion `account-cooker` that pre-warms decoy destinations drives it to ~0
-  (`harness/src/destination.rs`; the measured version bootstrap-resamples 28 real,
-  independently-checkable devnet addresses, `harness/fixtures/devnet_history.json`).
+- **Destination-history channel** (a real payee with prior activity vs. fresh decoys) —
+  **closed by a shipped mechanism.** `--decoy-mode warm-pool` / `supersonic warm` gives decoy
+  destinations real prior signatures before they're ever cast. Measured against 377 real
+  mainnet-beta addresses (`harness/src/mainnet_channel.rs`); naive leaks near-totally, warmed
+  drives it to ≈0. See [Warm-pool decoys](#warm-pool-decoys-closes-destination-history--token-holdings).
+- **Token-holdings channel** (does the destination already hold SPL tokens?) — **closed by
+  the same shipped mechanism.** `supersonic warm` opens a real associated token account
+  (wSOL) per pool slot. Measured the same way; naive +0.31 (K=2) to +0.61 (K=16), warmed ≈0.
+  **Residual:** every warmed slot gets the same mint at zero balance — a channel looking at
+  mint diversity or balance instead of raw account count would still distinguish it; not
+  measured here.
+- **Funding-graph channel** (was this destination funded by a diverse, external source, or
+  freshly by the same wallet casting the bundle?) — **measured, and NOT closed.** Every
+  warm-pool slot is funded by the user's own wallet. The `warm` regime number reported for
+  this channel is an idealized ceiling (what a genuinely diverse funding source would
+  achieve), not what the shipped mechanism produces. Closing this needs an external, mature
+  crowd/account-cooker this project doesn't build (see `THREAT_MODEL.md §4.7`).
 - **Timing/cadence channel** (when you cast) — addressed at the SDK/operational layer, not
   measured here.
 
-"Fuzz the value an observer reads, with structure that carries no signal" is the defended
-claim; "defeat every copy-trading signal" is not.
+"Fuzz the value an observer reads, and give decoys a real past, with structure that carries
+no signal" is the defended claim; "defeat every copy-trading signal, including who funded a
+decoy" is not.
 
 ## Honest limitations
 
@@ -161,44 +202,56 @@ claim; "defeat every copy-trading signal" is not.
   (an `account-cooker`).
 - **Per-bundle metric.** The `1/K` guarantee is per bundle; repeated use across many
   bundles leaks a behavioral prior. Stated, not solved.
-- **Destination-history channel (modeled AND measured, mitigated by a companion tool).** A
-  real payee with on-chain history stands out against fresh decoys — the strongest attack on
-  the tool used alone. The harness both models it and measures it for real
-  (`harness/src/destination.rs`): naive fresh decoys leak the real leg near-totally (advantage
-  up to +0.94), and pre-warmed decoy destinations (what an `account-cooker` provides) drive it
-  to ~0. The measured version bootstrap-resamples a real fixture — 18 devnet addresses funded
-  and transacted for real (2–25 real txs each) plus 10 confirmed-zero fresh addresses,
-  `harness/fixtures/devnet_history.json`, every pubkey independently checkable — and agrees
-  closely with the synthetic model across 4 seeds. To be precise about what that shows: the
-  ~0 in the pre-warmed regime follows from the sampling construction itself (every leg draws
-  from the same pool, so it's exchangeable by definition); what the real fixture adds is that
-  the underlying counts are genuine RPC results, not invented. No mature `account-cooker`
-  exists yet to integrate with directly, so this is a minimal self-built stand-in, and it does
-  not validate that a real account-cooker's warming pattern is itself indistinguishable from
-  organic activity.
-- **Framework (Anchor) is a measured choice, not a default.** The shipped program is Anchor;
-  [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in Pinocchio and measures the
-  tradeoff (Pinocchio is ~34× smaller and ~33× cheaper to deploy — verified `.so` sizes and
-  rent). The Anchor build is what's deployed and proven on devnet; the Pinocchio port is a
-  clean, well-scoped follow-up the benchmark justifies.
+- **Destination-history and token-holdings (measured against real mainnet data, closed by a
+  shipped mechanism, not just modeled).** A real payee has prior activity and often holds
+  other tokens; a fresh decoy has neither — the strongest attack on the tool used alone.
+  `harness/src/mainnet_channel.rs` measures both against 377 real, passively-observed
+  mainnet-beta addresses (`harness/fixtures/mainnet_profiles.json`; balance-delta block
+  scanning, nothing funded or spent to collect it), evaluated only on the fixture's
+  `held_out` split — the `calibration` split is reserved for whatever mechanism fits
+  something to the data, kept structurally separate from what measures it. `--decoy-mode
+  warm-pool` / `supersonic warm` (`sdk/src/warming.rs`) is that mechanism: it builds real
+  signature history and opens a real token account per pool slot, and each bundle draws a
+  distinct bundle-seeded random subset of the pool rather than a fixed prefix (so the same
+  handful of addresses don't visibly recur as decoys across every bundle from one signer —
+  proven statistically over 500 bundles, `sdk/src/warming.rs` tests). **Funding-graph is
+  measured the same way but NOT closed**: every warm-pool slot is funded by the same
+  wallet, so the `warm` number for this specific channel is an idealized ceiling, not a
+  claim about the shipped mechanism. See `THREAT_MODEL.md §4.7` for the full, itemized
+  breakdown of what's closed vs. open across all three sub-channels.
+- **Two implementations, same invariants, one deployed.** The shipped program is Anchor,
+  live and proven on devnet. [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in
+  Pinocchio and measures the tradeoff (~34× smaller, ~33× cheaper to deploy) — and
+  `harness/tests/pinocchio_invariants.rs` proves the *same* 8 invariants against it via
+  Mollusk, not just its binary size. The Pinocchio build is not deployed anywhere and does
+  not replace the Anchor build; it's offered as a minimal-attack-surface option, tested to
+  the same bar.
 - **Devnet-validated.** Deployed and exercised on devnet; not audited for mainnet.
-- **Tooling note:** `cargo clippy` hit an internal compiler panic (ICE) on the SDK crate on
-  clippy **0.1.94 / 0.1.96** (a clippy×solana-sdk toolchain bug); on **0.1.97 it runs clean**
-  (only trivial style lints), so it appears fixed upstream. `cargo build` and `cargo test`
-  are clean on all of them.
+- **Security tooling run against the real code:** Sec3 X-Ray (Solana-specific static
+  analyzer) reports 0 findings on the on-chain program; `cargo audit` reports 5 advisories,
+  all in transitive dependencies of the Solana SDK/reqwest stack, none in this project's own
+  code; zero `unsafe` in any crate this project owns (program, SDK, CLI, harness, Pinocchio
+  bench) — confirmed by grep, not assumed. CI runs `cargo clippy --workspace --all-targets
+  -- -D warnings` on every push (clippy 0.1.97 resolved the toolchain ICE noted in earlier
+  drafts of this document; pinned and clean).
 
 ## Repository layout
 
 ```
 programs/supersonic-tx/   on-chain router (Anchor) + invariant tests (LiteSVM)
-sdk/                      supersonic-sdk: decoy generation, bundle building, recovery
+sdk/                      supersonic-sdk: decoy generation, bundle building, recovery,
+                          warm-pool decoy sourcing (warming.rs)
                           (+ tests/properties.rs — proptest invariants for any input)
-cli/                      supersonic: plan / send / recover / inspect
+cli/                      supersonic: plan / send / recover / inspect / warm
 harness/                  supersonic-harness: adversarial proof
                           (classifiers + learned logreg + nonlinear forest,
-                           consolidation + destination-history channels)
-bench/pinocchio-router/   Pinocchio reimplementation of the core, for the framework benchmark
-.github/workflows/ci.yml  CI: fmt + build + test + proof reproduction on every push/PR
+                           consolidation + destination-history channels,
+                           mainnet_channel.rs — destination-history/funding-graph/
+                           token-holdings measured against real mainnet data)
+                          + tests/pinocchio_invariants.rs — same invariants, Pinocchio
+bench/pinocchio-router/   Pinocchio reimplementation of the core: same invariants
+                          proven via Mollusk, not deployed, offered as an option
+.github/workflows/ci.yml  CI: fmt + clippy -D warnings + build + test + proof reproduction
 THREAT_MODEL.md           adversaries, observability, metric, invariants
 ARCHITECTURE.md           component design and boundaries
 PROOF.md                  evidence: tests, live devnet txs, measured advantage

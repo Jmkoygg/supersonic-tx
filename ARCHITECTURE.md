@@ -70,7 +70,11 @@ and an anonymity-set size `K`, it produces an ordered bundle of 1 real + K−1 d
   jittered ones.
 - **Destinations**: decoy destinations are derived deterministically from a master seed
   via a domain-separated KDF, so they are **recoverable** by — and only by — the holder
-  of the seed. The real destination is user-supplied and never derived.
+  of the seed. The real destination is user-supplied and never derived. Two sourcing
+  modes (`DecoyMode`): `Fresh` (default — a brand-new keypair per bundle, zero prior
+  history) and `WarmPool` (`warming.rs` — drawn from a pool of addresses the user
+  pre-warms with real signature history and a real token account via `supersonic warm`,
+  a distinct bundle-seeded random subset per bundle rather than a fixed prefix).
 - **Placement**: the real leg is inserted at a seed-determined random index.
 - **Encoding**: builds the exact Anchor instruction (8-byte discriminator + Borsh
   `Vec<Leg>`) and account list, so the SDK needs no dependency on the program crate.
@@ -81,10 +85,13 @@ recoverable and the whole system reproducible and testable.
 ### 3. `cli/` — `supersonic` (the usable tool)
 
 Thin wrapper over the SDK + RPC: `plan` (dry run), `send` (cast to devnet), `recover`
-(sweep decoys), `inspect` (local records). The master recovery secret is derived from
-the wallet key (`sha256(tag ‖ keypair)`), so there is no extra secret to manage and the
-same wallet that cast a bundle can always recover it. `recover` prints the honest
-consolidation-linkage warning from `THREAT_MODEL §4.6`.
+(sweep decoys, auto-detecting which `DecoyMode` a past bundle used), `inspect` (local
+records), `warm` (build real signature history + a real token account on warm-pool
+slots ahead of use). The master recovery secret is derived from the wallet key
+(`sha256(tag ‖ keypair)`), so there is no extra secret to manage and the same wallet
+that cast a bundle can always recover it. `recover` prints the honest
+consolidation-linkage warning from `THREAT_MODEL §4.6`; `warm` prints the honest
+funding-graph-not-closed warning from `THREAT_MODEL §4.7`.
 
 ### 4. `harness/` — `supersonic-harness` (the proof)
 
@@ -93,18 +100,29 @@ bundles with the real SDK, then runs concrete adversary classifiers (max/min amo
 roundest/least-round, log-median outlier, fixed position) and measures
 `advantage = accuracy − 1/K` on a held-out test split (the adversary picks its best
 attack on train, so the number can't be cherry-picked from noise). It also reports the
-honest naive-consolidation worst case. Output is a table plus a machine-readable JSON
-that `PROOF.md` cites.
+honest naive-consolidation worst case, and — via `mainnet_channel.rs` /
+`mainnet_fixture.rs` — destination-history, funding-graph, and token-holdings measured
+against 377 real, passively-observed mainnet-beta addresses, evaluated only on a
+`held_out` partition decided at collection time (`calibration` is reserved for whatever
+mechanism fits something to the data). Output is a table plus a machine-readable JSON
+that `PROOF.md` cites. `harness/tests/pinocchio_invariants.rs` additionally proves the
+program's 8 core invariants hold against `bench/pinocchio-router` too, via Mollusk.
 
 ## Composability (how other tools "cast through" this)
 
 - **Program interface:** the published Anchor IDL for `execute_bundle` lets any program
   or client construct a bundle without reading this source.
 - **SDK surface:** `plan_bundle`, `build_instruction`, and `derive_decoy_keypair` are
-  the integration points. A companion tool (e.g. an `account-cooker`) can generate its
-  own real intents and route them through the same router, and can *host* decoy
-  destinations so they stay live instead of collapsing in a consolidation sweep —
-  directly mitigating the §4.6 tell.
+  the integration points. Proven externally, not just in principle:
+  [PR #3](https://github.com/solanabr/supersonic-tx/pull/3) is a separate contributor's
+  `account-cooker` work routing a real devnet transaction through this router using only
+  the public SDK surface.
+- **Warm-pool decoys** (`warming.rs`) are this project's own answer to "host decoy
+  destinations so they stay live" — the user's own SDK-managed pool, not a dependency on
+  an external tool. It closes destination-history and token-holdings; it does not
+  diversify who funds the pool, so funding-graph remains open regardless (`THREAT_MODEL
+  §4.7`) — an external, mature multi-party account-cooker/mirror-pool is still what would
+  close that specific residual.
 
 ## What lives where (invariant → enforcement)
 

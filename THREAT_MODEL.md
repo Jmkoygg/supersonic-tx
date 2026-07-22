@@ -171,6 +171,56 @@ one, and the harness must *test* each one.
    own distinct sink in a separate transaction, so no group forms and the advantage drops to
    **0 at every K**. Full unlinkability across time still benefits from keeping decoys live
    (an `account-cooker`); we state that remaining gap rather than claim it closed.
+7. **Destination-history, funding-graph, and token-holdings (the "does this address have
+   a past?" tells).** A real payee is usually an address with prior activity: it has
+   received before, was itself funded by someone, and often already holds other tokens.
+   A freshly-derived decoy has none of that — an attacker who just asks "which of these
+   K destinations already existed, was funded by someone else, or holds tokens?"
+   identifies the real leg almost for free. This is, honestly, the strongest attack
+   against the tool used in isolation, and this is where the three sub-channels split:
+
+   - **Destination-history (signature depth) — CLOSED by a shipped mechanism.**
+     `DecoyMode::WarmPool` (`sdk/src/warming.rs`) draws decoy destinations from a pool of
+     addresses the user can pre-warm (`supersonic warm`) with real, small round-trip
+     transfers, so they carry genuine prior signatures before ever being cast as a decoy.
+     Measured against **377 real, passively-observed mainnet addresses**
+     (`harness/fixtures/mainnet_profiles.json`, `harness/src/mainnet_channel.rs`), evaluated
+     only on the fixture's `held_out` split (see below) — advantage drops from the naive
+     baseline (naive ≈ `1 − 1/K`, e.g. +0.9375 at K=16) to essentially 0 in the warmed
+     regime. See `PROOF.md §3f`.
+   - **Token-holdings — CLOSED by the same shipped mechanism.** `supersonic warm` also
+     opens a real wSOL associated token account per pool slot (`cli/src/main.rs`), so a
+     warmed decoy holds a token account the way ~64% of real payees in our sample do.
+     Measured the same way (mainnet fixture, held-out split); naive baseline
+     +0.31 (K=2) to +0.61 (K=16), warmed regime ≈ 0. **Residual, stated not hidden:**
+     every warmed slot gets the *same* mint (wSOL) and is left at zero balance — an
+     attacker who looks past the raw account *count* (which is what this channel
+     measures) toward mint diversity or non-zero balances would still find a
+     fingerprint distinguishing a warmed decoy from an organically-active address. The
+     count-based channel is closed; a richer token-behavior channel is not measured
+     here and remains open.
+   - **Funding-graph — NOT closed. Measured, and left open on purpose.** Every
+     `DecoyMode::WarmPool` slot is funded by the *same* wallet (the user's own signer).
+     A real payee's own funding history is far more varied. We measure this
+     (`distinct_funders_lower_bound` in the mainnet fixture, a coarse single-page proxy —
+     see the collector's own documented limits) and report it honestly: the "warm"
+     number in `PROOF.md`/the harness output is an **idealized ceiling** (what a pool
+     with genuinely diverse funders would achieve), not what the shipped mechanism
+     produces. **The shipped `supersonic warm` does not diversify funder identity, and
+     this channel remains open** — an attacker correlating decoys by fee-payer across
+     bundles from the same signer would still find the tell. Closing this for real needs
+     a genuinely external source of funding diversity (a mature, multi-party
+     `account-cooker` or `mirror-pool`-style crowd, which does not exist yet to integrate
+     with) — not something a single user's own wallet can produce alone, however it's
+     used.
+
+   **Calibration/held-out split.** All three mainnet-fixture measurements above draw
+   `naive`/`warm` samples only from the fixture's `held_out` partition, assigned by a
+   stable hash of the pubkey **at collection time**, before any measurement
+   (`collect_mainnet_profiles.rs`). The `calibration` partition is reserved for whatever
+   mechanism eventually *fits* something to the data (e.g. a smarter warm-pool matched to
+   a target profile distribution) — kept structurally separate from what *evaluates* it,
+   so a future fitting step can't be graded on the same data it was tuned against.
 
 ## 5. Invariants the on-chain program MUST enforce (testable)
 
@@ -206,7 +256,12 @@ one, and the harness must *test* each one.
   closed — revert the entire bundle — never move funds partially.
 
 These four are written as program tests (`programs/supersonic-tx/tests/invariants.rs`)
-and re-checked from scratch by `auditor-zero`.
+and re-checked from scratch by `auditor-zero`. The same four are additionally proven
+against `bench/pinocchio-router` — a minimal-attack-surface Pinocchio reimplementation
+of the identical logic (`harness/tests/pinocchio_invariants.rs`, via Mollusk) — so both
+implementations are held to the same bar, not just the one that's deployed. The
+Pinocchio program is not deployed anywhere and does not replace the live Anchor
+deployment; it's offered as an option, tested to the same standard.
 
 ## 6. Explicit non-goals and limitations (what this does NOT do)
 
@@ -222,6 +277,10 @@ An auditor reads this section first. We are deliberately honest about the edges.
   over time with unlimited compute** — repeated use leaks a behavioral prior. We can
   raise the cost, not reduce it to zero. The metric is per-bundle ambiguity, and we
   state the multi-bundle limitation plainly.
+- **Does not close the funding-graph channel.** `DecoyMode::WarmPool` closes
+  destination-history and token-holdings (§4.7) but every warmed decoy is still funded
+  by the same wallet as the user — a fee-payer correlation attack across bundles is not
+  defended against by anything shipped today.
 - **Does not protect against key compromise, RPC-level logging correlation, or a
   malicious wallet.** We recommend private/self-hosted RPC for the send path and note
   this as an operational assumption.
