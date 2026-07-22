@@ -214,6 +214,13 @@ one, and the harness must *test* each one.
      with) — not something a single user's own wallet can produce alone, however it's
      used.
 
+     **This is stated as the frontier of the problem, not just of this tool.** As of this
+     writing, no submission to this bounty — across `supersonic-tx`, `account-cooker`, or
+     `mirror-pool` — closes funding-graph either; it requires a mature multi-party crowd
+     that doesn't exist yet in any of the three tracks. We name that explicitly, rather
+     than leave it to be discovered later, because the honest state of the art is a fact
+     worth stating plainly, not a gap to imply we didn't notice.
+
    **Calibration/held-out split.** All three mainnet-fixture measurements above draw
    `naive`/`warm` samples only from the fixture's `held_out` partition, assigned by a
    stable hash of the pubkey **at collection time**, before any measurement
@@ -286,6 +293,14 @@ An auditor reads this section first. We are deliberately honest about the edges.
   this as an operational assumption.
 - **Costs money to use.** Real decoys mean real fees + slippage. This is inherent to
   defeating the balance-delta filter, not an implementation flaw.
+- **Hardening gaps, stated plainly, not fixed:** `master_seed` and derived keypairs are
+  not zeroized from process memory; `supersonic warm` doesn't show a cost estimate
+  before spending (below its sanity cap); Associated Token Account rent it opens isn't
+  reclaimable by any command today; the deployed devnet program's bytecode has not been
+  verified byte-for-byte against a reproducible build (same size, different hash than a
+  fresh local build — consistent with known SBF toolchain non-determinism, not confirmed
+  either way). None of these are fund-safety issues on their own; all are listed in
+  [`SECURITY.md`](./SECURITY.md), not left for a reader to find independently.
 
 ## 7. Legal posture (why this is not a mixer)
 

@@ -283,9 +283,22 @@ On the core on-chain program, both checklist rounds came back clean: no PDAs, no
 accounts, no financial arithmetic beyond passing `amount` straight to a CPI transfer — the
 small, neutral-router design means most of the checklist is structurally not-applicable
 rather than passed by luck. Full findings, including CLI/opsec notes not repeated here
-(upgrade authority is a single key, no `SECURITY.md` — both expected at this devnet/bounty
-stage, not hidden), are summarized in this section rather than a separate report, per this
-project's practice of keeping evidence in the same document a reader already has open.
+(upgrade authority is a single key — expected at this devnet/bounty stage, not hidden),
+are summarized in this section rather than a separate report, per this project's practice
+of keeping evidence in the same document a reader already has open. `SECURITY.md` and
+`THREAT_MODEL.md §6` now list every hardening gap the audit surfaced, resolved or not.
+
+**Reproducible-build check, attempted and reported honestly (§3g close-out).** The audit
+flagged the deployed program's bytecode as never independently verified against source.
+We checked: `anchor build` from a clean `target/` produces a `.so` of the identical size
+(182,296 bytes — the same figure `BENCHMARK.md` cites) as `solana program dump
+BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn` returns for the live devnet deployment, but
+a **different SHA-256 hash**. Same size, different hash is consistent with known SBF
+toolchain build non-determinism (embedded build metadata/build-id, not necessarily
+different logic) — it is not evidence of a source mismatch, but it does not *prove*
+identity either, and we're not claiming more than we checked. A byte-exact verified
+build (`solana-verify` / Ellipsis Labs' pipeline, Docker-pinned toolchain) is the correct
+next step and has not been run. Stated in `SECURITY.md`, not left as an implied "verified."
 
 ## 4. Third-party-verifiable references
 

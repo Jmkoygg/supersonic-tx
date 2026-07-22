@@ -256,6 +256,7 @@ THREAT_MODEL.md           adversaries, observability, metric, invariants
 ARCHITECTURE.md           component design and boundaries
 PROOF.md                  evidence: tests, live devnet txs, measured advantage
 BENCHMARK.md              Anchor vs Pinocchio: measured binary size / deploy rent
+SECURITY.md               how to report an issue, and every stated hardening gap
 ```
 
 ## License
