@@ -3,7 +3,8 @@
 `supersonic-tx` is devnet-validated software from a Superteam Brasil bounty submission,
 not an audited production system. Read [`THREAT_MODEL.md`](./THREAT_MODEL.md) for the
 adversary model and [`PROOF.md §3g`](./PROOF.md) for the independent audit that has run
-against this code so far (`solanabr/auditor-skill`, two rounds, two real findings fixed).
+against this code so far (`solanabr/auditor-skill`, three rounds, three real findings
+fixed — including the local-storage plaintext issue below).
 
 ## Reporting a vulnerability
 
@@ -27,6 +28,22 @@ holds itself to (`PROOF.md`).
 The channels and limitations documented in `THREAT_MODEL.md §6` and `§4.7` — most
 notably that the funding-graph channel is not closed by anything shipped here — are
 known, not vulnerabilities to report. See those documents before filing.
+
+## Fixed findings
+
+- **Local bundle records were stored as plaintext JSON** (`~/.supersonic/bundles.json`),
+  including `real_index` (which leg of each sent bundle was real) and the real
+  destination — exactly what the rest of this tool exists to hide, readable by anything
+  with local file access (shared machine, cloud backup sync, forensic image, malware),
+  with no on-chain adversary needed at all. Found by `solanabr/auditor-skill` round 3.
+  **Fixed:** every record is now encrypted at rest (ChaCha20-Poly1305, key derived from
+  the wallet, same trust boundary as the recovery secret itself; random nonce per
+  record) before it touches disk, and the store file/directory permissions are
+  restricted to the owner (`0600`/`0700` on Unix) as defense in depth. Verified: a
+  dedicated test (`cli/src/main.rs :: tests::local_record_is_encrypted_and_round_trips`)
+  asserts the real destination and `real_index` do not appear as plaintext bytes
+  anywhere in what's written to disk, that a different wallet's derived key cannot
+  decrypt another wallet's records, and that nonces never repeat under the same key.
 
 ## Known, stated hardening gaps (not fixed, not hidden)
 

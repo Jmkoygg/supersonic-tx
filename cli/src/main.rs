@@ -4,14 +4,23 @@
 //! The master recovery secret is derived from your wallet key, so no extra secret
 //! to manage: the same wallet that sends a bundle can always recover its decoys.
 //! Per-bundle metadata is stored locally under `~/.supersonic/bundles.json` so you
-//! can inspect and audit what you sent.
+//! can inspect and audit what you sent — **encrypted** (ChaCha20-Poly1305, keyed by
+//! a hash of your wallet, same trust boundary as the recovery secret itself). This
+//! file otherwise contains exactly what the whole rest of this tool exists to hide
+//! per bundle (`real_index`, the real destination) — SECURITY.md documents this as
+//! a fixed gap, not left silently in cleartext.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Result};
+use chacha20poly1305::{
+    aead::{Aead, KeyInit},
+    ChaCha20Poly1305, Nonce,
+};
 use clap::{Parser, Subcommand};
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use solana_client::rpc_client::RpcClient;
@@ -209,7 +218,7 @@ fn main() -> Result<()> {
             println!("\n[ok] sent bundle {bundle_id}");
             println!("   signature: {sig}");
             println!("   explorer:  https://explorer.solana.com/tx/{sig}?cluster=devnet");
-            record_bundle(&plan, a, &sig.to_string())?;
+            record_bundle(&master_seed, &plan, a, &sig.to_string())?;
         }
         Cmd::Recover {
             bundle_id,
@@ -219,7 +228,8 @@ fn main() -> Result<()> {
             pool_size,
         } => {
             let client = rpc(&cli.rpc);
-            let (decoy_mode, pool_size) = resolve_recover_mode(*bundle_id, *decoy_mode, *pool_size);
+            let (decoy_mode, pool_size) =
+                resolve_recover_mode(&master_seed, *bundle_id, *decoy_mode, *pool_size);
             recover(
                 &client,
                 &keypair,
@@ -233,7 +243,7 @@ fn main() -> Result<()> {
                 },
             )?;
         }
-        Cmd::Inspect { bundle_id } => inspect(*bundle_id)?,
+        Cmd::Inspect { bundle_id } => inspect(&master_seed, *bundle_id)?,
         Cmd::Warm { pool_size, rounds } => {
             let client = rpc(&cli.rpc);
             warm_pool(&client, &keypair, &master_seed, *pool_size, *rounds)?;
@@ -405,6 +415,7 @@ fn send_bundle(
 /// otherwise fall back to what was recorded locally at send time; otherwise
 /// `Fresh` (today's default, and what every record predating this field used).
 fn resolve_recover_mode(
+    master_seed: &[u8; 32],
     bundle_id: u64,
     decoy_mode: Option<DecoyModeArg>,
     pool_size: Option<u32>,
@@ -413,7 +424,11 @@ fn resolve_recover_mode(
         return (m, pool_size.unwrap_or(32));
     }
     let s = load_store();
-    match s.bundles.get(&bundle_id) {
+    match s
+        .bundles
+        .get(&bundle_id)
+        .and_then(|enc| decrypt_record(master_seed, enc).ok())
+    {
         Some(r) => (r.decoy_mode, r.pool_size.max(1)),
         None => (DecoyModeArg::Fresh, 0),
     }
@@ -535,11 +550,28 @@ fn recover_dispersed(
 }
 
 // ----- local record keeping -----
+//
+// Per-bundle records contain exactly what the rest of this tool exists to hide
+// (`real_index`, the real destination) — so they're encrypted at rest, not just
+// written as plain JSON. Key is derived from the wallet (same trust boundary as
+// the recovery secret: whoever holds the keypair can already derive/recover
+// everything anyway); nonce is random per record, stored alongside the
+// ciphertext (never secret, must never repeat under the same key — random
+// 96-bit is enough at this volume). `bundle_id`/`next_id` stay in cleartext as
+// map keys — they're just counters, not sensitive on their own.
+
+const KDF_LOCAL_STORE: &[u8] = b"supersonic-tx/local-store/v1";
 
 #[derive(Serialize, Deserialize, Default)]
 struct Store {
     next_id: u64,
-    bundles: BTreeMap<u64, Record>,
+    bundles: BTreeMap<u64, EncryptedRecord>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct EncryptedRecord {
+    nonce: Vec<u8>,
+    ciphertext: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -563,6 +595,36 @@ fn default_decoy_mode() -> DecoyModeArg {
     DecoyModeArg::Fresh
 }
 
+fn local_store_cipher(master_seed: &[u8; 32]) -> ChaCha20Poly1305 {
+    let mut h = Sha256::new();
+    h.update(KDF_LOCAL_STORE);
+    h.update(master_seed);
+    let key: [u8; 32] = h.finalize().into();
+    ChaCha20Poly1305::new((&key).into())
+}
+
+fn encrypt_record(master_seed: &[u8; 32], record: &Record) -> Result<EncryptedRecord> {
+    let plaintext = serde_json::to_vec(record)?;
+    let mut nonce_bytes = [0u8; 12];
+    rand::thread_rng().fill_bytes(&mut nonce_bytes);
+    let nonce = Nonce::from_slice(&nonce_bytes);
+    let ciphertext = local_store_cipher(master_seed)
+        .encrypt(nonce, plaintext.as_ref())
+        .map_err(|e| anyhow!("encrypt local record: {e}"))?;
+    Ok(EncryptedRecord {
+        nonce: nonce_bytes.to_vec(),
+        ciphertext,
+    })
+}
+
+fn decrypt_record(master_seed: &[u8; 32], enc: &EncryptedRecord) -> Result<Record> {
+    let nonce = Nonce::from_slice(&enc.nonce);
+    let plaintext = local_store_cipher(master_seed)
+        .decrypt(nonce, enc.ciphertext.as_ref())
+        .map_err(|e| anyhow!("decrypt local record (wrong wallet?): {e}"))?;
+    Ok(serde_json::from_slice(&plaintext)?)
+}
+
 fn store_path() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
     PathBuf::from(home).join(".supersonic").join("bundles.json")
@@ -580,8 +642,26 @@ fn save_store(s: &Store) -> Result<()> {
     let p = store_path();
     if let Some(dir) = p.parent() {
         std::fs::create_dir_all(dir)?;
+        restrict_permissions(dir, 0o700)?;
     }
     std::fs::write(&p, serde_json::to_string_pretty(s)?)?;
+    restrict_permissions(&p, 0o600)?;
+    Ok(())
+}
+
+/// Best-effort on Unix (WSL/Linux/macOS, this project's actual deployment
+/// target); a no-op on platforms without POSIX permission bits. Defense in
+/// depth alongside encryption — encryption protects the file's *contents* if
+/// it leaks (backup, forensic image, exfiltration); this narrows *who on this
+/// machine* can read it at all.
+#[cfg(unix)]
+fn restrict_permissions(path: &std::path::Path, mode: u32) -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))?;
+    Ok(())
+}
+#[cfg(not(unix))]
+fn restrict_permissions(_path: &std::path::Path, _mode: u32) -> Result<()> {
     Ok(())
 }
 
@@ -593,28 +673,27 @@ fn next_bundle_id() -> u64 {
     id
 }
 
-fn record_bundle(plan: &BundlePlan, a: &PlanArgs, sig: &str) -> Result<()> {
+fn record_bundle(master_seed: &[u8; 32], plan: &BundlePlan, a: &PlanArgs, sig: &str) -> Result<()> {
     let mut s = load_store();
-    s.bundles.insert(
-        plan.bundle_id,
-        Record {
-            bundle_id: plan.bundle_id,
-            to: a.to.clone(),
-            amount_sol: a.amount,
-            k: a.k,
-            real_index: plan.real_index,
-            signature: sig.to_string(),
-            decoy_mode: a.decoy_mode,
-            pool_size: a.pool_size,
-        },
-    );
+    let record = Record {
+        bundle_id: plan.bundle_id,
+        to: a.to.clone(),
+        amount_sol: a.amount,
+        k: a.k,
+        real_index: plan.real_index,
+        signature: sig.to_string(),
+        decoy_mode: a.decoy_mode,
+        pool_size: a.pool_size,
+    };
+    s.bundles
+        .insert(plan.bundle_id, encrypt_record(master_seed, &record)?);
     if plan.bundle_id >= s.next_id {
         s.next_id = plan.bundle_id + 1;
     }
     save_store(&s)
 }
 
-fn inspect(bundle_id: Option<u64>) -> Result<()> {
+fn inspect(master_seed: &[u8; 32], bundle_id: Option<u64>) -> Result<()> {
     let s = load_store();
     let show = |r: &Record| {
         println!(
@@ -624,15 +703,16 @@ fn inspect(bundle_id: Option<u64>) -> Result<()> {
     };
     match bundle_id {
         Some(id) => match s.bundles.get(&id) {
-            Some(r) => show(r),
+            Some(enc) => show(&decrypt_record(master_seed, enc)?),
             None => println!("no local record for bundle {id}"),
         },
         None => {
             if s.bundles.is_empty() {
                 println!("no bundles recorded yet");
             }
-            for r in s.bundles.values() {
-                show(r);
+            for enc in s.bundles.values() {
+                let r = decrypt_record(master_seed, enc)?;
+                show(&r);
             }
         }
     }
@@ -658,4 +738,71 @@ fn derive_master_seed(kp: &Keypair) -> [u8; 32] {
     h.update(MASTER_TAG);
     h.update(kp.to_bytes()); // 64-byte secret+pubkey; never leaves this machine
     h.finalize().into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_record() -> Record {
+        Record {
+            bundle_id: 7,
+            to: "GhaNhctXJ5K1T2Ebe16X64D2S6a4qpTF3H4MNUkS5PUt".to_string(),
+            amount_sol: 0.02,
+            k: 8,
+            real_index: 3,
+            signature: "somesignature".to_string(),
+            decoy_mode: DecoyModeArg::Fresh,
+            pool_size: 0,
+        }
+    }
+
+    /// The bug class this module exists to prevent: a local record must not be
+    /// readable as plaintext JSON on disk, and must decrypt correctly for the
+    /// wallet that wrote it.
+    #[test]
+    fn local_record_is_encrypted_and_round_trips() {
+        let seed = [42u8; 32];
+        let record = sample_record();
+        let enc = encrypt_record(&seed, &record).unwrap();
+
+        // The point of this test: the real_index/to that everything else in
+        // this tool exists to hide must not appear as plaintext bytes in what
+        // gets written to disk.
+        assert!(!enc.ciphertext.windows(8).any(|w| w == b"real_ind"));
+        assert!(!enc
+            .ciphertext
+            .windows(record.to.len())
+            .any(|w| w == record.to.as_bytes()));
+
+        let decrypted = decrypt_record(&seed, &enc).unwrap();
+        assert_eq!(decrypted.bundle_id, record.bundle_id);
+        assert_eq!(decrypted.to, record.to);
+        assert_eq!(decrypted.real_index, record.real_index);
+        assert_eq!(decrypted.signature, record.signature);
+    }
+
+    #[test]
+    fn wrong_wallet_cannot_decrypt() {
+        let enc = encrypt_record(&[1u8; 32], &sample_record()).unwrap();
+        assert!(
+            decrypt_record(&[2u8; 32], &enc).is_err(),
+            "a different wallet's derived key must not decrypt another wallet's records"
+        );
+    }
+
+    #[test]
+    fn nonce_is_random_per_record_not_reused() {
+        let seed = [9u8; 32];
+        let a = encrypt_record(&seed, &sample_record()).unwrap();
+        let b = encrypt_record(&seed, &sample_record()).unwrap();
+        assert_ne!(
+            a.nonce, b.nonce,
+            "reused nonces under the same key break AEAD security"
+        );
+        assert_ne!(
+            a.ciphertext, b.ciphertext,
+            "identical plaintext + fresh nonce must not produce identical ciphertext"
+        );
+    }
 }

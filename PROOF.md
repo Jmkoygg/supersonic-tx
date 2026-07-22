@@ -36,21 +36,22 @@ compile with zero errors.
 > resolved it upstream, and CI now pins that and runs `cargo clippy --workspace
 > --all-targets -- -D warnings` on every push** — clean, not just "not disabled."
 
-## 2. Automated tests — 45 passing, 0 failing
+## 2. Automated tests — 48 passing, 0 failing
 
 ```
 $ cargo test --workspace
-   supersonic-cli   (warm-sweep fee-payer regression): 1 passed
-   supersonic-harness                                : 3 passed
-   supersonic-harness (mollusk_cu_bench)              : 2 passed
-   supersonic-harness (pinocchio_invariants, Mollusk) : 8 passed
-   supersonic-sdk (lib, incl. 5 warming.rs tests)     : 17 passed
-   supersonic-sdk (properties)                        : 5 passed   (proptest, 400 cases each)
-   supersonic-tx (lib)                                : 1 passed
-   supersonic-tx (invariants)                         : 8 passed
+   supersonic-cli   (warm-sweep fee-payer regression) : 1 passed
+   supersonic-cli   (local-store encryption, §3g)      : 3 passed
+   supersonic-harness                                 : 3 passed
+   supersonic-harness (mollusk_cu_bench)               : 2 passed
+   supersonic-harness (pinocchio_invariants, Mollusk)  : 8 passed
+   supersonic-sdk (lib, incl. 5 warming.rs tests)      : 17 passed
+   supersonic-sdk (properties)                         : 5 passed   (proptest, 400 cases each)
+   supersonic-tx (lib)                                 : 1 passed
+   supersonic-tx (invariants)                          : 8 passed
 ```
 
-**Total: 45 passed, 0 failed** (up from 31 in the previous round). The 8 Anchor invariant
+**Total: 48 passed, 0 failed** (up from 31 two rounds ago, 45 last round). The 8 Anchor invariant
 tests map 1:1 to the threat-model invariants (atomicity, fail-closed, bounds, real value
 movement) — and the same 8 are now also proven against `bench/pinocchio-router` via
 Mollusk (`harness/tests/pinocchio_invariants.rs`), not just size-benchmarked. The SDK unit
@@ -253,8 +254,10 @@ pool for both regimes.
 We ran the real checklist from the bounty judge's own published audit framework
 (`solanabr/auditor-skill` — checklists 01/account-validation, 02/access-control,
 03/arithmetic-safety, 04/CPI-PDA, 07/opsec, plus the known-vectors index) against this
-code, twice: once after the mainnet-channel/warm-pool work landed, and again after fixing
-what the first pass found.
+code, three times: after the mainnet-channel/warm-pool work landed, again after fixing
+what the first pass found, and a third time specifically hunting for anything the first
+two — focused on the on-chain program and the `warm` transaction logic — might have
+missed by staying inside that scope.
 
 **Round 1 found a real bug we introduced:** `supersonic warm`'s sweep-back transaction
 used the wrong fee-payer (the pool-slot keypair itself), which is mathematically
@@ -279,14 +282,30 @@ fixed): the CLI's warm-completion message pointed to `THREAT_MODEL.md` for "the 
 scope," but that document didn't yet mention `warm` at all — a broken reference, now
 resolved (`THREAT_MODEL.md §4.7`).
 
-On the core on-chain program, both checklist rounds came back clean: no PDAs, no token
-accounts, no financial arithmetic beyond passing `amount` straight to a CPI transfer — the
-small, neutral-router design means most of the checklist is structurally not-applicable
-rather than passed by luck. Full findings, including CLI/opsec notes not repeated here
-(upgrade authority is a single key — expected at this devnet/bounty stage, not hidden),
-are summarized in this section rather than a separate report, per this project's practice
-of keeping evidence in the same document a reader already has open. `SECURITY.md` and
-`THREAT_MODEL.md §6` now list every hardening gap the audit surfaced, resolved or not.
+**Round 3 found what the first two missed by scope, not by depth:** both prior rounds
+focused on the on-chain program and the `warm` transaction logic. Round 3 looked at local
+state and found `~/.supersonic/bundles.json` stored every sent bundle's `real_index` and
+real destination as **plaintext JSON** with default file permissions — exactly the fact
+the entire rest of this tool exists to hide, readable by anything with local file access
+(shared machine, cloud backup sync, forensic image, malware), with no on-chain adversary
+required at all. `recover()` doesn't even read `real_index` — it was persisted purely for
+`inspect`'s convenience, at a real cost. **Fixed:** records are now encrypted at rest
+(ChaCha20-Poly1305, key derived from the wallet — same trust boundary as the recovery
+secret) with a random nonce per record, plus restrictive file permissions
+(`0600`/`0700`) as defense in depth. Three new tests
+(`cli/src/main.rs :: tests`) lock this: the real destination/`real_index` provably don't
+appear as plaintext bytes in what's written to disk, a different wallet's key can't
+decrypt another wallet's records, and nonces don't repeat. Full detail: `SECURITY.md`.
+
+On the core on-chain program, all three checklist rounds came back clean: no PDAs, no
+token accounts, no financial arithmetic beyond passing `amount` straight to a CPI transfer
+— the small, neutral-router design means most of the checklist is structurally
+not-applicable rather than passed by luck. Full findings, including CLI/opsec notes not
+repeated here (upgrade authority is a single key — expected at this devnet/bounty stage,
+not hidden), are summarized in this section rather than a separate report, per this
+project's practice of keeping evidence in the same document a reader already has open.
+`SECURITY.md` and `THREAT_MODEL.md §6` list every hardening gap the audit surfaced,
+resolved or not.
 
 **Reproducible-build check, attempted and reported honestly (§3g close-out).** The audit
 flagged the deployed program's bytecode as never independently verified against source.
@@ -321,7 +340,7 @@ currently-live pair (§3b–3c show the exact commands).
 
 ## 5. What this proves
 
-- **The program does what it claims, safely — twice.** 45 tests, including 8 invariant
+- **The program does what it claims, safely — twice.** 48 tests, including 8 invariant
   tests over arbitrary-input properties, show the router executes multi-destination
   bundles atomically and **fails closed** on every malformed input (§2). The same 8
   invariants are now also proven against the Pinocchio implementation (§3f context,
