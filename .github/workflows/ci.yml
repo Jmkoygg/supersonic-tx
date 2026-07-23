@@ -45,7 +45,10 @@ jobs:
       - name: Build on-chain program (produces .so for the invariant tests)
         run: anchor build
 
-      - name: Test workspace (31 unit/integration/property/bench tests)
+      - name: Build Pinocchio bench program (produces the .so for pinocchio_invariants)
+        run: cd bench/pinocchio-router && cargo build-sbf
+
+      - name: Test workspace (unit/integration/property/bench/pinocchio-invariant tests)
         run: cargo test --workspace
 
       - name: Reproduce the adversarial proof numbers
