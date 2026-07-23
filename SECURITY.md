@@ -66,6 +66,26 @@ known, not vulnerabilities to report. See those documents before filing.
   (`with_store_lock`, via `fd-lock`). Verified:
   `cli/src/main.rs :: tests::next_bundle_id_unique_under_concurrent_callers`, and
   independently re-verified in round 5.
+- **`send --decoy-mode warm-pool` derived decoys from pool slots without checking they'd
+  ever actually been warmed** — a pool that was never run through `supersonic warm` (or
+  warmed below the slots this bundle selects) would silently produce decoys with no real
+  on-chain history, leaking exactly the destination-history tell the warm-pool mechanism
+  exists to close. Found by an independent live-review pass against devnet (not an
+  `auditor-skill` round). **Fixed:** `ensure_warm_pool_slots_are_warmed` now queries
+  `getSignaturesForAddress` for every selected slot before `send` proceeds, and fails
+  closed with an actionable error (naming the cold slot, its pubkey, and the exact
+  `supersonic warm` command to fix it) instead of leaking silently. The check runs at
+  `send` time, not `plan` time, so `plan` stays fully offline. Verified live against
+  devnet (a cold 47-slot pool was rejected before spending anything; the same pool
+  succeeded immediately after warming) and by
+  `cli/src/main.rs :: tests::check_warm_pool_slots_have_history_fails_closed_on_a_single_cold_slot`.
+- **`inspect` (no `--bundle-id` filter) aborted the entire listing if a single local
+  record was corrupted or undecryptable**, hiding every other bundle's record along with
+  it. Found by the same live-review pass. **Fixed:** a per-record decrypt failure now
+  prints a `[warn] ... skipping` line and the listing continues; the `--bundle-id <id>`
+  single-record path is unchanged. Verified:
+  `cli/src/main.rs :: tests::list_all_lines_skips_corrupted_record_instead_of_aborting`
+  (also asserts the corrupted record's plaintext fields never leak into the warning).
 
 ## Known, stated hardening gaps (not fixed, not hidden)
 
