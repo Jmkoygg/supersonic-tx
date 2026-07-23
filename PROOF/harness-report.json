@@ -68,7 +68,13 @@
       "naive_history_advantage": 0.5,
       "prewarmed_history_advantage": -0.009624999999999995,
       "naive_history_measured_advantage": 0.5,
-      "prewarmed_history_measured_advantage": -0.0017499999999999738
+      "prewarmed_history_measured_advantage": -0.0017499999999999738,
+      "naive_mainnet_history_advantage": 0.5,
+      "prewarmed_mainnet_history_advantage": -0.009500000000000008,
+      "naive_mainnet_funding_advantage": 0.5,
+      "prewarmed_mainnet_funding_advantage": -0.0022499999999999742,
+      "naive_mainnet_tokens_advantage": 0.292875,
+      "prewarmed_mainnet_tokens_advantage": -0.0027499999999999747
     },
     {
       "k": 4,
@@ -134,7 +140,13 @@
       "naive_history_advantage": 0.75,
       "prewarmed_history_advantage": 0.00824999999999998,
       "naive_history_measured_advantage": 0.75,
-      "prewarmed_history_measured_advantage": 0.005249999999999977
+      "prewarmed_history_measured_advantage": 0.005249999999999977,
+      "naive_mainnet_history_advantage": 0.75,
+      "prewarmed_mainnet_history_advantage": -0.0026249999999999885,
+      "naive_mainnet_funding_advantage": 0.75,
+      "prewarmed_mainnet_funding_advantage": 0.0036249999999999893,
+      "naive_mainnet_tokens_advantage": 0.449125,
+      "prewarmed_mainnet_tokens_advantage": 0.007500000000000007
     },
     {
       "k": 8,
@@ -200,7 +212,13 @@
       "naive_history_advantage": 0.875,
       "prewarmed_history_advantage": -0.0026250000000000023,
       "naive_history_measured_advantage": 0.875,
-      "prewarmed_history_measured_advantage": -0.0061250000000000054
+      "prewarmed_history_measured_advantage": -0.0061250000000000054,
+      "naive_mainnet_history_advantage": 0.875,
+      "prewarmed_mainnet_history_advantage": -0.0006250000000000006,
+      "naive_mainnet_funding_advantage": 0.875,
+      "prewarmed_mainnet_funding_advantage": -0.00037500000000000033,
+      "naive_mainnet_tokens_advantage": 0.531875,
+      "prewarmed_mainnet_tokens_advantage": -0.001125000000000001
     },
     {
       "k": 16,
@@ -266,7 +284,13 @@
       "naive_history_advantage": 0.9375,
       "prewarmed_history_advantage": 0.0027500000000000024,
       "naive_history_measured_advantage": 0.9375,
-      "prewarmed_history_measured_advantage": -0.0015000000000000013
+      "prewarmed_history_measured_advantage": -0.0015000000000000013,
+      "naive_mainnet_history_advantage": 0.9375,
+      "prewarmed_mainnet_history_advantage": 0.0002500000000000002,
+      "naive_mainnet_funding_advantage": 0.9375,
+      "prewarmed_mainnet_funding_advantage": 0.00037500000000000033,
+      "naive_mainnet_tokens_advantage": 0.565625,
+      "prewarmed_mainnet_tokens_advantage": 0.001125000000000001
     }
   ]
 }

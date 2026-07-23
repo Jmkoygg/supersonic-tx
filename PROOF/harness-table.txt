@@ -1,3 +1,5 @@
+    Finished `release` profile [optimized] target(s) in 0.95s
+     Running `target/release/supersonic-harness --n 8000 --seed 1 --out PROOF/harness-report.json`
 supersonic-tx — adversarial proof harness
 8000 bundles per train/test split · real amounts sampled log-uniform 0.001-100 SOL
 
@@ -8,19 +10,51 @@ supersonic-tx — adversarial proof harness
    8 |   0.125 | nonlinear_forest     |   +0.0182 | indistinguishable   |  +0.8750 ->  +0.0000
   16 |   0.062 | nonlinear_forest     |   +0.0073 | indistinguishable   |  +0.9375 ->  +0.0000
 
-  K  | destination-history channel (MODELED): naive -> account-cooker pre-warmed
------+----------------------------------------------------------------------------
-   2 |  +0.5000 ->  -0.0096
-   4 |  +0.7500 ->  +0.0082
-   8 |  +0.8750 ->  -0.0026
-  16 |  +0.9375 ->  +0.0028
+  K  | destination-history (MODELED): naive -> warm  | destination-history (MEASURED, real devnet): naive -> warm
+-----+-------------------------------------------------+-------------------------------------------------------------
+   2 |  +0.5000 ->  -0.0096                       |  +0.5000 ->  -0.0017
+   4 |  +0.7500 ->  +0.0082                       |  +0.7500 ->  +0.0052
+   8 |  +0.8750 ->  -0.0026                       |  +0.8750 ->  -0.0061
+  16 |  +0.9375 ->  +0.0028                       |  +0.9375 ->  -0.0015
 
 adv (test) = (attacker accuracy on held-out bundles) - 1/K.
 ~0 => the attacker does no better than a random guess (the goal).
 best attack now includes a nonlinear extra-trees ensemble (forest.rs) alongside logreg.
 consolidation = measured recovery-linkage advantage (consolidation.rs), naive sweep
 vs `recover --disperse`: dispersing each decoy to its own sink removes the linkage.
-destination-history = MODELED channel (destination.rs): fresh decoys leak the real leg;
-a companion account-cooker that pre-warms decoy destinations closes it (number, not promise).
+destination-history MODELED (destination.rs) = synthetic log-normal, regression reference.
+destination-history MEASURED = bootstrap-resampled from a real devnet fixture (harness/fixtures/devnet_history.json).
+Both regimes: a companion account-cooker that pre-warms decoy destinations closes the channel (number, not promise).
+
+  K  | mainnet destination-history: naive -> warm | mainnet funding-graph: naive -> warm | mainnet token-holdings: naive -> warm
+-----+---------------------------------------------+----------------------------------------+----------------------------------------
+   2 |  +0.5000 ->  -0.0095                 |  +0.5000 ->  -0.0022                    |  +0.2929 ->  -0.0027
+   4 |  +0.7500 ->  -0.0026                 |  +0.7500 ->  +0.0036                    |  +0.4491 ->  +0.0075
+   8 |  +0.8750 ->  -0.0006                 |  +0.8750 ->  -0.0004                    |  +0.5319 ->  -0.0011
+  16 |  +0.9375 ->  +0.0003                 |  +0.9375 ->  +0.0004                    |  +0.5656 ->  +0.0011
+
+mainnet channels above are MEASURED against real, passively-observed mainnet-beta
+addresses (harness/fixtures/mainnet_profiles.json), evaluated only on that fixture's
+
+IMPORTANT — what `--decoy-mode warm-pool` (`supersonic warm`) actually closes vs. what
+these numbers show: destination-history and token-holdings are closed by the SHIPPED
+mechanism (warm_pool creates real signature history AND a real token account per slot).
+Funding-graph's `warm` number above is an IDEALIZED ceiling — it resamples real aged
+addresses' actual funder diversity, which `warm_pool` does NOT reproduce: every pool slot
+is funded by the same wallet. This channel is NOT closed by the shipped mechanism; treat
+the funding-graph `warm` column as an aspirational target, not a claim. See THREAT_MODEL.md.
+`held_out` split — `calibration` is reserved for whatever mechanism (e.g. an SDK-side
+warming pool) fits something to the data, kept disjoint from what measures it.
+MEASURED fixture provenance: 28 addresses (cluster=devnet, collected_at=2026-07-19T23:12:42Z), 18 aged + 10 fresh_verified_zero.
+methodology: Self-collected against Solana devnet (no mature account-cooker exists yet to integrate with directly): each 'aged' address is a freshly-generated keypair, funded by a single real transfer from the project's deploy/dev wallet, then used as its own fee-payer for a random number of real system-program transfers (1000 lamports each) back to the deploy wallet. signature_count is the real length of getSignaturesForAddress for that pubkey after those transactions confirmed (includes the 1 funding transaction). fresh_verified_zero addresses are generated and never funded or used; signature_count is the real (independently re-verifiable, expected zero) result of the same RPC call against devnet. Every number here is a live RPC result at collection time, not assumed or modeled.
+  e.g. aged: 7qLtn8kiMcQUfP7YeRRiGX88LmEyb6ZE9e2YGCrjDRRS -> 10 real signatures (verify: solana transaction-history <ADDRESS> / explorer, cluster=devnet)
+  e.g. fresh: CaxTJqtPx1qaDT851u98DoLBLPYkhWHA1HRmEwFHH7fr -> 0 real signatures (independently re-verifiable)
+  full list: harness/fixtures/devnet_history.json
+
+MAINNET fixture provenance: 1206 addresses total (cluster=mainnet-beta, collected_at=2026-07-22T21:46:09Z (pass 1), 2026-07-22T22:39:38Z (pass 2)), 1066 aged + 140 fresh_verified_zero (531 aged + 75 fresh in the held_out split actually evaluated above; the rest is `calibration`, reserved).
+methodology: Passively observed against Solana mainnet-beta public RPC (https://api.mainnet-beta.solana.com); nothing was funded or transacted by this collector (read-only). Candidates were discovered by scanning recent finalized blocks via getBlock(transactionDetails=accounts) and selecting writable, non-signer accounts whose lamport balance increased in some transaction (a real payment received), without parsing instruction data. Candidates appearing as a receiver more than 2 times in the scanned window were dropped as likely hubs/exchanges/bots (a degree-based proxy, not a validated exchange-clustering heuristic — no Solana-specific published method for this was found). Each surviving candidate was verified to be a plain System-Program-owned, non-executable account via getAccountInfo, then profiled: signature_count_lower_bound/exact from a single getSignaturesForAddress page (capped at 1000 signatures — a lower bound, not exhaustive, for addresses with deeper history); earliest_funder_proxy is the fee payer of the oldest transaction within that page (a proxy for 'who funded this address', not a semantic transfer-source parse); token_account_count sums getTokenAccountsByOwner over both the SPL Token and Token-2022 program ids. fresh_verified_zero addresses are freshly generated keypairs, never funded or used, with signature and token-account counts independently re-verifiable as zero via the same RPC calls. Every number here is a live RPC result at collection time. split (calibration/held_out) is assigned from a stable hash of the pubkey at collection time, before any measurement, enabling an honest disjoint train/test split rather than reusing one pool for both regimes. Collected in two passes against different recent finalized-block windows (pass 1: --collected-at 2026-07-22T21:46:09Z --target-count 1400 --fresh-count 100, yielded 601 aged + 100 fresh; pass 2: --collected-at 2026-07-22T22:39:38Z --target-count 1600 --fresh-count 40, yielded 584 aged + 40 fresh), because a single pass's block-scan window yields only as many raw candidates as the discovery step happens to see before its want*3 over-collection threshold is hit, and only about 16% of raw candidates survive the owner/executable + profiling filters -- so reaching a larger target sample required sampling a second, later block window rather than one very long single scan. The two passes were merged and de-duplicated by pubkey (104 aged addresses were discovered in both passes' scan windows and appear once here, not double-counted; 0 fresh-keypair collisions, expected since each is freshly generated). Every field on every entry is still the live RPC result captured at that entry's own collection time; nothing was recomputed or synthesized during the merge.
+  e.g. aged: 53WnPKaaKw5NqFQkMff8GBP9wJXagbURkxg4r16HSnsU -> 15 sigs (lower bound if capped), funder=Some("Aw2W5R6JnK6KvuS6Pjh4WuSYJCKF2dDFxiSVMrrtv3Sb"), 4 token accounts, split=calibration (verify: solana transaction-history <ADDRESS>, cluster=mainnet-beta)
+  e.g. fresh: EMUQH6ESaJrsmWpocans9h9AQ7UUXYki5Pp3s5KDTDZS -> 0 sigs, 0 token accounts (independently re-verifiable)
+  full list: harness/fixtures/mainnet_profiles.json
 
 wrote machine-readable report to PROOF/harness-report.json

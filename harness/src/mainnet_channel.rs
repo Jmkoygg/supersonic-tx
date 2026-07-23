@@ -96,7 +96,10 @@ pub fn eval_mainnet_destination_history(
 /// decoy with none found. Scored from `distinct_funders_lower_bound`, which this
 /// collector's single-page proxy makes effectively binary (see
 /// `mainnet_fixture.rs`) — a coarser signal than a full funding-graph parse would
-/// give, stated as such, not smoothed over.
+/// give, stated as such, not smoothed over. In the current fixture it is in fact
+/// constant (`1`) across every `aged` entry — zero variance, not just low
+/// resolution — so this channel's numbers below are a modeled ceiling from a
+/// non-discriminating proxy, not output from a working classifier.
 pub fn eval_mainnet_funding_graph(
     bundles: &[Bundle],
     seed: u64,

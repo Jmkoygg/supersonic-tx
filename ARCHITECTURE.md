@@ -102,7 +102,7 @@ roundest/least-round, log-median outlier, fixed position) and measures
 attack on train, so the number can't be cherry-picked from noise). It also reports the
 honest naive-consolidation worst case, and — via `mainnet_channel.rs` /
 `mainnet_fixture.rs` — destination-history, funding-graph, and token-holdings measured
-against 377 real, passively-observed mainnet-beta addresses, evaluated only on a
+against 1,206 real, passively-observed mainnet-beta addresses, evaluated only on a
 `held_out` partition decided at collection time (`calibration` is reserved for whatever
 mechanism fits something to the data). Output is a table plus a machine-readable JSON
 that `PROOF.md` cites. `harness/tests/pinocchio_invariants.rs` additionally proves the

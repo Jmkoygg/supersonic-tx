@@ -70,10 +70,13 @@ fn dests(n: usize) -> Vec<Pubkey> {
     (0..n).map(|_| Keypair::new().pubkey()).collect()
 }
 
-/// Happy path: a single-leg bundle succeeds and the destination actually receives
-/// the lamports (economic reality — this is not a no-op).
+/// TooFewLegs: a single-leg bundle has no decoys — it would advertise "tool
+/// usage" without hiding anything, worse than a plain transfer. Rejected
+/// (fail-closed). This replaces the old `single_leg_succeeds_and_moves_value`
+/// test, which asserted the opposite (K=1 succeeding) before MIN_LEGS was
+/// enforced.
 #[test]
-fn single_leg_succeeds_and_moves_value() {
+fn single_leg_rejected() {
     let (mut svm, user) = setup();
     let d = dests(1);
     let res = send_bundle(
@@ -84,12 +87,7 @@ fn single_leg_succeeds_and_moves_value() {
         }],
         &d,
     );
-    assert!(res.is_ok(), "single-leg bundle should succeed: {res:?}");
-    assert_eq!(
-        svm.get_balance(&d[0]).unwrap_or(0),
-        LAMPORTS_PER_SOL,
-        "destination must actually receive the lamports (economic reality)"
-    );
+    assert!(res.is_err(), "single-leg bundle must be rejected");
 }
 
 /// Happy path: a realistic bundle (1 real leg + several decoys, all identical in

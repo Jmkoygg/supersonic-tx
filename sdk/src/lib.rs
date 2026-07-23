@@ -33,6 +33,7 @@ use solana_sdk::{
     signer::Signer,
     system_program,
 };
+use zeroize::Zeroize;
 
 pub mod amounts;
 pub mod warming;
@@ -158,8 +159,13 @@ fn bundle_rng(master_seed: &[u8; 32], bundle_id: u64) -> ChaCha20Rng {
     h.update(KDF_RNG);
     h.update(master_seed);
     h.update(bundle_id.to_le_bytes());
-    let seed: [u8; 32] = h.finalize().into();
-    ChaCha20Rng::from_seed(seed)
+    // Intermediate 32-byte RNG seed derived from `master_seed` — an owned local
+    // buffer, wiped explicitly once consumed by `ChaCha20Rng::from_seed` rather
+    // than left lingering in memory.
+    let mut seed: [u8; 32] = h.finalize().into();
+    let rng = ChaCha20Rng::from_seed(seed);
+    seed.zeroize();
+    rng
 }
 
 /// Derive the keypair for decoy destination `index` in `bundle_id`. Deterministic
@@ -171,9 +177,15 @@ pub fn derive_decoy_keypair(master_seed: &[u8; 32], bundle_id: u64, index: u32) 
     h.update(master_seed);
     h.update(bundle_id.to_le_bytes());
     h.update(index.to_le_bytes());
-    let seed: [u8; 32] = h.finalize().into();
+    // Intermediate 32-byte keypair seed derived from `master_seed` — wiped
+    // explicitly once consumed by `keypair_from_seed`. The resulting `Keypair`
+    // itself is out of scope here (external type, no `Zeroize` support — see
+    // SECURITY.md).
+    let mut seed: [u8; 32] = h.finalize().into();
     // keypair_from_seed accepts a >=32-byte seed and is fully deterministic.
-    keypair_from_seed(&seed).expect("32-byte seed is valid")
+    let kp = keypair_from_seed(&seed).expect("32-byte seed is valid");
+    seed.zeroize();
+    kp
 }
 
 /// Derive a per-decoy **dispersal sink** — a distinct user-controlled address that a
@@ -188,8 +200,11 @@ pub fn derive_sink_keypair(master_seed: &[u8; 32], bundle_id: u64, index: u32) -
     h.update(master_seed);
     h.update(bundle_id.to_le_bytes());
     h.update(index.to_le_bytes());
-    let seed: [u8; 32] = h.finalize().into();
-    keypair_from_seed(&seed).expect("32-byte seed is valid")
+    // Same treatment as `derive_decoy_keypair` above: wipe the intermediate seed.
+    let mut seed: [u8; 32] = h.finalize().into();
+    let kp = keypair_from_seed(&seed).expect("32-byte seed is valid");
+    seed.zeroize();
+    kp
 }
 
 /// Plan an intent-ambiguous bundle for a single real transfer.
@@ -428,6 +443,61 @@ mod tests {
             plan_bundle(&SEED, 1, dest, 0, 4, DecoyConfig::default()),
             Err(SdkError::ZeroRealAmount)
         ));
+    }
+
+    /// Regression for the `zeroize` hardening pass (SECURITY.md): wiping the
+    /// intermediate 32-byte KDF buffers in `bundle_rng`/`derive_decoy_keypair`/
+    /// `derive_sink_keypair` after they're consumed must not change what they
+    /// derive. These are golden values captured from the pre-`zeroize` code
+    /// path for `SEED`/`bundle_id=1`/`index=0` — if the derivation formula (tag
+    /// || master_seed || bundle_id || index, hashed once) ever drifts, this
+    /// fails loudly instead of silently reproducing a different recovery
+    /// address for existing users' already-sent bundles.
+    #[test]
+    fn derivation_matches_pre_zeroize_golden_values() {
+        let decoy = derive_decoy_keypair(&SEED, 1, 0);
+        assert_eq!(
+            decoy.pubkey().to_string(),
+            "7BrYEcjHsanWhBjuop2kHq5G8rpEUxTMgbJYAqpy9v3A"
+        );
+
+        let sink = derive_sink_keypair(&SEED, 1, 0);
+        assert_eq!(
+            sink.pubkey().to_string(),
+            "4QFqdYpFvHiWqqaUheSF6oT23wNAtH6yUyWMXwpS5CaF"
+        );
+
+        // bundle_rng is private; exercise it indirectly through plan_bundle,
+        // whose real_index/decoy amounts/destinations all flow through it.
+        let plan = plan_bundle(
+            &SEED,
+            1,
+            "GhaNhctXJ5K1T2Ebe16X64D2S6a4qpTF3H4MNUkS5PUt"
+                .parse()
+                .unwrap(),
+            1_337_000,
+            5,
+            DecoyConfig::default(),
+        )
+        .unwrap();
+        assert_eq!(plan.real_index, 0);
+        assert_eq!(
+            plan.amounts(),
+            vec![1337000, 1445000, 1411000, 3494000, 1979000]
+        );
+        assert_eq!(
+            plan.destinations()
+                .iter()
+                .map(|p| p.to_string())
+                .collect::<Vec<_>>(),
+            vec![
+                "GhaNhctXJ5K1T2Ebe16X64D2S6a4qpTF3H4MNUkS5PUt",
+                "7BrYEcjHsanWhBjuop2kHq5G8rpEUxTMgbJYAqpy9v3A",
+                "5dT7n437dMQzUx5CEQ7BBRsvyg5DwbcAAJeGNt6Ga5sw",
+                "5daavfRBW8WtsQnKLBBnhagyVNhFh1tCGk3WF9DKs54u",
+                "6zDUk2KUYkRnr6sytNTdqMiNtcX2zLYqtYx6PTrq6bXe",
+            ]
+        );
     }
 
     #[test]

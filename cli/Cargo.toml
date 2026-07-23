@@ -19,7 +19,10 @@ sha2 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 rand = { workspace = true }
+rand_chacha = { workspace = true }
 chacha20poly1305 = "0.10"
+fd-lock = "4"
+zeroize = { workspace = true }
 
 [dev-dependencies]
 litesvm = "0.6"

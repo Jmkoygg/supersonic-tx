@@ -16,3 +16,6 @@ rustc-ice-*.txt
 .xray/
 cargo_audit_full.txt
 *.ll
+
+# internal audit-cycle reports (auditor-skill runs) — process artifacts, superseded by AUDIT.md
+audit_*/

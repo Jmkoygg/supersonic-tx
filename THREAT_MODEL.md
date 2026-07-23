@@ -183,16 +183,36 @@ one, and the harness must *test* each one.
      `DecoyMode::WarmPool` (`sdk/src/warming.rs`) draws decoy destinations from a pool of
      addresses the user can pre-warm (`supersonic warm`) with real, small round-trip
      transfers, so they carry genuine prior signatures before ever being cast as a decoy.
-     Measured against **377 real, passively-observed mainnet addresses**
+     Measured against **1,206 real, passively-observed mainnet addresses**
      (`harness/fixtures/mainnet_profiles.json`, `harness/src/mainnet_channel.rs`), evaluated
      only on the fixture's `held_out` split (see below) — advantage drops from the naive
      baseline (naive ≈ `1 − 1/K`, e.g. +0.9375 at K=16) to essentially 0 in the warmed
      regime. See `PROOF.md §3f`.
+
+     **Round 4 correction, stated honestly.** juiz-cego found that, until this fix,
+     `warm_pool()` applied the exact same `--rounds` value to *every* slot, so every
+     warmed slot ended with an identical `rounds * 2` signature count — a uniform,
+     suspiciously round number repeated across the whole pool, which is itself a
+     detectable tell distinct from raw signature depth (an attacker observing several
+     decoys from the same pool would notice they all have exactly the same count). This
+     is now fixed: `cli/src/warm_profile.rs` derives a per-slot round-trip target from
+     the fixture's `calibration` split (186 addresses with a confirmed, non-capped exact
+     signature count — the other 349/535 calibration entries hit the collector's
+     1000-signature pagination cap and aren't a replicable, payable target), so
+     signature counts vary slot-to-slot instead of matching exactly. **What this closes
+     is the uniformity-as-a-tell, not a claim of statistical indistinguishability from
+     real mainnet magnitude.** 65% of that same calibration split hit the pagination cap,
+     i.e. real payees commonly carry far more signature history than a self-funded CLI
+     run doing real round trips can afford to replicate live (the calibration split's
+     median exact count is ~92 signatures — reaching the deeper end of that range live, at
+     the tool's default pool size, would blow well past the run's own sanity cap). What's
+     reproduced is *dispersion relative to* the round-trip budget the user already set via
+     `--rounds`, not the absolute scale of real mainnet history.
    - **Token-holdings — CLOSED by the same shipped mechanism.** `supersonic warm` also
      opens a real wSOL associated token account per pool slot (`cli/src/main.rs`), so a
-     warmed decoy holds a token account the way ~64% of real payees in our sample do.
+     warmed decoy holds a token account the way ~61% of real payees in our sample do.
      Measured the same way (mainnet fixture, held-out split); naive baseline
-     +0.31 (K=2) to +0.61 (K=16), warmed regime ≈ 0. **Residual, stated not hidden:**
+     +0.30 (K=2) to +0.56 (K=16), warmed regime ≈ 0. **Residual, stated not hidden:**
      every warmed slot gets the *same* mint (wSOL) and is left at zero balance — an
      attacker who looks past the raw account *count* (which is what this channel
      measures) toward mint diversity or non-zero balances would still find a
@@ -203,9 +223,13 @@ one, and the harness must *test* each one.
      `DecoyMode::WarmPool` slot is funded by the *same* wallet (the user's own signer).
      A real payee's own funding history is far more varied. We measure this
      (`distinct_funders_lower_bound` in the mainnet fixture, a coarse single-page proxy —
-     see the collector's own documented limits) and report it honestly: the "warm"
-     number in `PROOF.md`/the harness output is an **idealized ceiling** (what a pool
-     with genuinely diverse funders would achieve), not what the shipped mechanism
+     see the collector's own documented limits) and report it honestly. Stated precisely,
+     not just "coarse": this proxy is `1` for every one of the 1,066 `aged` entries in the
+     current fixture — zero variance, not merely low resolution, so it carries no
+     discriminating signal on its own in this sample. The "warm"
+     number in `PROOF.md`/the harness output is therefore an **idealized ceiling** (what a
+     pool with genuinely diverse funders would achieve if this proxy could see it), not
+     evidence from a working funder-diversity classifier and not what the shipped mechanism
      produces. **The shipped `supersonic warm` does not diversify funder identity, and
      this channel remains open** — an attacker correlating decoys by fee-payer across
      bundles from the same signer would still find the tell. Closing this for real needs
@@ -282,8 +306,27 @@ An auditor reads this section first. We are deliberately honest about the edges.
   (e.g., you posted your wallet publicly, or KYC ties it).
 - **Does not defend against a global adversary correlating across many of your bundles
   over time with unlimited compute** — repeated use leaks a behavioral prior. We can
-  raise the cost, not reduce it to zero. The metric is per-bundle ambiguity, and we
-  state the multi-bundle limitation plainly.
+  raise the cost, not reduce it to zero. The metric measured throughout this document
+  is **per-bundle** ambiguity (does the K-1 decoys hide the real leg *within one
+  bundle*), not cross-bundle unlinkability (can an observer who watches the same
+  signer cast many bundles over weeks build a profile that links them, or that skews
+  identification better than the per-bundle number suggests). We have not built or run
+  a multi-bundle adversary — no measured advantage number exists for this channel, and
+  we are explicit about that rather than implying a small per-bundle epsilon composes
+  safely across N observations (compounding, if it happens, is not bounded or
+  quantified here). One narrow piece of this *is* measured, and is worth naming
+  precisely rather than folding into the general disclaimer: `select_pool_slots`
+  (`sdk/src/warming.rs`) draws a distinct, bundle-seeded subset of the warm-pool per
+  bundle rather than a fixed prefix, and
+  `warming.rs::tests::selection_varies_across_bundles_not_a_fixed_prefix` checks over
+  500 bundles that this doesn't collapse onto a repeating group — closing the specific
+  "same decoy set reused every time" tell a naive pool implementation would have. That
+  is one component of the cross-bundle surface, not the whole channel: it says nothing
+  about whether amount patterns, timing, or fee-payer behavior across many bundles from
+  the same signer are themselves distinguishable in aggregate. Until that's measured,
+  the honest operational mitigation is procedural, not cryptographic: vary `K` and
+  timing across bundles rather than using an identical, clockwork pattern, since a
+  fixed cadence is itself a fingerprint no code change here can close.
 - **Does not close the funding-graph channel.** `DecoyMode::WarmPool` closes
   destination-history and token-holdings (§4.7) but every warmed decoy is still funded
   by the same wallet as the user — a fee-payer correlation attack across bundles is not
@@ -293,13 +336,17 @@ An auditor reads this section first. We are deliberately honest about the edges.
   this as an operational assumption.
 - **Costs money to use.** Real decoys mean real fees + slippage. This is inherent to
   defeating the balance-delta filter, not an implementation flaw.
-- **Hardening gaps, stated plainly, not fixed:** `master_seed` and derived keypairs are
-  not zeroized from process memory; `supersonic warm` doesn't show a cost estimate
-  before spending (below its sanity cap); Associated Token Account rent it opens isn't
-  reclaimable by any command today; the deployed devnet program's bytecode has not been
-  verified byte-for-byte against a reproducible build (same size, different hash than a
-  fresh local build — consistent with known SBF toolchain non-determinism, not confirmed
-  either way). None of these are fund-safety issues on their own; all are listed in
+- **Hardening gaps, stated plainly, not fixed:** `supersonic warm` doesn't show a cost
+  estimate before spending (below its sanity cap); Associated Token Account rent it
+  opens isn't reclaimable by any command today; the deployed devnet program's bytecode
+  has not been verified byte-for-byte against a reproducible build (same size,
+  different hash than a fresh local build — consistent with known SBF toolchain
+  non-determinism, not confirmed either way); the devnet upgrade authority is a single
+  wallet, not a multisig (acceptable pre-mainnet, blocking before any real deploy).
+  `master_seed` and individual derived `Keypair`s are zeroized on drop (`zeroize` crate
+  for the former; `ed25519-dalek`'s own `SecretKey` `Drop` impl for the latter,
+  verified by reading its source — see [`SECURITY.md`](./SECURITY.md) for exactly how).
+  None of the remaining gaps are fund-safety issues on their own; all are listed in
   [`SECURITY.md`](./SECURITY.md), not left for a reader to find independently.
 
 ## 7. Legal posture (why this is not a mixer)

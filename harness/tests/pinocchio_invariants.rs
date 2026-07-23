@@ -101,16 +101,20 @@ fn balance_of(accounts: &[(Pubkey, Account)], key: &Pubkey) -> u64 {
         .unwrap_or(0)
 }
 
+/// A single-leg bundle has no decoys — it would advertise "tool usage"
+/// without hiding anything, worse than a plain transfer. Rejected
+/// (fail-closed). This replaces the old `single_leg_succeeds_and_moves_value`
+/// test, which asserted the opposite (K=1 succeeding) before MIN_LEGS was
+/// enforced.
 #[test]
-fn single_leg_succeeds_and_moves_value() {
+fn single_leg_rejected() {
     let payer = Pubkey::new_from_array([200; 32]);
     let dests = fresh_dests(1);
     let (ix, accounts) = bundle(payer, &dests, &[LAMPORTS_PER_SOL], 10 * LAMPORTS_PER_SOL);
-    let result = mollusk().process_and_validate_instruction(&ix, &accounts, &[Check::success()]);
-    assert_eq!(
-        balance_of(&result.resulting_accounts, &dests[0]),
-        LAMPORTS_PER_SOL,
-        "destination must actually receive the lamports (economic reality)"
+    let result = mollusk().process_instruction(&ix, &accounts);
+    assert!(
+        result.program_result.is_err(),
+        "single-leg bundle must be rejected"
     );
 }
 

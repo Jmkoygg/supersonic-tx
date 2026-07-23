@@ -73,7 +73,7 @@ you can afford**.
 
 The harness also quantifies three more channels the value channel alone doesn't close: the
 **recovery-linkage** channel (naive sweep leaks; `recover --disperse` drives it to 0) and, at
-**mainnet scale** — measured against 377 real, passively-observed mainnet-beta addresses
+**mainnet scale** — measured against 1,206 real, passively-observed mainnet-beta addresses
 (`harness/fixtures/mainnet_profiles.json`, not devnet, not synthetic) — **destination-history**
 and **token-holdings**, both closed by a shipped mechanism (`--decoy-mode warm-pool`, below).
 **Funding-graph** is measured too, and left honestly open — see
@@ -133,7 +133,12 @@ supersonic recover --bundle-id <ID> --k 8
 
 Each bundle draws a distinct, bundle-seeded random subset of the pool (`sdk/src/warming.rs`)
 rather than a fixed prefix, so the same handful of addresses don't visibly recur as decoys
-across every bundle from the same signer. **What this does and doesn't close:** see
+across every bundle from the same signer. Round-trip counts also vary per slot instead of
+every slot getting the exact same `--rounds` value — `cli/src/warm_profile.rs` jitters each
+slot's target against real signature counts from the mainnet calibration fixture, closing the
+uniformity-as-a-tell (identical counts across a pool) while making no claim of matching real
+mainnet's absolute *magnitude*, which is far larger than a self-funded live run can afford to
+replicate. **What this does and doesn't close:** see
 [Scope of the privacy guarantee](#scope-of-the-privacy-guarantee) — destination-history and
 token-holdings are closed by this mechanism; funding-graph is not.
 
@@ -143,14 +148,26 @@ Other tools "cast through" `supersonic-tx` two ways:
 
 - **On-chain:** route through the stable program id via the Anchor IDL, committed at
   [`idl/supersonic_tx.json`](./idl/supersonic_tx.json).
-- **In Rust:** call `plan_bundle` / `build_instruction` from `supersonic-sdk`. A runnable
-  example of a *third-party tool* composing a bundle with only the public SDK surface —
-  no router internals — is in [`sdk/examples/compose.rs`](./sdk/examples/compose.rs)
-  (`cargo run -p supersonic-sdk --example compose`).
+- **In Rust:** call `plan_bundle` / `build_instruction` from `supersonic-sdk`. Two runnable
+  examples show a *third-party tool* composing a bundle with only the public SDK surface —
+  no router internals:
+  - [`sdk/examples/compose.rs`](./sdk/examples/compose.rs) — offline, free, builds the
+    signable `execute_bundle` instruction and prints its shape, no RPC involved
+    (`cargo run -p supersonic-sdk --example compose`).
+  - [`sdk/examples/compose_live.rs`](./sdk/examples/compose_live.rs) — **live**, self-contained
+    proof: funds a fresh keypair from the devnet faucet, plans and builds a real bundle, then
+    signs and broadcasts it against the deployed router
+    (`cargo run -p supersonic-sdk --example compose_live --release`). It depends on nothing
+    but a devnet RPC endpoint and the deployed program — no other contributor's work or
+    timing. A real run produced the finalized transaction
+    [`5YD1jxvL8ds5qFKx51YAStjPptXLsX68wgfytpY769hVjvxcjupA1xkNQ9iPcz8WWQCy6ttzgfd5mYSVdoscZM6h`](https://explorer.solana.com/tx/5YD1jxvL8ds5qFKx51YAStjPptXLsX68wgfytpY769hVjvxcjupA1xkNQ9iPcz8WWQCy6ttzgfd5mYSVdoscZM6h?cluster=devnet)
+    on devnet.
 - **Proven externally:** a separate contributor's `account-cooker` work
   ([PR #3](https://github.com/solanabr/supersonic-tx/pull/3)) routes a real devnet
   transaction through this exact router using only the public SDK — not a hypothetical,
-  a working third-party integration.
+  a working third-party integration. This coexists with the self-contained proof above:
+  one shows an independent third party integrating against the SDK, the other shows the
+  SDK alone is sufficient with no third party involved at all.
 
 ## Scope of the privacy guarantee
 
@@ -167,12 +184,15 @@ that remains open:
   **measured** against the nonlinear forest adversary; small, bounded advantage (table above).
 - **Destination-history channel** (a real payee with prior activity vs. fresh decoys) —
   **closed by a shipped mechanism.** `--decoy-mode warm-pool` / `supersonic warm` gives decoy
-  destinations real prior signatures before they're ever cast. Measured against 377 real
+  destinations real prior signatures before they're ever cast. Measured against 1,206 real
   mainnet-beta addresses (`harness/src/mainnet_channel.rs`); naive leaks near-totally, warmed
-  drives it to ≈0. See [Warm-pool decoys](#warm-pool-decoys-closes-destination-history--token-holdings).
+  drives it to ≈0. Round-trip counts per slot are jittered against real mainnet calibration
+  data (`cli/src/warm_profile.rs`) rather than uniform across the pool — see [Warm-pool
+  decoys](#warm-pool-decoys-closes-destination-history--token-holdings) for what "closed"
+  does and doesn't claim.
 - **Token-holdings channel** (does the destination already hold SPL tokens?) — **closed by
   the same shipped mechanism.** `supersonic warm` opens a real associated token account
-  (wSOL) per pool slot. Measured the same way; naive +0.31 (K=2) to +0.61 (K=16), warmed ≈0.
+  (wSOL) per pool slot. Measured the same way; naive +0.30 (K=2) to +0.56 (K=16), warmed ≈0.
   **Residual:** every warmed slot gets the same mint at zero balance — a channel looking at
   mint diversity or balance instead of raw account count would still distinguish it; not
   measured here.
@@ -205,7 +225,7 @@ decoy" is not.
 - **Destination-history and token-holdings (measured against real mainnet data, closed by a
   shipped mechanism, not just modeled).** A real payee has prior activity and often holds
   other tokens; a fresh decoy has neither — the strongest attack on the tool used alone.
-  `harness/src/mainnet_channel.rs` measures both against 377 real, passively-observed
+  `harness/src/mainnet_channel.rs` measures both against 1,206 real, passively-observed
   mainnet-beta addresses (`harness/fixtures/mainnet_profiles.json`; balance-delta block
   scanning, nothing funded or spent to collect it), evaluated only on the fixture's
   `held_out` split — the `calibration` split is reserved for whatever mechanism fits
@@ -221,7 +241,7 @@ decoy" is not.
   breakdown of what's closed vs. open across all three sub-channels.
 - **Two implementations, same invariants, one deployed.** The shipped program is Anchor,
   live and proven on devnet. [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in
-  Pinocchio and measures the tradeoff (~34× smaller, ~33× cheaper to deploy) — and
+  Pinocchio and measures the tradeoff (~32× smaller, ~32× cheaper to deploy) — and
   `harness/tests/pinocchio_invariants.rs` proves the *same* 8 invariants against it via
   Mollusk, not just its binary size. The Pinocchio build is not deployed anywhere and does
   not replace the Anchor build; it's offered as a minimal-attack-surface option, tested to
@@ -257,6 +277,8 @@ ARCHITECTURE.md           component design and boundaries
 PROOF.md                  evidence: tests, live devnet txs, measured advantage
 BENCHMARK.md              Anchor vs Pinocchio: measured binary size / deploy rent
 SECURITY.md               how to report an issue, and every stated hardening gap
+AUDIT.md                  the independent adversarial audit: methodology, every
+                          finding across six rounds, and how each was fixed
 ```
 
 ## License

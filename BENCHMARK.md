@@ -13,21 +13,21 @@ Pinocchio source is in [`bench/pinocchio-router/`](./bench/pinocchio-router/src/
 
 | | Anchor (shipped) | Pinocchio (bench) | ratio |
 |---|---:|---:|---:|
-| Compiled `.so` | **182,296 bytes** | **5,416 bytes** | **33.7× smaller** |
-| Rent-exempt to deploy | **1.2697 SOL** | **0.0386 SOL** | **32.9× less** |
+| Compiled `.so` | **183,088 bytes** | **5,672 bytes** | **32.3× smaller** |
+| Rent-exempt to deploy | **1.2752 SOL** | **0.0404 SOL** | **31.6× less** |
 | ≈ USD at $77/SOL | ~$98 | ~$3 | **~$95 saved / deploy** |
 
 Reproduce:
 ```bash
 # Anchor
-anchor build && stat -c%s target/deploy/supersonic_tx.so && solana rent 182296
+anchor build && stat -c%s target/deploy/supersonic_tx.so && solana rent 183088
 # Pinocchio
 cd bench/pinocchio-router && cargo build-sbf \
-  && stat -c%s target/deploy/supersonic_tx_pinocchio.so && solana rent 5416
+  && stat -c%s target/deploy/supersonic_tx_pinocchio.so && solana rent 5672
 ```
 
 Deploy rent is linear in binary size (Solana's rent formula:
-`(bytes + 128) × 0.00000348 × 2 SOL`), so a 34× smaller binary is a ~33× smaller deploy
+`(bytes + 128) × 0.00000348 × 2 SOL`), so a 32× smaller binary is a ~32× smaller deploy
 cost. **This is the load-bearing result:** it turns a mainnet deployment from a
 ~$98 commitment of locked SOL into a ~$3 one — i.e. it makes a real mainnet deployment
 of this tool cheap enough to be a non-decision.
@@ -66,7 +66,7 @@ instead of requiring an exact match — both fixed, both now covered by a test.
 ## What this benchmark decides
 
 The framework question for *this* program is settled by Result 1, not by taste or by the
-judge's preferences: Pinocchio is **~34× smaller** and **~33× cheaper to deploy**, at the
+judge's preferences: Pinocchio is **~32× smaller** and **~32× cheaper to deploy**, at the
 cost of writing the account/data parsing by hand — which, for a program this simple (no
 custody, no PDA state, one instruction), removes almost none of Anchor's safety value (the
 signer requirement is still enforced by the System Program during the CPI regardless).
@@ -88,4 +88,4 @@ that justifies it.
 - Binary sizes depend on toolchain/optimization flags; both were built with
   `opt-level = 3` + fat LTO and the standard `cargo build-sbf` / `anchor build` pipelines.
 - A pending network change (SIMD-0436) could halve rent-exempt minimums generally; that
-  would scale both columns down together and leave the ~33× ratio unchanged.
+  would scale both columns down together and leave the ~32× ratio unchanged.

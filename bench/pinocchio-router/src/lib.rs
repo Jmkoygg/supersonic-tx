@@ -26,6 +26,11 @@ entrypoint!(process_instruction);
 pinocchio::nostd_panic_handler!();
 
 pub const MAX_LEGS: usize = 16;
+/// Lower bound on legs per bundle. A single-leg bundle has no decoys, so it
+/// advertises "this used the privacy tool" without hiding anything — worse
+/// than a plain transfer. At least one decoy (K >= 2) is required. Matches
+/// the Anchor program's `MIN_LEGS` invariant.
+pub const MIN_LEGS: usize = 2;
 
 pub fn process_instruction(
     _program_id: &Address,
@@ -36,7 +41,7 @@ pub fn process_instruction(
         return Err(ProgramError::InvalidInstructionData);
     }
     let count = data[0] as usize;
-    if count == 0 || count > MAX_LEGS {
+    if count < MIN_LEGS || count > MAX_LEGS {
         return Err(ProgramError::InvalidInstructionData);
     }
     if data.len() != 1 + count * 8 {

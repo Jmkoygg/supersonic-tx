@@ -36,22 +36,25 @@ compile with zero errors.
 > resolved it upstream, and CI now pins that and runs `cargo clippy --workspace
 > --all-targets -- -D warnings` on every push** — clean, not just "not disabled."
 
-## 2. Automated tests — 48 passing, 0 failing
+## 2. Automated tests — 62 passing, 0 failing
 
 ```
 $ cargo test --workspace
-   supersonic-cli   (warm-sweep fee-payer regression) : 1 passed
-   supersonic-cli   (local-store encryption, §3g)      : 3 passed
-   supersonic-harness                                 : 3 passed
-   supersonic-harness (mollusk_cu_bench)               : 2 passed
-   supersonic-harness (pinocchio_invariants, Mollusk)  : 8 passed
-   supersonic-sdk (lib, incl. 5 warming.rs tests)      : 17 passed
-   supersonic-sdk (properties)                         : 5 passed   (proptest, 400 cases each)
-   supersonic-tx (lib)                                 : 1 passed
-   supersonic-tx (invariants)                          : 8 passed
+   supersonic-cli   (lib unit tests, incl. warm_profile, inspect skip-on-corrupt, warm-pool fail-closed) : 15 passed
+   supersonic-cli   (warm-sweep fee-payer regression)    : 1 passed
+   supersonic-harness                                   : 3 passed
+   supersonic-harness (mollusk_cu_bench)                 : 2 passed
+   supersonic-harness (pinocchio_invariants, Mollusk)    : 8 passed
+   supersonic-sdk (lib, incl. warming.rs + zeroize golden-value tests) : 19 passed
+   supersonic-sdk (properties)                           : 5 passed   (proptest, 400 cases each)
+   supersonic-tx (lib)                                   : 1 passed
+   supersonic-tx (invariants)                            : 8 passed
 ```
 
-**Total: 48 passed, 0 failed** (up from 31 two rounds ago, 45 last round). The 8 Anchor invariant
+**Total: 62 passed, 0 failed** (up from 31 tests at the start of the audit cycle to 58 at
+its close — see `AUDIT.md` — plus 4 more added by the post-audit `inspect`/warm-pool
+fail-closed fixes below). The
+8 Anchor invariant
 tests map 1:1 to the threat-model invariants (atomicity, fail-closed, bounds, real value
 movement) — and the same 8 are now also proven against `bench/pinocchio-router` via
 Mollusk (`harness/tests/pinocchio_invariants.rs`), not just size-benchmarked. The SDK unit
@@ -202,26 +205,59 @@ size / deploy rent) is in [`BENCHMARK.md`](./BENCHMARK.md).
 $ supersonic-harness --n 8000 --seed 1
   K  | mainnet destination-history: naive -> warm | mainnet funding-graph: naive -> warm | mainnet token-holdings: naive -> warm
 -----+---------------------------------------------+----------------------------------------+----------------------------------------
-   2 |  +0.5000 ->  -0.0029                        |  +0.5000 ->  -0.0022                   |  +0.3147 ->  +0.0004
-   4 |  +0.7500 ->  +0.0016                        |  +0.7500 ->  +0.0036                   |  +0.4802 ->  +0.0039
-   8 |  +0.8750 ->  +0.0010                        |  +0.8750 ->  -0.0004                   |  +0.5624 ->  +0.0066
-  16 |  +0.9375 ->  -0.0013                        |  +0.9375 ->  +0.0004                   |  +0.6064 ->  -0.0040
+   2 |  +0.5000 ->  -0.0095                        |  +0.5000 ->  -0.0022                   |  +0.2929 ->  -0.0027
+   4 |  +0.7500 ->  -0.0026                        |  +0.7500 ->  +0.0036                   |  +0.4491 ->  +0.0075
+   8 |  +0.8750 ->  -0.0006                        |  +0.8750 ->  -0.0004                   |  +0.5319 ->  -0.0011
+  16 |  +0.9375 ->  +0.0003                        |  +0.9375 ->  +0.0004                   |  +0.5656 ->  +0.0011
 ```
 
-**Provenance:** 477 addresses total (377 aged + 100 fresh), collected passively against
-mainnet-beta on 2026-07-21 — `getBlock(transactionDetails=accounts)` block-scanning plus
-balance-delta discovery, nothing funded or spent to collect it (unlike the devnet fixture
-in §3e, which self-funded its own "aged" pool because devnet has no organic activity worth
-sampling). 5 candidates were excluded post-collection by an offensive-content guard (a
-vanity-generated funder address spelling a slur funded 5 sampled destinations) — content
-hygiene, not a research adjustment. Full methodology and every pubkey:
-`harness/fixtures/mainnet_profiles.json`; reproduce collection with
-`cargo run -p supersonic-harness --bin collect-mainnet-profiles --release -- --collected-at <now> --target-count 600 --fresh-count 100`.
+**Provenance:** 1,206 addresses total (1,066 aged + 140 fresh), collected passively against
+mainnet-beta in two passes on 2026-07-22 (21:46 UTC and 22:39 UTC) — `getBlock(transactionDetails=accounts)`
+block-scanning plus balance-delta discovery, nothing funded or spent to collect it (unlike
+the devnet fixture in §3e, which self-funded its own "aged" pool because devnet has no
+organic activity worth sampling). A single pass's candidate-discovery step stops early
+(it over-collects raw candidates by a fixed multiple of the target, then stops scanning
+blocks), and only ~16% of raw candidates survive the owner/executable + profiling filters
+— so growing the sample past the earlier 377 required a second pass against a later,
+disjoint block window rather than one very long scan; the two passes (601 aged + 100 fresh,
+then 584 aged + 40 fresh) were merged and de-duplicated by pubkey (104 aged addresses were
+discovered in both passes' windows and appear once, not double-counted). **Note on content
+review:** the earlier 377-address collection had 5 candidates excluded post-collection by a
+manual offensive-content check (a vanity-generated funder address spelling a slur funded 5
+sampled destinations). That check has now been re-run against the full merged sample —
+all 1,221 pre-exclusion entries (pubkey and, where present, `earliest_funder_proxy`),
+not just the newly-added ones — using an automated, case-insensitive scan against a
+~21-term wordlist of common English/Portuguese slurs and offensive terms, with a small
+leetspeak-digit normalization (`1→i, 3→e, 4→a, 5→s, 7→t, 8→b, 9→g`) relevant to the
+base58 alphabet. This is a limited wordlist scan, not a general content-moderation
+review — it is scoped to catch the same kind of thing found before, not to guarantee
+nothing offensive is present. It flagged 26 raw substring hits; a Monte Carlo baseline
+(same wordlist/normalization against random base58 strings of matching count and length)
+put the expected chance-collision rate for short 3-4 letter terms (e.g. "fag", "spic",
+"kike") at roughly 10 hits per run of this size, so 11 of the 26 — each a short fragment
+inside an otherwise-unique address, no repeated pattern — are judged noise consistent
+with that baseline rather than intentional content, and were left in the fixture. The
+remaining 15 hits were all the *same* funder address, `niggerd597QYedtvjQDVHZTCCGyJrwHNm2i49dkm5zS`
+(the slur spelled literally at the start of the address, the same vanity-grinding pattern
+as the earlier 5-exclusion finding, not a chance substring) — this is the same offensive
+vanity funder found before, now appearing as `earliest_funder_proxy` for 15 destinations
+in the larger sample (up from 5). All 15 of those destination entries (all in the `aged`
+bucket; the funder field itself is never a sampled destination) were removed from
+`harness/fixtures/mainnet_profiles.json`, bringing the total from 1,221 to the 1,206
+reported above; the remaining sample's collection and filtering methodology is otherwise
+unchanged. This remains a limited, wordlist-based check, not a guarantee the fixture is
+free of anything else offensive or otherwise undesirable — stated here rather than
+silently implied as exhaustive. Full methodology
+and every pubkey: `harness/fixtures/mainnet_profiles.json`; reproduce collection with
+`cargo run -p supersonic-harness --bin collect-mainnet-profiles --release -- --collected-at <now> --target-count 1400 --fresh-count 100`
+(run a second time with a later `--collected-at`/`--out` and merge-dedup by pubkey to reach
+a similar total — a single pass self-limits well before checking a candidate pool that
+large).
 
-**Held-out evaluation, not the full sample.** Of the 377/100, only **177 aged + 54 fresh**
+**Held-out evaluation, not the full sample.** Of the 1,066/140, only **531 aged + 75 fresh**
 were actually used above — assigned to the `held_out` partition by a stable hash of the
-pubkey *at collection time*, before any measurement. The `calibration` partition (200
-aged + 46 fresh) is reserved for whatever mechanism eventually *fits* something to this
+pubkey *at collection time*, before any measurement. The `calibration` partition (535
+aged + 65 fresh) is reserved for whatever mechanism eventually *fits* something to this
 data; it is not consumed by anything today, so it cannot have contaminated the numbers
 above. This is a methodological upgrade over §3e's devnet fixture, which reuses the same
 pool for both regimes.
@@ -236,6 +272,20 @@ pool for both regimes.
   `supersonic warm --pool-size 2 --rounds 1` produced two addresses independently
   confirmed via raw RPC (`getSignaturesForAddress`, `getTokenAccountsByOwner`) to have 3
   real signatures and 1 real token account each.
+- **Round 4 correction, stated honestly:** until this fix, every slot got the exact
+  same `rounds * 2` signature count — perfectly uniform across the whole pool, itself a
+  detectable tell (an attacker comparing several decoys from one pool would notice they
+  all carry an identical, suspiciously round signature count) that the table above,
+  which measures raw signature *depth* against an idealized resample of the calibration
+  pool rather than the CLI's own literal output, did not capture. `cli/src/warm_profile.rs`
+  now derives a per-slot round-trip target from the fixture's `calibration` split (its
+  186 addresses with a confirmed, non-capped exact signature count), so counts vary
+  slot-to-slot instead of matching exactly — closing the uniformity-as-a-tell. This is
+  not a claim that `supersonic warm`'s output is now statistically indistinguishable
+  from real mainnet *magnitude*: 65% of that same calibration split hit the collector's
+  1000-signature pagination cap, a scale unreachable for a self-funded CLI run doing
+  real round trips. What's reproduced is dispersion relative to the round-trip budget
+  the user sets via `--rounds`, not the absolute scale of real mainnet history.
 - **Token-holdings residual, stated:** every warmed slot gets the *same* mint (wSOL) at
   zero balance. The channel measured here (raw account count) is closed; an attacker
   looking at mint diversity or non-zero balances instead of count would still find a
@@ -252,65 +302,24 @@ pool for both regimes.
 ### 3g. Independent adversarial audit (`solanabr/auditor-skill`)
 
 We ran the real checklist from the bounty judge's own published audit framework
-(`solanabr/auditor-skill` — checklists 01/account-validation, 02/access-control,
-03/arithmetic-safety, 04/CPI-PDA, 07/opsec, plus the known-vectors index) against this
-code, three times: after the mainnet-channel/warm-pool work landed, again after fixing
-what the first pass found, and a third time specifically hunting for anything the first
-two — focused on the on-chain program and the `warm` transaction logic — might have
-missed by staying inside that scope.
+(`solanabr/auditor-skill`) against this code six times over the project's life: three
+informal passes, then three formal rounds each producing a full written report. Real bugs
+were found and fixed along the way — the `warm` sweep-back fee-payer bug, a
+token-holdings/funding-graph overclaim, `~/.supersonic/bundles.json` storing decoy
+records as plaintext, a silent-fallback bug in bundle recovery (F-001), and a non-atomic
+`bundle_id` counter (F-003) — and the last two formal rounds each came back with zero
+findings at severity ≥ 4, the framework's own criterion for closing the audit cycle.
 
-**Round 1 found a real bug we introduced:** `supersonic warm`'s sweep-back transaction
-used the wrong fee-payer (the pool-slot keypair itself), which is mathematically
-guaranteed to fail — a transaction's fee is debited from the fee-payer before the
-instruction executes, so the slot always had exactly `fee` fewer lamports than the
-full-balance transfer it was attempting. Every real run would have stranded ~0.005 SOL
-with no CLI command exposed to recover it. Fixed (payer pays the fee, the slot only
-co-signs to authorize moving its own balance — the same pattern already used correctly in
-`recover()`), and locked with a permanent regression test
-(`cli/tests/warm_sweep_fix_verification.rs`), not the audit's own throwaway reproduction.
-
-**Round 1 also found the token-holdings/funding-graph overclaim** described in §3f above,
-before it shipped anywhere public.
-
-**Round 2 (after both fixes) re-verified independently, not just re-read:** ran the full
-workspace test suite (45/45 pass) and `cargo clippy -- -D warnings` (clean) itself; tested
-the fixed `warm` command against real devnet, including the `--rounds 2` edge case
-explicitly, confirming no funds strand; verified the Associated Token Account derivation
-and `CreateIdempotent` discriminator are correct (and specifically the right mitigation
-against known-vector 127, ATA pre-creation DoS). It found one remaining process gap (since
-fixed): the CLI's warm-completion message pointed to `THREAT_MODEL.md` for "the honest
-scope," but that document didn't yet mention `warm` at all — a broken reference, now
-resolved (`THREAT_MODEL.md §4.7`).
-
-**Round 3 found what the first two missed by scope, not by depth:** both prior rounds
-focused on the on-chain program and the `warm` transaction logic. Round 3 looked at local
-state and found `~/.supersonic/bundles.json` stored every sent bundle's `real_index` and
-real destination as **plaintext JSON** with default file permissions — exactly the fact
-the entire rest of this tool exists to hide, readable by anything with local file access
-(shared machine, cloud backup sync, forensic image, malware), with no on-chain adversary
-required at all. `recover()` doesn't even read `real_index` — it was persisted purely for
-`inspect`'s convenience, at a real cost. **Fixed:** records are now encrypted at rest
-(ChaCha20-Poly1305, key derived from the wallet — same trust boundary as the recovery
-secret) with a random nonce per record, plus restrictive file permissions
-(`0600`/`0700`) as defense in depth. Three new tests
-(`cli/src/main.rs :: tests`) lock this: the real destination/`real_index` provably don't
-appear as plaintext bytes in what's written to disk, a different wallet's key can't
-decrypt another wallet's records, and nonces don't repeat. Full detail: `SECURITY.md`.
-
-On the core on-chain program, all three checklist rounds came back clean: no PDAs, no
-token accounts, no financial arithmetic beyond passing `amount` straight to a CPI transfer
-— the small, neutral-router design means most of the checklist is structurally
-not-applicable rather than passed by luck. Full findings, including CLI/opsec notes not
-repeated here (upgrade authority is a single key — expected at this devnet/bounty stage,
-not hidden), are summarized in this section rather than a separate report, per this
-project's practice of keeping evidence in the same document a reader already has open.
-`SECURITY.md` and `THREAT_MODEL.md §6` list every hardening gap the audit surfaced,
-resolved or not.
+The full round-by-round account — methodology, every finding with its severity and fix,
+and what checklist coverage each round achieved — lives in
+[`AUDIT.md`](./AUDIT.md), not duplicated here. `SECURITY.md`'s "Fixed findings" and
+"Known, stated hardening gaps" sections carry the same findings forward for anyone
+scanning that file instead.
 
 **Reproducible-build check, attempted and reported honestly (§3g close-out).** The audit
 flagged the deployed program's bytecode as never independently verified against source.
 We checked: `anchor build` from a clean `target/` produces a `.so` of the identical size
-(182,296 bytes — the same figure `BENCHMARK.md` cites) as `solana program dump
+(183,088 bytes — the same figure `BENCHMARK.md` cites) as `solana program dump
 BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn` returns for the live devnet deployment, but
 a **different SHA-256 hash**. Same size, different hash is consistent with known SBF
 toolchain build non-determinism (embedded build metadata/build-id, not necessarily
@@ -329,6 +338,7 @@ All actively confirmed on devnet (each `solana confirm … --url devnet` returne
 | Program account | [`BCrR3J…YeYabn`](https://explorer.solana.com/address/BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn?cluster=devnet) | `solana program show` → BPFLoaderUpgradeable, 185016 bytes |
 | Cast K=8 (bundle 302) | [`2eQM7u…3Gzgr`](https://explorer.solana.com/tx/2eQM7uCtp5aZou7p5mwaBMKXLHfvu4w34F3Fe1KdKU6xKuNiH24W3QAd23dKXD89nCApQAWKkWzSe6gyjSs3Gzgr?cluster=devnet) | `solana confirm` → Finalized |
 | Dispersed sweep (decoy 0) | [`nVX6oH…DFfHe`](https://explorer.solana.com/tx/nVX6oHoVGSqAUcBTh4f6e8GJgyZVKMArBbKbLk9Sov6K8zG2mJKNDxXVePkwHuRbGv82kCGJyuU6yBAaXhDFfHe?cluster=devnet) | `solana confirm` → Finalized |
+| Self-contained SDK composability (K=8, `sdk/examples/compose_live.rs`) | [`5YD1jx…scZM6h`](https://explorer.solana.com/tx/5YD1jxvL8ds5qFKx51YAStjPptXLsX68wgfytpY769hVjvxcjupA1xkNQ9iPcz8WWQCy6ttzgfd5mYSVdoscZM6h?cluster=devnet) | `solana confirm` → Finalized |
 
 The **program account** is the durable reference (a live account, not prunable transaction
 history — checkable indefinitely). The two transaction signatures above were captured and
@@ -340,7 +350,7 @@ currently-live pair (§3b–3c show the exact commands).
 
 ## 5. What this proves
 
-- **The program does what it claims, safely — twice.** 48 tests, including 8 invariant
+- **The program does what it claims, safely — twice.** 62 tests, including 8 invariant
   tests over arbitrary-input properties, show the router executes multi-destination
   bundles atomically and **fails closed** on every malformed input (§2). The same 8
   invariants are now also proven against the Pinocchio implementation (§3f context,
@@ -363,7 +373,7 @@ currently-live pair (§3b–3c show the exact commands).
 - **Four channels now close on real chain data, one is measured and left honestly open.**
   Recovery-linkage: naive consolidation links decoys, `--disperse` drives it to 0
   (`consolidation.rs`, a structural model). Destination-history and token-holdings: closed
-  by the shipped `DecoyMode::WarmPool` mechanism, measured against 377 real, passively
+  by the shipped `DecoyMode::WarmPool` mechanism, measured against 1,206 real, passively
   observed mainnet-beta addresses on a held-out split decided before measurement (§3f) —
   not devnet, not synthetic, not the same pool used to calibrate. Funding-graph: measured
   the same way and explicitly **not** closed — the shipped mechanism funds every pool slot
@@ -377,7 +387,7 @@ currently-live pair (§3b–3c show the exact commands).
   (real devnet runs, raw RPC checks, not just re-reading source) — §3g.
 - **The framework choice is measured, and now also functionally proven, not assumed.**
   [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in Pinocchio: verified `.so` sizes
-  make it ~34× smaller and ~33× cheaper to deploy than the shipped Anchor build, and it now
+  make it ~32× smaller and ~32× cheaper to deploy than the shipped Anchor build, and it now
   passes the identical invariant suite, not just a size comparison.
 - **Security tooling ran against the real code:** Sec3 X-Ray (0 findings), `cargo audit` (5
   advisories, all transitive dependencies, none in this project's own crates), zero

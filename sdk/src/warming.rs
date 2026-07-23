@@ -35,12 +35,29 @@
 //! aged-address methodology, not synthesized. Before warming, a fresh pool
 //! behaves identically to today's per-bundle fresh derivation — this is an
 //! opt-in mechanism (`DecoyMode::WarmPool`), not a silent behavior change.
+//!
+//! **Per-slot round-trip counts are no longer uniform.** Round 4's juiz-cego
+//! found that `supersonic warm` applied the exact same `--rounds` value to
+//! every pool slot, so every warmed slot ended with an identical, suspicious
+//! `rounds * 2` signature count — a uniformity tell real mainnet addresses
+//! don't have. `cli/src/warm_profile.rs` now derives a per-slot target from
+//! real mainnet calibration data (the `calibration` split of
+//! `harness/fixtures/mainnet_profiles.json`), so signature counts vary
+//! slot-to-slot instead of matching exactly. This closes the
+//! uniformity-as-a-tell, not a claim of statistical indistinguishability
+//! from real mainnet magnitude: 80% of that same calibration split hit the
+//! collector's 1000-signature pagination cap, i.e. real addresses commonly
+//! have far more signature history than a self-funded CLI run doing real
+//! round trips can afford to replicate live. What's reproduced is dispersion
+//! *relative to* the round-trip budget (`--rounds`) the user already
+//! chose, not the absolute scale of real mainnet history.
 
 use rand::Rng;
 use rand::SeedableRng;
 use rand_chacha::ChaCha20Rng;
 use sha2::{Digest, Sha256};
 use solana_sdk::signature::{keypair_from_seed, Keypair};
+use zeroize::Zeroize;
 
 const KDF_POOL: &[u8] = b"supersonic-tx/warm-pool/v1";
 const KDF_POOL_SELECT: &[u8] = b"supersonic-tx/warm-pool-select/v1";
@@ -54,8 +71,13 @@ pub fn derive_pool_member_keypair(master_seed: &[u8; 32], slot: u32) -> Keypair 
     h.update(KDF_POOL);
     h.update(master_seed);
     h.update(slot.to_le_bytes());
-    let seed: [u8; 32] = h.finalize().into();
-    keypair_from_seed(&seed).expect("32-byte seed is valid")
+    // Intermediate 32-byte keypair seed derived from `master_seed` — wiped
+    // explicitly once consumed, same treatment as `sdk/src/lib.rs`'s
+    // `derive_decoy_keypair`/`derive_sink_keypair`.
+    let mut seed: [u8; 32] = h.finalize().into();
+    let kp = keypair_from_seed(&seed).expect("32-byte seed is valid");
+    seed.zeroize();
+    kp
 }
 
 /// Deterministically select `n` **distinct** slot indices out of
@@ -80,8 +102,11 @@ pub fn select_pool_slots(
     h.update(KDF_POOL_SELECT);
     h.update(master_seed);
     h.update(bundle_id.to_le_bytes());
-    let seed: [u8; 32] = h.finalize().into();
+    // Intermediate 32-byte RNG seed derived from `master_seed` — wiped
+    // explicitly once consumed by `ChaCha20Rng::from_seed`.
+    let mut seed: [u8; 32] = h.finalize().into();
     let mut rng = ChaCha20Rng::from_seed(seed);
+    seed.zeroize();
 
     // Partial Fisher–Yates: shuffle only as far as needed to pick n elements.
     let mut pool: Vec<u32> = (0..pool_size).collect();
@@ -101,6 +126,20 @@ mod tests {
     use std::collections::HashSet;
 
     const SEED: [u8; 32] = [11u8; 32];
+
+    /// Regression for the `zeroize` hardening pass (SECURITY.md): wiping the
+    /// intermediate 32-byte KDF seed in `derive_pool_member_keypair` after
+    /// it's consumed must not change what it derives. Golden value captured
+    /// from the pre-`zeroize` code path for seed `[7u8; 32]`, slot 5.
+    #[test]
+    fn derive_pool_member_keypair_matches_pre_zeroize_golden_value() {
+        let seed = [7u8; 32];
+        let kp = derive_pool_member_keypair(&seed, 5);
+        assert_eq!(
+            kp.pubkey().to_string(),
+            "8u7PtBBmADEredUS4A9FvP1o1EBFtja7ykLsE6pXQFZQ"
+        );
+    }
 
     #[test]
     fn slot_derivation_is_deterministic_and_bundle_independent() {

@@ -7,6 +7,11 @@ declare_id!("BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn");
 /// account and size limits of a single transaction.
 pub const MAX_LEGS: usize = 16;
 
+/// Lower bound on legs per bundle. A single-leg bundle has no decoys, so it
+/// advertises "this used the privacy tool" without hiding anything — worse
+/// than a plain transfer. At least one decoy (K >= 2) is required.
+pub const MIN_LEGS: usize = 2;
+
 #[program]
 pub mod supersonic_tx {
     use super::*;
@@ -37,6 +42,7 @@ pub mod supersonic_tx {
         legs: Vec<Leg>,
     ) -> Result<()> {
         require!(!legs.is_empty(), SupersonicError::EmptyBundle);
+        require!(legs.len() >= MIN_LEGS, SupersonicError::TooFewLegs);
         require!(legs.len() <= MAX_LEGS, SupersonicError::TooManyLegs);
 
         let user = &ctx.accounts.user;
@@ -101,6 +107,8 @@ pub struct ExecuteBundle<'info> {
 pub enum SupersonicError {
     #[msg("Bundle must contain at least one leg")]
     EmptyBundle,
+    #[msg("Bundle must contain at least two legs — a single-leg bundle reveals tool usage without hiding anything")]
+    TooFewLegs,
     #[msg("Bundle exceeds the maximum number of legs")]
     TooManyLegs,
     #[msg("Number of destination accounts must equal the number of legs")]
