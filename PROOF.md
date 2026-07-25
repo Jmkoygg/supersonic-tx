@@ -36,13 +36,13 @@ compile with zero errors.
 > resolved it upstream, and CI now pins that and runs `cargo clippy --workspace
 > --all-targets -- -D warnings` on every push** — clean, not just "not disabled."
 
-## 2. Automated tests — 62 passing, 0 failing
+## 2. Automated tests — 66 passing, 0 failing
 
 ```
 $ cargo test --workspace
    supersonic-cli   (lib unit tests, incl. warm_profile, inspect skip-on-corrupt, warm-pool fail-closed) : 15 passed
    supersonic-cli   (warm-sweep fee-payer regression)    : 1 passed
-   supersonic-harness                                   : 3 passed
+   supersonic-harness                                   : 7 passed
    supersonic-harness (mollusk_cu_bench)                 : 2 passed
    supersonic-harness (pinocchio_invariants, Mollusk)    : 8 passed
    supersonic-sdk (lib, incl. warming.rs + zeroize golden-value tests) : 19 passed
@@ -51,9 +51,10 @@ $ cargo test --workspace
    supersonic-tx (invariants)                            : 8 passed
 ```
 
-**Total: 62 passed, 0 failed** (up from 31 tests at the start of the audit cycle to 58 at
-its close — see `AUDIT.md` — plus 4 more added by the post-audit `inspect`/warm-pool
-fail-closed fixes below). The
+**Total: 66 passed, 0 failed** (up from 31 tests at the start of the audit cycle to 58 at
+its close — see `AUDIT.md` — plus 4 more from the post-audit `inspect`/warm-pool
+fail-closed fixes, plus 4 more from the funding-graph shipped-mechanism regression
+tests below, §3f). The
 8 Anchor invariant
 tests map 1:1 to the threat-model invariants (atomicity, fail-closed, bounds, real value
 movement) — and the same 8 are now also proven against `bench/pinocchio-router` via
@@ -154,6 +155,20 @@ regime) — the two roles that tool would fill. Reproduce: `cargo run -p superso
 collect-devnet-history --release -- --collected-at <now> --aged-count 18 --fresh-count 10`, then
 `supersonic-harness --n 8000 --seed 1`. Every pubkey is independently checkable via `solana
 transaction-history <address>`/explorer (§4).
+
+> **On devnet retention (same caveat as §3c):** the `aged` addresses in this fixture — e.g.
+> `7qLtn8kiMcQUfP7YeRRiGX88LmEyb6ZE9e2YGCrjDRRS` (10 real signatures at collection time) — are
+> devnet accounts, and Solana's public devnet RPC prunes old transaction history (typically
+> within days, not permanently, unlike mainnet). By the time you're reading this, `solana
+> transaction-history <address>` against these specific pubkeys may already return 0 results.
+> That is expected devnet behavior, not a fabricated number — `harness/fixtures/devnet_history.json`
+> and this table record what the RPC genuinely returned at `collected_at`, and the raw JSON
+> is the durable record of that measurement even after the live RPC forgets. For evidence that
+> doesn't rot this way, see **§3f**'s mainnet measurement
+> (`harness/fixtures/mainnet_profiles.json`) — mainnet-beta history is not pruned on this
+> timescale, so those addresses stay independently checkable indefinitely and are the more
+> robust channel to reproduce against; treat this devnet fixture as the original,
+> now-historical measurement, not the primary one to re-verify today.
 `adv (test)` = attacker accuracy on held-out bundles − 1/K. The suite is deliberately
 adversary-favorable:
 
@@ -210,6 +225,48 @@ $ supersonic-harness --n 8000 --seed 1
    8 |  +0.8750 ->  -0.0006                        |  +0.8750 ->  -0.0004                   |  +0.5319 ->  -0.0011
   16 |  +0.9375 ->  +0.0003                        |  +0.9375 ->  +0.0004                   |  +0.5656 ->  +0.0011
 ```
+
+**Funding-graph, SHIPPED-mechanism residual — real, not idealized.** The "warm" column
+above for funding-graph is an idealized ceiling: it resamples real aged addresses' actual
+funder diversity, a proxy that (per `mainnet_channel.rs`'s own doc) is constant across the
+current fixture and therefore carries no signal. It does not model what `--decoy-mode
+warm-pool` actually produces. `eval_mainnet_funding_graph_shipped_mechanism`
+(`harness/src/mainnet_channel.rs`) closes that gap: it models the literal shipped
+mechanism — every decoy slot funded by the same wallet (`payer.pubkey()` in
+`cli/src/main.rs::warm_pool`, `25NhgSgz97LKxPbD8usUcnH7AcUbuV6P2Qmc3Ayhbaee`), the real leg
+carrying a real held-out payee's real `earliest_funder_proxy` — against a same-funder-clustering
+attacker (`predict_by_shared_funder`) that just picks whichever of the K disclosed funders
+differs from the rest, something anyone with mainnet RPC access can do today for free, no
+classifier training required.
+
+```
+  K  | funding-graph (idealized ceiling, warm) | funding-graph (SHIPPED mechanism, real residual)
+-----+-------------------------------------------+----------------------------------------------------
+   2 |  -0.0022 / +0.0062 / -0.0047 / -0.0059   |  -0.0022 / +0.0062 / -0.0047 / -0.0059 (seeds 1/2/3/42)
+   4 |  +0.0036 / -0.0026 / -0.0035 / -0.0150   |  +0.7500 / +0.7500 / +0.7500 / +0.7500 (seeds 1/2/3/42)
+   8 |  -0.0004 / +0.0063 / +0.0001 / +0.0015   |  +0.8750 / +0.8750 / +0.8750 / +0.8750 (seeds 1/2/3/42)
+  16 |  +0.0004 / +0.0003 / -0.0014 / -0.0025   |  +0.9375 / +0.9375 / +0.9375 / +0.9375 (seeds 1/2/3/42)
+```
+
+Reproduce: `supersonic-harness --n 8000 --seed <1|2|3|42>` (the new column is printed
+directly below the existing mainnet-channel table, labeled "funding-graph (SHIPPED
+mechanism, same-wallet funder, real residual)").
+
+**Reported straight, not softened — this is worse than the idealized ceiling.** At K=4,
+8, 16 the SHIPPED-mechanism residual is **identical to the naive (no-mitigation) baseline**
+(`1 − 1/K`: +0.7500, +0.8750, +0.9375) in all four seeds, with zero variance across seeds —
+because with a real distinct payee pubkey as the real leg's funder and K-1 decoys sharing
+one exact, literal wallet string, "which funder differs from the majority" identifies the
+real leg with (effectively) 100% accuracy for any K≥4. In plain terms: **for K≥4, the
+shipped `warm_pool` mechanism provides zero effective protection against this attack on the
+funding-graph channel — it is exactly as bad as shipping no decoy-funding defense at all.**
+K=2 is the one exception, and for a structural reason, not a defense: with only one decoy,
+there is no "majority" to key on (both the real leg's and the lone decoy's funder appear
+exactly once), so the classifier's tie-break degenerates to "always guess index 0" —
+coincidentally the same degenerate behavior the idealized-ceiling proxy already has at every
+K (its own score is constant across the fixture), which is why the two columns are
+numerically identical at K=2 specifically: both mechanisms, at that K, reduce to the same
+"always predict slot 0" rule over the same underlying bundles.
 
 **Provenance:** 1,206 addresses total (1,066 aged + 140 fresh), collected passively against
 mainnet-beta in two passes on 2026-07-22 (21:46 UTC and 22:39 UTC) — `getBlock(transactionDetails=accounts)`
@@ -290,14 +347,17 @@ pool for both regimes.
   zero balance. The channel measured here (raw account count) is closed; an attacker
   looking at mint diversity or non-zero balances instead of count would still find a
   fingerprint. Not measured here.
-- **Funding-graph is NOT closed.** Every warm-pool slot is funded by the user's own
-  wallet — the "warm" column above is an idealized ceiling (what a genuinely diverse
-  funding source would achieve), not what `supersonic warm` produces. Both the harness
-  output and the CLI's own completion message say this explicitly, so the gap between
-  what's measured and what's shipped is stated where a reader would see it, not left to
-  be found by comparing two source files. Closing it needs an external, mature
-  multi-party funding source (`THREAT_MODEL.md §4.7`) — not something achievable from a
-  single wallet.
+- **Funding-graph is NOT closed — and now measured, not just idealized.** Every warm-pool
+  slot is funded by the user's own wallet — the "warm" column above is an idealized
+  ceiling (what a genuinely diverse funding source would achieve), not what `supersonic
+  warm` produces. The real residual of the shipped mechanism, measured above, is +0.7500
+  to +0.9375 for K≥4 across all four seeds — **identical to the naive, no-mitigation
+  baseline**, i.e. no effective protection at all against a same-funder-clustering
+  attacker for any K≥4. Both the harness output and the CLI's own completion message say
+  this explicitly, so the gap between what's measured and what's shipped is stated where
+  a reader would see it, not left to be found by comparing two source files. Closing it
+  needs an external, mature multi-party funding source (`THREAT_MODEL.md §4.7`) — not
+  something achievable from a single wallet.
 
 ### 3g. Independent adversarial audit (`solanabr/auditor-skill`)
 
@@ -350,7 +410,7 @@ currently-live pair (§3b–3c show the exact commands).
 
 ## 5. What this proves
 
-- **The program does what it claims, safely — twice.** 62 tests, including 8 invariant
+- **The program does what it claims, safely — twice.** 66 tests, including 8 invariant
   tests over arbitrary-input properties, show the router executes multi-destination
   bundles atomically and **fails closed** on every malformed input (§2). The same 8
   invariants are now also proven against the Pinocchio implementation (§3f context,
@@ -378,7 +438,9 @@ currently-live pair (§3b–3c show the exact commands).
   not devnet, not synthetic, not the same pool used to calibrate. Funding-graph: measured
   the same way and explicitly **not** closed — the shipped mechanism funds every pool slot
   from one wallet, and both the tool and the docs say so, rather than let a gap between
-  claim and mechanism go undocumented.
+  claim and mechanism go undocumented. Measured against the shipped mechanism directly
+  (not just an idealized ceiling), the real residual is +0.7500 to +0.9375 for K≥4 — as
+  bad as no mitigation at all — reported as a number, not softened (§3f).
 - **An independent adversarial audit ran against this exact code, found a real bug, and
   we fixed it before it went anywhere public.** `solanabr/auditor-skill` — the bounty
   judge's own published framework — found a fee-payer bug in `supersonic warm` that would

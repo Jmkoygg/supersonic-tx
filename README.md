@@ -200,8 +200,12 @@ that remains open:
   freshly by the same wallet casting the bundle?) — **measured, and NOT closed.** Every
   warm-pool slot is funded by the user's own wallet. The `warm` regime number reported for
   this channel is an idealized ceiling (what a genuinely diverse funding source would
-  achieve), not what the shipped mechanism produces. Closing this needs an external, mature
-  crowd/account-cooker this project doesn't build (see `THREAT_MODEL.md §4.7`).
+  achieve), not what the shipped mechanism produces. The shipped mechanism's own real
+  residual is also measured directly (`eval_mainnet_funding_graph_shipped_mechanism`,
+  `harness/src/mainnet_channel.rs`): **+0.7500 to +0.9375 for K≥4, across all four
+  seeds — identical to the naive, no-mitigation baseline.** Closing this needs an
+  external, mature crowd/account-cooker this project doesn't build (see
+  `THREAT_MODEL.md §4.7`, `PROOF.md §3f`).
 - **Timing/cadence channel** (when you cast) — addressed at the SDK/operational layer, not
   measured here.
 
@@ -237,8 +241,11 @@ decoy" is not.
   proven statistically over 500 bundles, `sdk/src/warming.rs` tests). **Funding-graph is
   measured the same way but NOT closed**: every warm-pool slot is funded by the same
   wallet, so the `warm` number for this specific channel is an idealized ceiling, not a
-  claim about the shipped mechanism. See `THREAT_MODEL.md §4.7` for the full, itemized
-  breakdown of what's closed vs. open across all three sub-channels.
+  claim about the shipped mechanism. The shipped mechanism's real residual is also
+  measured directly, not just idealized: **+0.7500 to +0.9375 for K≥4** (identical to
+  shipping no funding-graph defense at all), reported honestly rather than left as only
+  a qualitative gap. See `THREAT_MODEL.md §4.7` and `PROOF.md §3f` for the full,
+  itemized breakdown of what's closed vs. open across all three sub-channels.
 - **Two implementations, same invariants, one deployed.** The shipped program is Anchor,
   live and proven on devnet. [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in
   Pinocchio and measures the tradeoff (~32× smaller, ~32× cheaper to deploy) — and
@@ -253,7 +260,9 @@ decoy" is not.
   code; zero `unsafe` in any crate this project owns (program, SDK, CLI, harness, Pinocchio
   bench) — confirmed by grep, not assumed. CI runs `cargo clippy --workspace --all-targets
   -- -D warnings` on every push (clippy 0.1.97 resolved the toolchain ICE noted in earlier
-  drafts of this document; pinned and clean).
+  drafts of this document; pinned and clean). Semgrep (`p/rust`) is also run against this
+  project's own Rust code, versioned at [`security/semgrep-report.md`](./security/semgrep-report.md)
+  (4 findings, all reviewed and confirmed false positives — see the report).
 
 ## Repository layout
 

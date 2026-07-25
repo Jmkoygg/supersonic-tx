@@ -8,6 +8,17 @@ three formal rounds, the last two clean and closing the audit cycle — five rea
 fixed, including the local-storage plaintext issue below). `PROOF.md §3g` carries a short
 summary of the same audit with a link to the full account.
 
+## Static analysis tooling
+
+In addition to Sec3 X-Ray (Solana-specific, on-chain program only) and `cargo audit`
+(dependency advisories) — see [`README.md`](./README.md) — this project also runs
+Semgrep (`p/rust` ruleset) against all of its own Rust code (`programs/`, `sdk/`, `cli/`,
+`harness/`, `bench/pinocchio-router/`, third-party dependencies excluded). Versioned
+report and SARIF output: [`security/semgrep-report.md`](./security/semgrep-report.md),
+[`security/semgrep-report.sarif`](./security/semgrep-report.sarif). Current result: 4
+findings, all reviewed and confirmed to be rule false positives for this codebase (see
+the report for the per-finding rationale) — no code change required.
+
 ## Reporting a vulnerability
 
 If you find a security issue, please report it privately rather than opening a public

@@ -160,6 +160,29 @@ fn print_table(results: &[KResult], n: usize) {
         "addresses (harness/fixtures/mainnet_profiles.json), evaluated only on that fixture's"
     );
     println!();
+    println!("  K  | funding-graph (idealized ceiling, warm) | funding-graph (SHIPPED mechanism, same-wallet funder, real residual)");
+    println!("-----+-------------------------------------------+------------------------------------------------------------------------");
+    for r in results {
+        println!(
+            "  {:>2} | {:>+8.4}                                | {:>+8.4}",
+            r.k, r.prewarmed_mainnet_funding_advantage, r.mainnet_funding_shipped_advantage,
+        );
+    }
+    println!();
+    println!(
+        "SHIPPED mechanism residual = predict_by_shared_funder (mainnet_channel.rs): decoys all"
+    );
+    println!(
+        "carry the literal warm_pool funder wallet, the real leg carries a real held-out payee's"
+    );
+    println!(
+        "real earliest_funder_proxy; the attacker just picks whichever of the K funders differs"
+    );
+    println!(
+        "from the rest. This is the honest residual of what `--decoy-mode warm-pool` ships today,"
+    );
+    println!("not an idealized ceiling. See THREAT_MODEL.md §4.7 and PROOF.md §3f.");
+    println!();
     println!(
         "IMPORTANT — what `--decoy-mode warm-pool` (`supersonic warm`) actually closes vs. what"
     );

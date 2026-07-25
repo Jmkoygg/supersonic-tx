@@ -219,24 +219,44 @@ one, and the harness must *test* each one.
      fingerprint distinguishing a warmed decoy from an organically-active address. The
      count-based channel is closed; a richer token-behavior channel is not measured
      here and remains open.
-   - **Funding-graph — NOT closed. Measured, and left open on purpose.** Every
+   - **Funding-graph — NOT closed. Measured two ways, and left open on purpose.** Every
      `DecoyMode::WarmPool` slot is funded by the *same* wallet (the user's own signer).
-     A real payee's own funding history is far more varied. We measure this
-     (`distinct_funders_lower_bound` in the mainnet fixture, a coarse single-page proxy —
-     see the collector's own documented limits) and report it honestly. Stated precisely,
-     not just "coarse": this proxy is `1` for every one of the 1,066 `aged` entries in the
-     current fixture — zero variance, not merely low resolution, so it carries no
-     discriminating signal on its own in this sample. The "warm"
-     number in `PROOF.md`/the harness output is therefore an **idealized ceiling** (what a
-     pool with genuinely diverse funders would achieve if this proxy could see it), not
-     evidence from a working funder-diversity classifier and not what the shipped mechanism
-     produces. **The shipped `supersonic warm` does not diversify funder identity, and
-     this channel remains open** — an attacker correlating decoys by fee-payer across
-     bundles from the same signer would still find the tell. Closing this for real needs
-     a genuinely external source of funding diversity (a mature, multi-party
-     `account-cooker` or `mirror-pool`-style crowd, which does not exist yet to integrate
-     with) — not something a single user's own wallet can produce alone, however it's
-     used.
+     A real payee's own funding history is far more varied. We measure this two ways.
+     First, `distinct_funders_lower_bound` in the mainnet fixture (a coarse single-page
+     proxy — see the collector's own documented limits): this proxy is `1` for every one
+     of the 1,066 `aged` entries in the current fixture — zero variance, not merely low
+     resolution, so it carries no discriminating signal on its own in this sample. The
+     "warm" number this produces in `PROOF.md`/the harness output is an **idealized
+     ceiling** (what a pool with genuinely diverse funders would achieve if this proxy
+     could see it), not evidence from a working funder-diversity classifier and not what
+     the shipped mechanism produces.
+
+     Second — and this is the real, honest number —
+     `eval_mainnet_funding_graph_shipped_mechanism` (`harness/src/mainnet_channel.rs`)
+     models the *literal* shipped mechanism directly: K-1 decoys all carry the exact
+     fee-payer wallet `warm_pool` actually uses (`25NhgSgz97LKxPbD8usUcnH7AcUbuV6P2Qmc3Ayhbaee`,
+     `cli/src/main.rs::warm_pool`'s `payer.pubkey()`), the real leg carries a real
+     held-out payee's real `earliest_funder_proxy`, and the attacker
+     (`predict_by_shared_funder`) simply picks whichever of the K disclosed funders
+     differs from the rest — no classifier training needed, just
+     `getSignaturesForAddress`/`getTransaction` on the K legs. Measured across all four
+     seeds (1/2/3/42, `--n 8000`): **+0.7500 at K=4, +0.8750 at K=8, +0.9375 at K=16 —
+     identical, with zero variance across seeds, to the naive no-mitigation baseline
+     (`1 − 1/K`).** In plain terms: for K≥4 this attack identifies the real leg with
+     effectively 100% accuracy; the shipped mechanism provides **zero** effective
+     protection against it. (K=2 is the one exception, for a structural reason, not a
+     defense: with only one decoy there's no "majority" to key on, so the tie-break
+     degenerates to always guessing slot 0 — advantage ≈ 0 by coincidence of that
+     degenerate rule, not because the channel is closed.) Full numbers: `PROOF.md §3f`.
+
+     **The shipped `supersonic warm` does not diversify funder identity, and this
+     channel remains open, now with a real measured number behind that claim rather than
+     only a qualitative one** — an attacker correlating decoys by fee-payer across
+     bundles from the same signer would find the tell essentially every time for K≥4.
+     Closing this for real needs a genuinely external source of funding diversity (a
+     mature, multi-party `account-cooker` or `mirror-pool`-style crowd, which does not
+     exist yet to integrate with) — not something a single user's own wallet can produce
+     alone, however it's used.
 
      **This is stated as the frontier of the problem, not just of this tool.** As of this
      writing, no submission to this bounty — across `supersonic-tx`, `account-cooker`, or

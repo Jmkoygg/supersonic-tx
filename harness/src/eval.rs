@@ -69,6 +69,10 @@ pub struct KResult {
     pub prewarmed_mainnet_funding_advantage: f64,
     pub naive_mainnet_tokens_advantage: f64,
     pub prewarmed_mainnet_tokens_advantage: f64,
+    /// Funding-graph, SHIPPED mechanism (`mainnet_channel::eval_mainnet_funding_graph_shipped_mechanism`):
+    /// the real, honest residual of `--decoy-mode warm-pool` as it actually funds
+    /// decoys (every slot from the same wallet), not the idealized ceiling above.
+    pub mainnet_funding_shipped_advantage: f64,
 }
 
 /// Sample a realistic "real intent" amount in lamports.
@@ -200,6 +204,12 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         crate::mainnet_channel::eval_mainnet_funding_graph(&test, seed, &mainnet_fixture);
     let (naive_mainnet_tokens_advantage, prewarmed_mainnet_tokens_advantage) =
         crate::mainnet_channel::eval_mainnet_token_holdings(&test, seed, &mainnet_fixture);
+    let mainnet_funding_shipped_advantage =
+        crate::mainnet_channel::eval_mainnet_funding_graph_shipped_mechanism(
+            &test,
+            seed,
+            &mainnet_fixture,
+        );
 
     KResult {
         k,
@@ -221,5 +231,6 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         prewarmed_mainnet_funding_advantage,
         naive_mainnet_tokens_advantage,
         prewarmed_mainnet_tokens_advantage,
+        mainnet_funding_shipped_advantage,
     }
 }

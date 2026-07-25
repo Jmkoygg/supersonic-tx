@@ -41,6 +41,15 @@
 //! (funding graph shape, timing, who pays for it) is itself indistinguishable from
 //! organic activity — `signature_count` is a single scalar, and a real account-cooker
 //! integration remains a stated next step, not something this measurement covers.
+//!
+//! **Devnet retention caveat.** `harness/fixtures/devnet_history.json`'s pubkeys were
+//! "independently re-queryable" *at collection time* — Solana's public devnet RPC
+//! prunes old transaction history (typically within days), so `getSignaturesForAddress`
+//! against these specific addresses may already return 0 by the time you try it; that's
+//! expected devnet pruning, not a retraction of the recorded counts. For a channel
+//! measurement that stays checkable indefinitely, see the mainnet fixture instead
+//! (`harness/fixtures/mainnet_profiles.json`, `mainnet_channel.rs`, PROOF.md §3f) —
+//! mainnet-beta history isn't pruned on this timescale.
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;

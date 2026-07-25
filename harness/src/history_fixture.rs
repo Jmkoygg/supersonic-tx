@@ -5,6 +5,14 @@
 //! harness run time, so `cargo test`/`cargo run` stay deterministic and CI-safe.
 //! Re-running the collector overwrites this file with a fresh, honestly-labeled
 //! sample; nothing here is synthesized.
+//!
+//! **Devnet retention:** the `signature_count` values below were genuine RPC results
+//! at `collected_at`, but Solana's public devnet RPC prunes old transaction history
+//! (typically within days). Re-querying these exact pubkeys later may legitimately
+//! return 0 — that's devnet pruning, not evidence the original numbers were wrong.
+//! `harness/fixtures/mainnet_profiles.json` (see `mainnet_fixture.rs`) is the
+//! equivalent fixture for mainnet-beta, which isn't pruned the same way and stays
+//! independently re-checkable indefinitely.
 
 use serde::Deserialize;
 
