@@ -61,6 +61,7 @@ use zeroize::Zeroize;
 
 const KDF_POOL: &[u8] = b"supersonic-tx/warm-pool/v1";
 const KDF_POOL_SELECT: &[u8] = b"supersonic-tx/warm-pool-select/v1";
+const KDF_SUBFUNDER: &[u8] = b"supersonic-tx/warm-pool-subfunder/v1";
 
 /// Derive the stable keypair for warm-pool slot `slot` (independent of
 /// `bundle_id` — this is what lets it be reused/warmed across many bundles).
@@ -74,6 +75,35 @@ pub fn derive_pool_member_keypair(master_seed: &[u8; 32], slot: u32) -> Keypair 
     // Intermediate 32-byte keypair seed derived from `master_seed` — wiped
     // explicitly once consumed, same treatment as `sdk/src/lib.rs`'s
     // `derive_decoy_keypair`/`derive_sink_keypair`.
+    let mut seed: [u8; 32] = h.finalize().into();
+    let kp = keypair_from_seed(&seed).expect("32-byte seed is valid");
+    seed.zeroize();
+    kp
+}
+
+/// Derive the stable keypair for warm-pool slot `slot`'s dedicated
+/// **sub-funder** — an intermediary wallet that funds and receives the
+/// sweep-back for that one slot, instead of the top-level `payer` doing it
+/// directly (`cli/src/main.rs::warm_pool`). One sub-funder per slot, never
+/// shared, closes the specific attack `harness/src/mainnet_channel.rs`'s
+/// `predict_by_shared_funder` measures: with a single shared funder, an
+/// observer sees the same funder pubkey on every decoy leg of a bundle and
+/// the real leg's different (real, historical) funder stands out as the one
+/// that doesn't match the majority. With one sub-funder per slot, no funder
+/// pubkey repeats across a bundle's decoy legs, so there is no majority to
+/// stand out against.
+///
+/// **What this does not do:** it does not hide that `payer` funded every
+/// sub-funder in the first place — an observer willing to trace one hop
+/// further back (sub-funder's own earliest funder) still finds the same
+/// `payer` behind every slot. This raises the cost of the specific
+/// same-hop attacker measured today; it does not defeat a stronger,
+/// multi-hop funding-graph adversary (see THREAT_MODEL.md §6).
+pub fn derive_subfunder_keypair(master_seed: &[u8; 32], slot: u32) -> Keypair {
+    let mut h = Sha256::new();
+    h.update(KDF_SUBFUNDER);
+    h.update(master_seed);
+    h.update(slot.to_le_bytes());
     let mut seed: [u8; 32] = h.finalize().into();
     let kp = keypair_from_seed(&seed).expect("32-byte seed is valid");
     seed.zeroize();
@@ -153,6 +183,32 @@ mod tests {
         let a = derive_pool_member_keypair(&SEED, 0);
         let b = derive_pool_member_keypair(&SEED, 1);
         assert_ne!(a.pubkey(), b.pubkey());
+    }
+
+    #[test]
+    fn subfunder_derivation_is_deterministic_and_bundle_independent() {
+        let a = derive_subfunder_keypair(&SEED, 5);
+        let b = derive_subfunder_keypair(&SEED, 5);
+        assert_eq!(a.pubkey(), b.pubkey());
+    }
+
+    #[test]
+    fn distinct_slots_give_distinct_subfunders() {
+        let a = derive_subfunder_keypair(&SEED, 0);
+        let b = derive_subfunder_keypair(&SEED, 1);
+        assert_ne!(a.pubkey(), b.pubkey());
+    }
+
+    #[test]
+    fn subfunder_and_pool_member_never_collide() {
+        // Different KDF domain constants — a sub-funder for slot N must never
+        // equal the pool member keypair for slot N (or any other slot),
+        // otherwise the "funder" and "funded" roles would conflate.
+        for slot in 0..8u32 {
+            let member = derive_pool_member_keypair(&SEED, slot);
+            let subfunder = derive_subfunder_keypair(&SEED, slot);
+            assert_ne!(member.pubkey(), subfunder.pubkey());
+        }
     }
 
     #[test]

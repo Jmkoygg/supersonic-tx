@@ -160,12 +160,15 @@ fn print_table(results: &[KResult], n: usize) {
         "addresses (harness/fixtures/mainnet_profiles.json), evaluated only on that fixture's"
     );
     println!();
-    println!("  K  | funding-graph (idealized ceiling, warm) | funding-graph (SHIPPED mechanism, same-wallet funder, real residual)");
-    println!("-----+-------------------------------------------+------------------------------------------------------------------------");
+    println!("  K  | funding-graph (idealized ceiling, warm) | funding-graph (SHIPPED, same-wallet funder) | funding-graph (SHIPPED, per-slot sub-funder)");
+    println!("-----+-------------------------------------------+-----------------------------------------------+------------------------------------------------");
     for r in results {
         println!(
-            "  {:>2} | {:>+8.4}                                | {:>+8.4}",
-            r.k, r.prewarmed_mainnet_funding_advantage, r.mainnet_funding_shipped_advantage,
+            "  {:>2} | {:>+8.4}                                | {:>+8.4}                                       | {:>+8.4}",
+            r.k,
+            r.prewarmed_mainnet_funding_advantage,
+            r.mainnet_funding_shipped_advantage,
+            r.mainnet_funding_shipped_subfunder_pool_advantage,
         );
     }
     println!();
@@ -182,6 +185,20 @@ fn print_table(results: &[KResult], n: usize) {
         "from the rest. This is the honest residual of what `--decoy-mode warm-pool` ships today,"
     );
     println!("not an idealized ceiling. See THREAT_MODEL.md §4.7 and PROOF.md §3f.");
+    println!();
+    println!(
+        "per-slot sub-funder residual = same attacker, after `warm_pool` funds each pool slot from"
+    );
+    println!(
+        "its own dedicated wallet (`sdk/src/warming.rs::derive_subfunder_keypair`) instead of one"
+    );
+    println!(
+        "shared wallet — no majority funder left to compare against, so this same-hop attacker's"
+    );
+    println!(
+        "advantage measures to exactly 0.0. Does NOT model a stronger attacker who traces one hop"
+    );
+    println!("further (each sub-funder's own funder is still `payer`) — see THREAT_MODEL.md §6.");
     println!();
     println!(
         "IMPORTANT — what `--decoy-mode warm-pool` (`supersonic warm`) actually closes vs. what"

@@ -33,6 +33,10 @@ path = "src/bin/collect_devnet_history.rs"
 name = "collect-mainnet-profiles"
 path = "src/bin/collect_mainnet_profiles.rs"
 
+[[bin]]
+name = "program-identity"
+path = "src/bin/program_identity.rs"
+
 [dev-dependencies]
 mollusk-svm = "0.14"
 mollusk-svm-bencher = "0.14"

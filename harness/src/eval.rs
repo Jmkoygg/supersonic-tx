@@ -73,6 +73,13 @@ pub struct KResult {
     /// the real, honest residual of `--decoy-mode warm-pool` as it actually funds
     /// decoys (every slot from the same wallet), not the idealized ceiling above.
     pub mainnet_funding_shipped_advantage: f64,
+    /// Same channel, AFTER the per-slot sub-funder mitigation
+    /// (`mainnet_channel::eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool`,
+    /// `sdk/src/warming.rs::derive_subfunder_keypair`): every decoy funded by its
+    /// own dedicated wallet instead of one shared wallet. See that function's
+    /// doc comment for why this measures out to exactly `0.0` for this specific
+    /// same-hop attacker, and what stronger attacker it does not model.
+    pub mainnet_funding_shipped_subfunder_pool_advantage: f64,
 }
 
 /// Sample a realistic "real intent" amount in lamports.
@@ -210,6 +217,12 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
             seed,
             &mainnet_fixture,
         );
+    let mainnet_funding_shipped_subfunder_pool_advantage =
+        crate::mainnet_channel::eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool(
+            &test,
+            seed,
+            &mainnet_fixture,
+        );
 
     KResult {
         k,
@@ -232,5 +245,6 @@ pub fn eval_k(k: usize, n: usize, cfg: DecoyConfig, seed: u64) -> KResult {
         naive_mainnet_tokens_advantage,
         prewarmed_mainnet_tokens_advantage,
         mainnet_funding_shipped_advantage,
+        mainnet_funding_shipped_subfunder_pool_advantage,
     }
 }

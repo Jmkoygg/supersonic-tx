@@ -36,25 +36,29 @@ compile with zero errors.
 > resolved it upstream, and CI now pins that and runs `cargo clippy --workspace
 > --all-targets -- -D warnings` on every push** — clean, not just "not disabled."
 
-## 2. Automated tests — 66 passing, 0 failing
+## 2. Automated tests — 74 passing, 0 failing
 
 ```
 $ cargo test --workspace
-   supersonic-cli   (lib unit tests, incl. warm_profile, inspect skip-on-corrupt, warm-pool fail-closed) : 15 passed
+   supersonic-cli   (lib unit tests, incl. warm_profile, inspect skip-on-corrupt, warm-pool fail-closed,
+                      pool-size cap, recover-mode pool-size fail-loud)             : 18 passed
    supersonic-cli   (warm-sweep fee-payer regression)    : 1 passed
-   supersonic-harness                                   : 7 passed
+   supersonic-harness                                   : 9 passed
    supersonic-harness (mollusk_cu_bench)                 : 2 passed
    supersonic-harness (pinocchio_invariants, Mollusk)    : 8 passed
-   supersonic-sdk (lib, incl. warming.rs + zeroize golden-value tests) : 19 passed
+   supersonic-sdk (lib, incl. warming.rs + subfunder-pool + zeroize golden-value tests) : 22 passed
    supersonic-sdk (properties)                           : 5 passed   (proptest, 400 cases each)
    supersonic-tx (lib)                                   : 1 passed
    supersonic-tx (invariants)                            : 8 passed
 ```
 
-**Total: 66 passed, 0 failed** (up from 31 tests at the start of the audit cycle to 58 at
+**Total: 74 passed, 0 failed** (up from 31 tests at the start of the audit cycle to 58 at
 its close — see `AUDIT.md` — plus 4 more from the post-audit `inspect`/warm-pool
 fail-closed fixes, plus 4 more from the funding-graph shipped-mechanism regression
-tests below, §3f). The
+tests below (§3f), reaching 66 — plus 8 more from round 7's work: the per-slot
+sub-funder mitigation and its zero-residual regression test, the `--pool-size` sanity
+cap, and the `recover`/`--pool-size` fail-loud fix (`AUDIT.md`, `SECURITY.md`), reaching
+the current 74. The
 8 Anchor invariant
 tests map 1:1 to the threat-model invariants (atomicity, fail-closed, bounds, real value
 movement) — and the same 8 are now also proven against `bench/pinocchio-router` via
@@ -268,6 +272,40 @@ K (its own score is constant across the fixture), which is why the two columns a
 numerically identical at K=2 specifically: both mechanisms, at that K, reduce to the same
 "always predict slot 0" rule over the same underlying bundles.
 
+**Per-slot sub-funder mitigation — real, measured closure of this specific attacker.**
+`warm_pool` (`cli/src/main.rs`) now funds each pool slot from its own dedicated,
+deterministically-derived wallet (`sdk/src/warming.rs::derive_subfunder_keypair`, one
+sub-funder per slot, never shared) instead of the single shared wallet above.
+`eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool`
+(`harness/src/mainnet_channel.rs`) measures the same `predict_by_shared_funder` attacker
+against this mechanism — reproduced live, not asserted:
+
+```
+$ supersonic-harness --n 8000 --seed 1
+  K  | funding-graph (idealized ceiling, warm) | funding-graph (SHIPPED, same-wallet funder) | funding-graph (SHIPPED, per-slot sub-funder)
+-----+-------------------------------------------+-----------------------------------------------+------------------------------------------------
+   2 |  -0.0022                                |  -0.0022                                       |  -0.0022
+   4 |  +0.0036                                |  +0.7500                                       |  +0.0036
+   8 |  -0.0004                                |  +0.8750                                       |  -0.0004
+  16 |  +0.0004                                |  +0.9375                                       |  +0.0004
+```
+
+The per-slot sub-funder column matches the idealized ceiling almost exactly (both near-zero
+noise around the 1/K baseline) at every K — a real, measured collapse from "zero effective
+protection" (+0.7500 to +0.9375) down to no measurable advantage at all, for this specific
+attacker. Why it's exact, not approximate, in principle: with no funder pubkey repeated
+across a bundle's decoy legs, `predict_by_shared_funder`'s tie-break (every count is 1) always
+resolves to the lowest leg index regardless of which leg is real — see
+`eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool_is_zero_residual`
+(`harness/src/mainnet_channel.rs`), which constructs an exactly-uniform `real_index`
+distribution and asserts the residual is `0.0` on the nose, not just small.
+
+**What this does not do.** An observer willing to trace one hop further back — each
+sub-funder's own earliest funder — still finds the same `payer` wallet behind every slot.
+This mitigation raises the cost of the specific, same-hop attacker measured above; it is not
+a claim of unlinkability against a stronger, multi-hop funding-graph adversary. Stated
+explicitly in THREAT_MODEL.md §6, not left implied by the improved number.
+
 **Provenance:** 1,206 addresses total (1,066 aged + 140 fresh), collected passively against
 mainnet-beta in two passes on 2026-07-22 (21:46 UTC and 22:39 UTC) — `getBlock(transactionDetails=accounts)`
 block-scanning plus balance-delta discovery, nothing funded or spent to collect it (unlike
@@ -347,28 +385,37 @@ pool for both regimes.
   zero balance. The channel measured here (raw account count) is closed; an attacker
   looking at mint diversity or non-zero balances instead of count would still find a
   fingerprint. Not measured here.
-- **Funding-graph is NOT closed — and now measured, not just idealized.** Every warm-pool
-  slot is funded by the user's own wallet — the "warm" column above is an idealized
-  ceiling (what a genuinely diverse funding source would achieve), not what `supersonic
-  warm` produces. The real residual of the shipped mechanism, measured above, is +0.7500
-  to +0.9375 for K≥4 across all four seeds — **identical to the naive, no-mitigation
-  baseline**, i.e. no effective protection at all against a same-funder-clustering
-  attacker for any K≥4. Both the harness output and the CLI's own completion message say
-  this explicitly, so the gap between what's measured and what's shipped is stated where
-  a reader would see it, not left to be found by comparing two source files. Closing it
-  needs an external, mature multi-party funding source (`THREAT_MODEL.md §4.7`) — not
-  something achievable from a single wallet.
+- **Funding-graph: mitigated against the same-hop attacker, not closed against a stronger
+  one — and both states are measured, not just idealized.** The "warm" column above is an
+  idealized ceiling (what a genuinely diverse funding source would achieve), not what
+  `supersonic warm` produces. Before the per-slot sub-funder mitigation, the shipped
+  mechanism's real residual was +0.7500 to +0.9375 for K≥4 across all four seeds —
+  **identical to the naive, no-mitigation baseline**. After it (every pool slot funded by
+  its own dedicated wallet instead of one shared wallet, `sdk/src/warming.rs::derive_subfunder_keypair`),
+  the same attacker's residual collapses to near-zero, matching the idealized ceiling —
+  see the earlier per-slot sub-funder table in this section and `THREAT_MODEL.md §6` for
+  the full before/after numbers. Both the harness output and the CLI's own completion
+  message state the current mechanism and its limit explicitly: an observer willing to
+  trace one hop further back (each sub-funder's own funder) still finds the same `payer`
+  wallet behind every slot — this raises the cost of a same-hop fee-payer correlation
+  attack, it does not defend against a stronger, multi-hop funding-graph adversary. That
+  residual is unmeasured and unmitigated (`THREAT_MODEL.md §6`).
 
 ### 3g. Independent adversarial audit (`solanabr/auditor-skill`)
 
 We ran the real checklist from the bounty judge's own published audit framework
-(`solanabr/auditor-skill`) against this code six times over the project's life: three
-informal passes, then three formal rounds each producing a full written report. Real bugs
+(`solanabr/auditor-skill`) against this code seven times over the project's life: three
+informal passes, then four formal rounds each producing a full written report. Real bugs
 were found and fixed along the way — the `warm` sweep-back fee-payer bug, a
 token-holdings/funding-graph overclaim, `~/.supersonic/bundles.json` storing decoy
-records as plaintext, a silent-fallback bug in bundle recovery (F-001), and a non-atomic
-`bundle_id` counter (F-003) — and the last two formal rounds each came back with zero
-findings at severity ≥ 4, the framework's own criterion for closing the audit cycle.
+records as plaintext, a silent-fallback bug in bundle recovery (F-001), a non-atomic
+`bundle_id` counter (F-003), an unbounded `--pool-size` sanity-cap gap, and the same
+silent-fallback failure shape as F-001 recurring one parameter over in `--pool-size`
+(F-1) — and rounds 5–6 came back with zero findings at severity ≥ 4 back to back,
+formally closing the audit cycle at that point. Round 7 then found F-1 and the
+`--pool-size` cap gap above in newly-added code and fixed them within the same round,
+which honestly reopens that closing counter rather than claiming a closure that no
+longer holds; a follow-up round with zero new findings would be needed to re-close it.
 
 The full round-by-round account — methodology, every finding with its severity and fix,
 and what checklist coverage each round achieved — lives in
@@ -410,7 +457,7 @@ currently-live pair (§3b–3c show the exact commands).
 
 ## 5. What this proves
 
-- **The program does what it claims, safely — twice.** 66 tests, including 8 invariant
+- **The program does what it claims, safely — twice.** 74 tests, including 8 invariant
   tests over arbitrary-input properties, show the router executes multi-destination
   bundles atomically and **fails closed** on every malformed input (§2). The same 8
   invariants are now also proven against the Pinocchio implementation (§3f context,
@@ -436,11 +483,12 @@ currently-live pair (§3b–3c show the exact commands).
   by the shipped `DecoyMode::WarmPool` mechanism, measured against 1,206 real, passively
   observed mainnet-beta addresses on a held-out split decided before measurement (§3f) —
   not devnet, not synthetic, not the same pool used to calibrate. Funding-graph: measured
-  the same way and explicitly **not** closed — the shipped mechanism funds every pool slot
-  from one wallet, and both the tool and the docs say so, rather than let a gap between
-  claim and mechanism go undocumented. Measured against the shipped mechanism directly
-  (not just an idealized ceiling), the real residual is +0.7500 to +0.9375 for K≥4 — as
-  bad as no mitigation at all — reported as a number, not softened (§3f).
+  the same way and mitigated against the same-hop attacker, not closed against a stronger
+  one — before mitigation, the shipped mechanism funded every pool slot from one wallet,
+  giving a real residual of +0.7500 to +0.9375 for K≥4 (as bad as no mitigation at all);
+  each slot is now funded from its own dedicated wallet instead, and the same attacker's
+  measured residual collapses to near-zero, with the remaining one-hop-further limit
+  stated plainly rather than left undocumented (§3f).
 - **An independent adversarial audit ran against this exact code, found a real bug, and
   we fixed it before it went anywhere public.** `solanabr/auditor-skill` — the bounty
   judge's own published framework — found a fee-payer bug in `supersonic warm` that would

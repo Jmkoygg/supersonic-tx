@@ -204,6 +204,67 @@ pub fn eval_mainnet_funding_graph_shipped_mechanism(
     hits as f64 / n - base
 }
 
+/// The residual of the shipped `warm_pool` mechanism against the
+/// funding-graph channel **after** the per-slot sub-funder mitigation
+/// (`cli/src/main.rs::warm_pool`, `sdk/src/warming.rs::derive_subfunder_keypair`):
+/// each decoy leg is now funded by a distinct wallet — one dedicated
+/// sub-funder per pool slot, never shared with any other slot — instead of
+/// the single shared `WARM_POOL_FUNDER_PUBKEY` that
+/// `eval_mainnet_funding_graph_shipped_mechanism` (above) models. Modeled here
+/// with a distinct synthetic funder id per decoy leg (values don't matter,
+/// only that no two legs in the same bundle share one) plus one real,
+/// historical funder for the real leg, run through the same
+/// `predict_by_shared_funder` attacker used above.
+///
+/// Because every leg's funder is now unique, `predict_by_shared_funder` finds
+/// no majority to pick the odd leg out against — every count is `1`, so its
+/// tie-break (lowest index) always resolves to leg `0`, independent of which
+/// leg is actually real. With `real_index` uniform over `0..K` (guaranteed
+/// upstream by however `bundles` was generated), that makes the attacker's
+/// hit rate exactly `1/K` — i.e. the measured advantage is `0.0`: this
+/// specific, shipped, same-hop attacker is fully neutralized, not just
+/// reduced.
+///
+/// **What this does not model:** an attacker willing to trace one hop further
+/// back (each sub-funder's own funder) still finds the same wallet (`payer`)
+/// behind every slot — that stronger, multi-hop adversary is out of scope
+/// here; see THREAT_MODEL.md §6 for the full, honest statement of what this
+/// mitigation does and does not defend against.
+pub fn eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool(
+    bundles: &[Bundle],
+    seed: u64,
+    fixture: &MainnetFixture,
+) -> f64 {
+    let aged = fixture.aged_held_out();
+    let funder_pool: Vec<&str> = aged
+        .iter()
+        .filter_map(|p| p.earliest_funder_proxy.as_deref())
+        .collect();
+    if bundles.is_empty() || funder_pool.is_empty() {
+        return 0.0;
+    }
+    let mut rng = ChaCha20Rng::seed_from_u64(seed ^ 0x4D4E_5F46_4753_5342);
+    let k = bundles[0].amounts.len();
+    let mut hits = 0usize;
+
+    for (bundle_idx, b) in bundles.iter().enumerate() {
+        let kk = b.amounts.len();
+        let real_funder = funder_pool[rng.gen_range(0..funder_pool.len())];
+        let decoy_ids: Vec<String> = (0..kk)
+            .map(|leg| format!("subfunder-{bundle_idx}-{leg}"))
+            .collect();
+        let mut funders: Vec<&str> = decoy_ids.iter().map(|s| s.as_str()).collect();
+        funders[b.real_index] = real_funder;
+        if predict_by_shared_funder(&funders) == b.real_index {
+            hits += 1;
+        }
+    }
+
+    let n = bundles.len() as f64;
+    let base = 1.0 / k as f64;
+    hits as f64 / n - base
+}
+
 /// Token-holdings: does this destination already hold SPL/Token-2022 accounts,
 /// vs a freshly-derived decoy holding none.
 pub fn eval_mainnet_token_holdings(
@@ -268,6 +329,44 @@ mod tests {
         let fixture = MainnetFixture::load();
         assert_eq!(
             eval_mainnet_funding_graph_shipped_mechanism(&[], 1, &fixture),
+            0.0
+        );
+    }
+
+    /// The point of the sub-funder mitigation: since `predict_by_shared_funder`
+    /// always guesses leg 0 once every funder is unique (see the function's
+    /// doc comment), its hit rate is exactly `1/K` if and only if `real_index`
+    /// is *exactly* uniform over the sample, not merely uniform in
+    /// expectation — a randomly-drawn sample (like `synthetic_bundles`) would
+    /// only converge to that, with sampling noise on any finite n. So this
+    /// test builds `real_index` deterministically cycling `0..K` (`k` copies
+    /// of each value) instead of drawing it at random, to get an exact
+    /// uniform distribution and therefore an exact `0.0` residual — a
+    /// mathematical identity here, not a statistical approximation.
+    #[test]
+    fn eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool_is_zero_residual() {
+        let fixture = MainnetFixture::load();
+        for &k in &[2usize, 4, 8, 16] {
+            let bundles: Vec<Bundle> = (0..k * 20)
+                .map(|i| Bundle {
+                    amounts: vec![1u64; k],
+                    real_index: i % k,
+                })
+                .collect();
+            let advantage =
+                eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool(&bundles, 1, &fixture);
+            assert_eq!(
+                advantage, 0.0,
+                "expected exactly zero residual for K={k}, got {advantage}"
+            );
+        }
+    }
+
+    #[test]
+    fn eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool_empty_bundles_is_zero() {
+        let fixture = MainnetFixture::load();
+        assert_eq!(
+            eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool(&[], 1, &fixture),
             0.0
         );
     }

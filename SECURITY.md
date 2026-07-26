@@ -3,10 +3,13 @@
 `supersonic-tx` is devnet-validated software from a Superteam Brasil bounty submission,
 not an audited production system. Read [`THREAT_MODEL.md`](./THREAT_MODEL.md) for the
 adversary model and [`AUDIT.md`](./AUDIT.md) for the full independent audit that has run
-against this code so far (`solanabr/auditor-skill`, six rounds — three informal plus
-three formal rounds, the last two clean and closing the audit cycle — five real findings
-fixed, including the local-storage plaintext issue below). `PROOF.md §3g` carries a short
-summary of the same audit with a link to the full account.
+against this code so far (`solanabr/auditor-skill`, seven rounds — three informal plus
+four formal rounds; rounds 5–6 ran clean back to back and closed the cycle once, and
+round 7 found new real issues in newly-added code and fixed them within the same round,
+honestly reopening that closing counter rather than claiming a closure that no longer
+holds — six real findings fixed at or above the disclosure bar, including the
+local-storage plaintext issue below). `PROOF.md §3g` carries a short summary of the same
+audit with a link to the full account.
 
 ## Static analysis tooling
 
@@ -39,11 +42,28 @@ holds itself to (`PROOF.md`).
 ## What's explicitly out of scope (already known, already stated)
 
 The channels and limitations documented in `THREAT_MODEL.md §6` and `§4.7` — most
-notably that the funding-graph channel is not closed by anything shipped here — are
-known, not vulnerabilities to report. See those documents before filing.
+notably that the funding-graph channel is mitigated against a same-hop fee-payer
+correlation attacker, but not closed against a stronger multi-hop one, by anything
+shipped here — are known, not vulnerabilities to report. See those documents before
+filing.
 
 ## Fixed findings
 
+- **`supersonic warm`'s sweep-back transaction used the wrong fee-payer** (the pool-slot
+  keypair itself), which is mathematically guaranteed to fail — a transaction's fee is
+  debited from the fee-payer before the instruction executes, so every real run would
+  have stranded ~0.005 SOL per slot with no CLI command exposed to recover it. Found by
+  `solanabr/auditor-skill` round 1. **Fixed:** the pool's real `payer` (later, its
+  per-slot sub-funder — see below) pays the fee; the slot only co-signs to authorize
+  moving its own balance. Verified:
+  `cli/tests/warm_sweep_fix_verification.rs` (a permanent regression test).
+- **Docs overclaimed that `--decoy-mode warm-pool` closes the token-holdings and
+  funding-graph channels together**, when at the time only token-holdings (and
+  destination-history) were actually closed by the shipped mechanism. Found by
+  `solanabr/auditor-skill` round 1. **Fixed:** corrected before it shipped publicly; the
+  funding-graph channel's real, honest status (mitigated against a same-hop attacker as
+  of round 7, not fully closed against a multi-hop one) is tracked accurately in
+  `THREAT_MODEL.md §6` and measured in `PROOF.md §3f`.
 - **Local bundle records were stored as plaintext JSON** (`~/.supersonic/bundles.json`),
   including `real_index` (which leg of each sent bundle was real) and the real
   destination — exactly what the rest of this tool exists to hide, readable by anything
@@ -97,6 +117,23 @@ known, not vulnerabilities to report. See those documents before filing.
   single-record path is unchanged. Verified:
   `cli/src/main.rs :: tests::list_all_lines_skips_corrupted_record_instead_of_aborting`
   (also asserts the corrupted record's plaintext fields never leak into the warning).
+- **`resolve_recover_mode` still silently defaulted `--pool-size` to `32` when
+  `--decoy-mode warm-pool` was passed explicitly without it** — the same failure shape as
+  the F-001 fix above, one parameter over: `pool_size` directly changes the range
+  `select_pool_slots` shuffles over on every draw, so a wrong guess derives a
+  structurally different slot sequence, not a subset, silently reproducing the "nothing
+  to recover" false-success F-001 exists to prevent for any bundle sent with a
+  non-default `--pool-size`. Found by `solanabr/auditor-skill` round 7 (F-1, severity 5).
+  **Fixed:** the same fail-loud pattern as F-001, scoped to `WarmPool` specifically.
+  Verified: `cli/src/main.rs :: tests::recover_mode_errors_on_warm_pool_override_without_pool_size`.
+- **`warm_pool`'s only sanity cap bounded round-trip cost, which is zero whenever
+  `--rounds 0` regardless of `--pool-size`** — leaving the flat per-slot costs paid
+  independent of `rounds` (ATA-creation rent, and the sub-funder seeding transfer this
+  round's funding-graph mitigation added) with no bound at all, so an arbitrarily large
+  `--pool-size 0` would pass the existing check and spend on every slot with no warning.
+  Found during round 7's scoped diff-audit pass, before the full re-walk began. **Fixed:**
+  an independent `pool_size_exceeds_cap` check (cap: 1,000 slots) now runs first.
+  Verified: `cli/src/main.rs :: tests::pool_size_exceeds_cap_rejects_above_and_allows_at_or_below`.
 
 ## Known, stated hardening gaps (not fixed, not hidden)
 

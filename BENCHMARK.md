@@ -52,6 +52,26 @@ use (`compute_units_consumed` on the transaction result) and is the natural vali
 step **if** the production port is taken — but it would refine a number that does not
 change the conclusion. Binary size / deploy rent does.
 
+**Measured (Anchor side), via Mollusk — `harness/tests/mollusk_cu_bench.rs`:**
+
+| Legs (`K`) | Compute units | Marginal CU / leg |
+|---:|---:|---:|
+| 2 | 5,446 | — |
+| 4 | 9,832 | 2,193 |
+| 8 | 18,604 | 2,193 |
+| 16 | 36,148 | 2,193 |
+
+The curve is almost perfectly linear: `CU ≈ 1,060 + 2,193 × K` (fixed overhead + a flat
+per-leg System-Program-transfer cost). This confirms the analysis above directly instead
+of just arguing it: the fixed framework overhead Pinocchio would remove is a small,
+constant slice of a cost that scales with `K`, so the saving *shrinks proportionally* as
+bundles get larger — reinforcing, not changing, the conclusion that binary size/deploy
+rent (Result 1) is the axis this benchmark decides on. Reproduce:
+```bash
+cargo build-sbf --manifest-path programs/supersonic-tx/Cargo.toml
+cargo test --release -p supersonic-harness --test mollusk_cu_bench -- --nocapture
+```
+
 ## Result 3 — same invariants, not just a size comparison (measured)
 
 A benchmark that's only ever been sized, never functionally tested, isn't evidence it

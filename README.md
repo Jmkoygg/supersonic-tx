@@ -197,15 +197,17 @@ that remains open:
   mint diversity or balance instead of raw account count would still distinguish it; not
   measured here.
 - **Funding-graph channel** (was this destination funded by a diverse, external source, or
-  freshly by the same wallet casting the bundle?) — **measured, and NOT closed.** Every
-  warm-pool slot is funded by the user's own wallet. The `warm` regime number reported for
-  this channel is an idealized ceiling (what a genuinely diverse funding source would
-  achieve), not what the shipped mechanism produces. The shipped mechanism's own real
-  residual is also measured directly (`eval_mainnet_funding_graph_shipped_mechanism`,
-  `harness/src/mainnet_channel.rs`): **+0.7500 to +0.9375 for K≥4, across all four
-  seeds — identical to the naive, no-mitigation baseline.** Closing this needs an
-  external, mature crowd/account-cooker this project doesn't build (see
-  `THREAT_MODEL.md §4.7`, `PROOF.md §3f`).
+  freshly by the same wallet casting the bundle?) — **measured, and mitigated against the
+  same-hop attacker, not closed against a stronger one.** Before mitigation, every
+  warm-pool slot was funded by the user's own wallet: the shipped mechanism's real
+  residual (`eval_mainnet_funding_graph_shipped_mechanism`, `harness/src/mainnet_channel.rs`)
+  was **+0.7500 to +0.9375 for K≥4** — identical to the naive, no-mitigation baseline.
+  `warm_pool` now funds each pool slot from its own dedicated wallet instead
+  (`sdk/src/warming.rs::derive_subfunder_keypair`), and the same attacker's measured
+  residual (`eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool`) collapses to
+  near-zero, matching the idealized ceiling. What this does not do: an observer tracing
+  one hop further back (each sub-funder's own funder) still finds the same wallet behind
+  every slot — see `THREAT_MODEL.md §6`, `PROOF.md §3f` for the full before/after numbers.
 - **Timing/cadence channel** (when you cast) — addressed at the SDK/operational layer, not
   measured here.
 
@@ -239,13 +241,16 @@ decoy" is not.
   distinct bundle-seeded random subset of the pool rather than a fixed prefix (so the same
   handful of addresses don't visibly recur as decoys across every bundle from one signer —
   proven statistically over 500 bundles, `sdk/src/warming.rs` tests). **Funding-graph is
-  measured the same way but NOT closed**: every warm-pool slot is funded by the same
-  wallet, so the `warm` number for this specific channel is an idealized ceiling, not a
-  claim about the shipped mechanism. The shipped mechanism's real residual is also
-  measured directly, not just idealized: **+0.7500 to +0.9375 for K≥4** (identical to
-  shipping no funding-graph defense at all), reported honestly rather than left as only
-  a qualitative gap. See `THREAT_MODEL.md §4.7` and `PROOF.md §3f` for the full,
-  itemized breakdown of what's closed vs. open across all three sub-channels.
+  measured the same way and mitigated against the same-hop attacker, not closed against a
+  stronger one:** before mitigation every warm-pool slot was funded by the same wallet,
+  giving a real residual of **+0.7500 to +0.9375 for K≥4** (identical to shipping no
+  funding-graph defense at all). Each pool slot is now funded from its own dedicated
+  wallet instead (`sdk/src/warming.rs::derive_subfunder_keypair`), and the same attacker's
+  measured residual collapses to near-zero, matching the idealized ceiling — reported
+  honestly along with what it doesn't cover: an observer tracing one hop further back
+  (each sub-funder's own funder) still finds the same wallet behind every slot. See
+  `THREAT_MODEL.md §6` and `PROOF.md §3f` for the full, itemized breakdown of what's
+  closed vs. open across all three sub-channels.
 - **Two implementations, same invariants, one deployed.** The shipped program is Anchor,
   live and proven on devnet. [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in
   Pinocchio and measures the tradeoff (~32× smaller, ~32× cheaper to deploy) — and
@@ -287,7 +292,7 @@ PROOF.md                  evidence: tests, live devnet txs, measured advantage
 BENCHMARK.md              Anchor vs Pinocchio: measured binary size / deploy rent
 SECURITY.md               how to report an issue, and every stated hardening gap
 AUDIT.md                  the independent adversarial audit: methodology, every
-                          finding across six rounds, and how each was fixed
+                          finding across seven rounds, and how each was fixed
 ```
 
 ## License

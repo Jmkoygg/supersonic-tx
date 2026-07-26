@@ -38,7 +38,7 @@ use solana_sdk::{
 };
 use supersonic_sdk::{
     build_instruction, derive_decoy_keypair, derive_sink_keypair, plan_bundle_with_mode,
-    warming::{derive_pool_member_keypair, select_pool_slots},
+    warming::{derive_pool_member_keypair, derive_subfunder_keypair, select_pool_slots},
     BundlePlan, DecoyConfig, DecoyMode,
 };
 use zeroize::{Zeroize, Zeroizing};
@@ -277,6 +277,17 @@ fn worst_case_round_trips(pool_size: u32, rounds: u32) -> u64 {
     (pool_size as u64).saturating_mul(per_slot_worst_case)
 }
 
+/// Independent cap on `pool_size` alone, extracted as its own pure/testable
+/// function for the same reason `worst_case_round_trips` is: `warm_pool`
+/// itself needs a live `RpcClient` to call, so its bounds checks are pulled
+/// out here where a unit test can exercise them without a network. See the
+/// cap's own doc comment at its call site in `warm_pool` for why it exists
+/// (it covers per-slot costs `worst_case_round_trips` does not, which are
+/// zero at `rounds == 0` regardless of `pool_size`).
+fn pool_size_exceeds_cap(pool_size: u32, max_pool_size: u32) -> bool {
+    pool_size > max_pool_size
+}
+
 /// Build up real signature history on `pool_size` warm-pool slots: real
 /// fund-in + sweep-back round trips per slot, each adding 2 signatures.
 /// `rounds` is the user's budget/average, not a flat per-slot count — the
@@ -301,6 +312,21 @@ fn warm_pool(
                                               // this cap must budget for the worst case, not the flat `pool_size * rounds` that used to be
                                               // exact. This is now an upper-bound estimate, not the precise total round trips this run will
                                               // actually perform.
+                                              // `MAX_TOTAL_ROUND_TRIPS` above bounds round-trip cost, which scales with `rounds` — it is
+                                              // *zero* whenever `rounds == 0` regardless of `pool_size`, and so does not bound the per-slot
+                                              // costs below that are paid once per slot independent of `rounds`: the ATA-creation rent
+                                              // (pre-existing) and the sub-funder seeding transfer (new, this change). An unbounded
+                                              // `--pool-size` with `--rounds 0` would otherwise let `payer` be drained by an arbitrarily
+                                              // large pool with no warning — a self-inflicted DoS/fund-drain via missing bounds, not an
+                                              // externally exploitable one, but still worth capping independently of `rounds`.
+    const MAX_POOL_SIZE: u32 = 1_000; // generous for any realistic K<=16 anonymity-set pool
+    if pool_size_exceeds_cap(pool_size, MAX_POOL_SIZE) {
+        return Err(anyhow!(
+            "--pool-size {pool_size} exceeds the sanity cap of {MAX_POOL_SIZE}: each slot costs a \
+             flat amount (ATA rent + sub-funder seeding) independent of --rounds, so this cap \
+             applies even with --rounds 0. Run in smaller batches if you really need more slots."
+        ));
+    }
     let worst_case_round_trips = worst_case_round_trips(pool_size, rounds);
     if worst_case_round_trips > MAX_TOTAL_ROUND_TRIPS {
         return Err(anyhow!(
@@ -311,8 +337,32 @@ fn warm_pool(
             lamports_to_sol(DUST_LAMPORTS.saturating_mul(worst_case_round_trips))
         ));
     }
+    // Comfortably covers a slot's worst-case round-trip fees (2 tx/round, jittered
+    // up to 3x `rounds`) plus one ATA-creation fee and its rent-exempt minimum
+    // (~0.0020 SOL), with margin. Devnet SOL only — see the funding-graph
+    // discussion below for why this exists.
+    const SUBFUNDER_ALLOWANCE_LAMPORTS: u64 = 10_000_000; // 0.01 SOL
+
     for slot in 0..pool_size {
         let kp = derive_pool_member_keypair(master_seed, slot);
+        // Each slot's own funder, derived from `master_seed` and never shared with
+        // any other slot — see `warming::derive_subfunder_keypair` for why: it's
+        // what stops a same-bundle "which decoy's funder differs from the
+        // majority" attacker (`harness/src/mainnet_channel.rs::predict_by_shared_funder`)
+        // from having a majority to compare against in the first place.
+        let subfunder = derive_subfunder_keypair(master_seed, slot);
+        let bh = client.get_latest_blockhash()?;
+        let seed_ix = system_instruction::transfer(
+            &payer.pubkey(),
+            &subfunder.pubkey(),
+            SUBFUNDER_ALLOWANCE_LAMPORTS,
+        );
+        let seed_tx =
+            Transaction::new_signed_with_payer(&[seed_ix], Some(&payer.pubkey()), &[payer], bh);
+        client
+            .send_and_confirm_transaction_with_spinner(&seed_tx)
+            .with_context(|| format!("seed sub-funder for pool slot {slot}"))?;
+
         // Per-slot round-trip target, derived from real mainnet calibration data so
         // every slot doesn't end up with the exact same, suspiciously uniform
         // signature count (see `warm_profile` module doc).
@@ -320,25 +370,30 @@ fn warm_pool(
         for r in 0..slot_rounds {
             let bh = client.get_latest_blockhash()?;
             let fund_ix =
-                system_instruction::transfer(&payer.pubkey(), &kp.pubkey(), DUST_LAMPORTS);
-            let fund_tx =
-                Transaction::new_signed_with_payer(&[fund_ix], Some(&payer.pubkey()), &[payer], bh);
+                system_instruction::transfer(&subfunder.pubkey(), &kp.pubkey(), DUST_LAMPORTS);
+            let fund_tx = Transaction::new_signed_with_payer(
+                &[fund_ix],
+                Some(&subfunder.pubkey()),
+                &[&subfunder],
+                bh,
+            );
             client
                 .send_and_confirm_transaction_with_spinner(&fund_tx)
                 .with_context(|| format!("fund pool slot {slot} round {r}"))?;
 
             let bal = client.get_balance(&kp.pubkey())?;
             let bh = client.get_latest_blockhash()?;
-            let sweep_ix = system_instruction::transfer(&kp.pubkey(), &payer.pubkey(), bal);
-            // `payer` (not `kp`) must be the fee-payer: `kp` only has exactly `bal`
-            // lamports, and a transaction's fee is debited from the fee-payer
-            // before the instruction runs — if `kp` paid its own fee here, moving
-            // its full balance would always fail by exactly the fee amount. Same
-            // fee-payer/signer split already used correctly in `recover()` below.
+            let sweep_ix = system_instruction::transfer(&kp.pubkey(), &subfunder.pubkey(), bal);
+            // `subfunder` (not `kp`) must be the fee-payer: `kp` only has exactly
+            // `bal` lamports, and a transaction's fee is debited from the
+            // fee-payer before the instruction runs — if `kp` paid its own fee
+            // here, moving its full balance would always fail by exactly the fee
+            // amount. Same fee-payer/signer split `payer` used before this change,
+            // and the one `recover()` below still uses.
             let sweep_tx = Transaction::new_signed_with_payer(
                 &[sweep_ix],
-                Some(&payer.pubkey()),
-                &[payer, &kp],
+                Some(&subfunder.pubkey()),
+                &[&subfunder, &kp],
                 bh,
             );
             client
@@ -351,13 +406,14 @@ fn warm_pool(
         // signature-history number) so the token-holdings channel
         // (`harness/src/mainnet_channel.rs::eval_mainnet_token_holdings`) is
         // actually closed by this shipped mechanism, not just measured under
-        // an idealized model. `payer` funds the (small) rent; the account
-        // belongs to the pool slot, not `payer`. Idempotent: safe to re-run.
+        // an idealized model. `subfunder` funds the (small) rent, keeping the
+        // same funder-of-record as the round trips above; the account belongs
+        // to the pool slot, not `subfunder`. Idempotent: safe to re-run.
         let token_program: Pubkey = TOKEN_PROGRAM_ID.parse().expect("valid constant");
         let ata_program: Pubkey = ASSOCIATED_TOKEN_PROGRAM_ID.parse().expect("valid constant");
         let mint: Pubkey = NATIVE_MINT.parse().expect("valid constant");
         let create_ata_ix = create_ata_idempotent_ix(
-            &payer.pubkey(),
+            &subfunder.pubkey(),
             &kp.pubkey(),
             &mint,
             &token_program,
@@ -366,19 +422,45 @@ fn warm_pool(
         let bh = client.get_latest_blockhash()?;
         let ata_tx = Transaction::new_signed_with_payer(
             &[create_ata_ix],
-            Some(&payer.pubkey()),
-            &[payer],
+            Some(&subfunder.pubkey()),
+            &[&subfunder],
             bh,
         );
         client
             .send_and_confirm_transaction_with_spinner(&ata_tx)
             .with_context(|| format!("create token account for pool slot {slot}"))?;
 
+        // Return whatever the sub-funder has left (its allowance minus fees and
+        // the ATA rent it just paid) to `payer` — hygiene, not a privacy
+        // requirement: this final transfer is `payer` <-> `subfunder`, a
+        // different pair than any transaction a destination-profiling observer
+        // looks at for the pool slot itself.
+        let leftover = client.get_balance(&subfunder.pubkey())?;
+        let bh = client.get_latest_blockhash()?;
+        let fee_estimate = 5_000; // one signature's base fee, left unswept as margin
+        if leftover > fee_estimate {
+            let return_ix = system_instruction::transfer(
+                &subfunder.pubkey(),
+                &payer.pubkey(),
+                leftover - fee_estimate,
+            );
+            let return_tx = Transaction::new_signed_with_payer(
+                &[return_ix],
+                Some(&subfunder.pubkey()),
+                &[&subfunder],
+                bh,
+            );
+            client
+                .send_and_confirm_transaction_with_spinner(&return_tx)
+                .with_context(|| format!("return sub-funder leftover for pool slot {slot}"))?;
+        }
+
         println!(
             "  slot {slot}/{pool_size}: {} -> +{} real signatures this run ({slot_rounds} round-trip(s)), \
-             1 token account ensured",
+             1 token account ensured, funded via dedicated sub-funder {}",
             kp.pubkey(),
-            slot_rounds * 2
+            slot_rounds * 2,
+            subfunder.pubkey(),
         );
     }
     println!(
@@ -387,9 +469,11 @@ fn warm_pool(
          (`cli/src/warm_profile.rs`) rather than all being exactly {rounds} — {rounds} is the budget \
          you set via --rounds, not the exact count applied to every slot; see the per-slot lines above \
          for what each slot actually got this run. \
-         NOTE: funding-graph is NOT closed by this mechanism — every slot is funded by this same \
-         wallet, so an attacker correlating bundles by fee-payer would see one funder behind every \
-         warm-pool decoy. See THREAT_MODEL.md for the honest scope of what --decoy-mode warm-pool \
+         NOTE: funding-graph is now spread across one dedicated sub-funder wallet per slot (never \
+         shared across slots), which stops a same-bundle observer from finding a majority funder to \
+         compare a bundle's real leg against. It does NOT hide that `payer` funded every sub-funder \
+         one hop back — an observer willing to trace that extra hop still finds one wallet behind \
+         every slot. See THREAT_MODEL.md for the full, honest scope of what --decoy-mode warm-pool \
          does and does not defend.\n\
          Use --decoy-mode warm-pool --pool-size {pool_size} on `plan`/`send`."
     );
@@ -551,7 +635,26 @@ fn resolve_recover_mode(
     pool_size: Option<u32>,
 ) -> Result<(DecoyModeArg, u32)> {
     if let Some(m) = decoy_mode {
-        return Ok((m, pool_size.unwrap_or(32)));
+        // `--pool-size` needs the same fail-loud treatment as `--decoy-mode` above, for
+        // `WarmPool` specifically: unlike `decoy_mode` (which only selects which RNG
+        // algorithm decoys come from), `pool_size` directly changes the range
+        // `select_pool_slots` (`sdk/src/warming.rs`) shuffles over on every draw, so a
+        // wrong guess doesn't return a subset of the right answer -- it derives a
+        // structurally unrelated slot sequence. Silently defaulting to the CLI's own
+        // `32` here would reproduce exactly the "nothing to recover" false-success this
+        // function exists to prevent, just for a bundle sent with a non-default
+        // `--pool-size`. `Fresh` mode never reads `pool_size`, so it's fine to default
+        // there -- only `WarmPool` needs the exact value.
+        return match (m, pool_size) {
+            (DecoyModeArg::WarmPool, None) => Err(anyhow!(
+                "--decoy-mode warm-pool given without --pool-size: a wrong guess here (e.g. \
+                 this CLI's own default of 32) would derive a structurally different set of \
+                 decoy addresses than the ones this bundle actually used -- you'd see \"nothing \
+                 to recover\" while the real decoys sit untouched at the actual pool size. Pass \
+                 the exact --pool-size this bundle was sent with."
+            )),
+            (m, size) => Ok((m, size.unwrap_or(32))),
+        };
     }
     let s = with_store_lock_shared(load_store)?;
     match s
@@ -1119,6 +1222,41 @@ mod tests {
         });
     }
 
+    /// Round-7 audit finding F-1: the same failure shape as F-001 above, one
+    /// parameter over. `--decoy-mode warm-pool` given explicitly without
+    /// `--pool-size` used to silently default to 32 (this CLI's own default
+    /// for `plan`/`send`/`warm`) instead of erroring -- invisible unless the
+    /// bundle was actually sent with a non-default pool size, at which point
+    /// `select_pool_slots` derives a structurally different slot sequence
+    /// (its RNG range depends on `pool_size` on every draw, unlike `n`, which
+    /// is prefix-stable) and `recover()` reports "nothing to recover" while
+    /// the real decoys sit untouched at the actual pool size.
+    #[test]
+    fn recover_mode_errors_on_warm_pool_override_without_pool_size() {
+        let seed = [7u8; 32];
+
+        let missing_pool_size = resolve_recover_mode(&seed, 42, Some(DecoyModeArg::WarmPool), None);
+        assert!(
+            missing_pool_size.is_err(),
+            "--decoy-mode warm-pool without --pool-size must error, not silently default to 32"
+        );
+        let msg = missing_pool_size.unwrap_err().to_string();
+        assert!(
+            msg.contains("--pool-size"),
+            "error should name --pool-size specifically, got: {msg}"
+        );
+
+        // Fresh mode never reads pool_size, so no --pool-size override is fine.
+        let fresh_without_pool_size =
+            resolve_recover_mode(&seed, 42, Some(DecoyModeArg::Fresh), None);
+        assert_eq!(fresh_without_pool_size.unwrap(), (DecoyModeArg::Fresh, 32));
+
+        // Warm-pool with an explicit --pool-size still works.
+        let warm_with_pool_size =
+            resolve_recover_mode(&seed, 42, Some(DecoyModeArg::WarmPool), Some(64));
+        assert_eq!(warm_with_pool_size.unwrap(), (DecoyModeArg::WarmPool, 64));
+    }
+
     /// F-003 regression: `next_bundle_id()` must be safe under concurrent
     /// callers on the same machine. Before the fix, two racing calls could
     /// both read the same `next_id` and return the same bundle_id, which
@@ -1217,6 +1355,23 @@ mod tests {
         assert_eq!(worst_case_round_trips(10, 5), 10 * 15);
         assert_eq!(worst_case_round_trips(0, 100), 0);
         assert_eq!(worst_case_round_trips(100, 0), 0);
+    }
+
+    /// The gap `pool_size_exceeds_cap` exists to close: at `rounds == 0`,
+    /// `worst_case_round_trips` is always `0` regardless of `pool_size`, so
+    /// it alone would let an arbitrarily large `--pool-size` through with no
+    /// cap on the flat per-slot costs (ATA rent, sub-funder seeding) that are
+    /// paid independent of `rounds`.
+    #[test]
+    fn worst_case_round_trips_is_zero_at_rounds_zero_regardless_of_pool_size() {
+        assert_eq!(worst_case_round_trips(1_000_000, 0), 0);
+    }
+
+    #[test]
+    fn pool_size_exceeds_cap_rejects_above_and_allows_at_or_below() {
+        assert!(pool_size_exceeds_cap(1_001, 1_000));
+        assert!(!pool_size_exceeds_cap(1_000, 1_000));
+        assert!(!pool_size_exceeds_cap(0, 1_000));
     }
 
     /// juiz-cego live-devnet finding: `inspect` with no `--bundle-id` (list

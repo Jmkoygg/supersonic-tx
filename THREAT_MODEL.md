@@ -219,8 +219,10 @@ one, and the harness must *test* each one.
      fingerprint distinguishing a warmed decoy from an organically-active address. The
      count-based channel is closed; a richer token-behavior channel is not measured
      here and remains open.
-   - **Funding-graph — NOT closed. Measured two ways, and left open on purpose.** Every
-     `DecoyMode::WarmPool` slot is funded by the *same* wallet (the user's own signer).
+   - **Funding-graph — mitigated against the same-hop attacker, not closed against a
+     stronger one. Measured two ways, before and after.** Every `DecoyMode::WarmPool`
+     slot used to be funded by the *same* wallet (the user's own signer); see the
+     mitigation update after the measurements below for what changed.
      A real payee's own funding history is far more varied. We measure this two ways.
      First, `distinct_funders_lower_bound` in the mainnet fixture (a coarse single-page
      proxy — see the collector's own documented limits): this proxy is `1` for every one
@@ -249,21 +251,31 @@ one, and the harness must *test* each one.
      degenerates to always guessing slot 0 — advantage ≈ 0 by coincidence of that
      degenerate rule, not because the channel is closed.) Full numbers: `PROOF.md §3f`.
 
-     **The shipped `supersonic warm` does not diversify funder identity, and this
-     channel remains open, now with a real measured number behind that claim rather than
-     only a qualitative one** — an attacker correlating decoys by fee-payer across
-     bundles from the same signer would find the tell essentially every time for K≥4.
-     Closing this for real needs a genuinely external source of funding diversity (a
-     mature, multi-party `account-cooker` or `mirror-pool`-style crowd, which does not
-     exist yet to integrate with) — not something a single user's own wallet can produce
-     alone, however it's used.
+     **Mitigation (this is the current, shipped state): each pool slot is now funded from
+     its own dedicated wallet.** `warm_pool` (`cli/src/main.rs`) funds and sweeps every
+     pool slot through a deterministically-derived, per-slot sub-funder
+     (`sdk/src/warming.rs::derive_subfunder_keypair`) instead of the single wallet above.
+     With no funder pubkey shared across a bundle's decoy legs, `predict_by_shared_funder`
+     has no majority to compare against — its tie-break always resolves to the lowest leg
+     index regardless of which leg is real, so with `real_index` uniform over `0..K` the
+     attacker's hit rate is exactly `1/K`: **measured residual `0.0`**
+     (`eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool`, `PROOF.md §3f`) —
+     collapsing the +0.7500/+0.8750/+0.9375 numbers above down to the idealized ceiling.
+     **What this does not do:** an observer willing to trace one hop further back (each
+     sub-funder's own earliest funder) still finds the same `payer` wallet behind every
+     slot. This raises the cost of the specific same-hop attacker measured above; it does
+     not defend against a stronger, multi-hop funding-graph adversary — that residual
+     remains unmeasured and unmitigated, and closing it for real still needs a genuinely
+     external source of funding diversity (a mature, multi-party `account-cooker` or
+     `mirror-pool`-style crowd, which does not exist yet to integrate with) — not
+     something derivable from a single user's own wallet alone, however it's split.
 
-     **This is stated as the frontier of the problem, not just of this tool.** As of this
-     writing, no submission to this bounty — across `supersonic-tx`, `account-cooker`, or
-     `mirror-pool` — closes funding-graph either; it requires a mature multi-party crowd
-     that doesn't exist yet in any of the three tracks. We name that explicitly, rather
-     than leave it to be discovered later, because the honest state of the art is a fact
-     worth stating plainly, not a gap to imply we didn't notice.
+     **Frontier note, updated:** at the time this channel was first measured, no
+     submission to this bounty closed it at all. The mitigation above closes it against
+     the specific same-hop attacker this document measures; the multi-hop frontier (an
+     external, mature multi-party funding crowd) remains open across all tracks as far as
+     is known. We name the current boundary explicitly rather than leave the earlier,
+     now-superseded claim standing.
 
    **Calibration/held-out split.** All three mainnet-fixture measurements above draw
    `naive`/`warm` samples only from the fixture's `held_out` partition, assigned by a
@@ -347,10 +359,34 @@ An auditor reads this section first. We are deliberately honest about the edges.
   the honest operational mitigation is procedural, not cryptographic: vary `K` and
   timing across bundles rather than using an identical, clockwork pattern, since a
   fixed cadence is itself a fingerprint no code change here can close.
-- **Does not close the funding-graph channel.** `DecoyMode::WarmPool` closes
-  destination-history and token-holdings (§4.7) but every warmed decoy is still funded
-  by the same wallet as the user — a fee-payer correlation attack across bundles is not
-  defended against by anything shipped today.
+- **Funding-graph channel: mitigated against the same-hop attacker, not closed against a
+  stronger one.** `warm_pool` now funds each pool slot from its own dedicated,
+  deterministically-derived sub-funder (`sdk/src/warming.rs::derive_subfunder_keypair`),
+  never shared across slots, instead of one wallet funding every slot. Measured effect
+  (`eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool`, PROOF.md §3f): the
+  `predict_by_shared_funder` attacker's advantage collapses from **+0.7500/+0.8750/+0.9375**
+  at K=4/8/16 (identical to no mitigation at all) down to **near-zero, matching the
+  idealized ceiling** — a real, measured closure of that specific attacker, not an
+  idealized claim. What it does **not** do: an observer willing to trace one hop further
+  back (each sub-funder's own earliest funder) still finds the same `payer` wallet behind
+  every slot. This raises the cost of a same-hop fee-payer correlation attack; it does not
+  defend against a stronger, multi-hop funding-graph adversary — that residual is
+  unmeasured and unmitigated.
+- **Does not close the program-identity channel.** This program is deployed at a
+  single, fixed `program_id`, which anyone can enumerate via
+  `getSignaturesForAddress` and, per signature, resolve the signer via
+  `getTransaction` — correlating every bundle this tool ever produced (and the
+  signer's other on-chain activity) to a common source, independent of anything the
+  bundle contents do. Measured live against the deployed devnet program (
+  `harness/src/bin/program_identity.rs`, run with
+  `--rpc https://api.devnet.solana.com --program-id BCrR3JKi5EWhC5DuKYzV4EX7ogawoWaoKkhSqZYeYabn`):
+  **6 confirmed signatures, 3 distinct signers** at time of writing — a small number
+  only because devnet usage here has been light so far, not because the channel is
+  narrow; it grows with real usage. There is no mixing-layer fix for "the program's
+  address is public and immutable" short of a fresh deployment per user, which
+  reintroduces the ~1.27 SOL-per-deploy rent cost (see [`BENCHMARK.md`](./BENCHMARK.md)
+  Result 1) once per *user* rather than once total — a materially worse trade, not a
+  free fix. Named and measured here rather than left unmentioned.
 - **Does not protect against key compromise, RPC-level logging correlation, or a
   malicious wallet.** We recommend private/self-hosted RPC for the send path and note
   this as an operational assumption.
