@@ -186,3 +186,12 @@ filing.
   potential backdoor vector. Rotating to a multisig (e.g. Squads) upgrade authority, or
   revoking upgradeability entirely, is a blocking requirement before any mainnet deploy,
   not an optional hardening step.
+- The Pinocchio bench program's own devnet deployment
+  (`3cKHNQ4YyfkEnc3YuJjSdrFAGCketGqTUobWy6gxaoLP`, `BENCHMARK.md` Result 4) has the
+  **same** single-wallet upgrade authority as the Anchor program above
+  (`25NhgSgz97LKxPbD8usUcnH7AcUbuV6P2Qmc3Ayhbaee` — confirmed via
+  `solana program show 3cKHNQ4YyfkEnc3YuJjSdrFAGCketGqTUobWy6gxaoLP --url devnet`), which
+  doubles that single key's blast radius (compromise now lets an attacker push malicious
+  bytecode to two deployed programs, not one) rather than introducing a new class of
+  risk. Same acceptance and same blocking requirement as above: fine for a devnet
+  functional proof, not for any mainnet deploy of either program under this key.

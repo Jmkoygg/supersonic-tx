@@ -38,7 +38,7 @@ semgrep --config=p/rust programs sdk cli harness bench/pinocchio-router \
 
 ## Findings — all 4 reviewed, all false positives for this codebase
 
-### 1. `rust.lang.security.temp-dir.temp-dir` — `cli/src/main.rs:988`
+### 1. `rust.lang.security.temp-dir.temp-dir` — `cli/src/main.rs:1091`
 
 ```rust
 let dir = std::env::temp_dir().join(format!(

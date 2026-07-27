@@ -322,9 +322,10 @@ These four are written as program tests (`programs/supersonic-tx/tests/invariant
 and re-checked from scratch by `auditor-zero`. The same four are additionally proven
 against `bench/pinocchio-router` — a minimal-attack-surface Pinocchio reimplementation
 of the identical logic (`harness/tests/pinocchio_invariants.rs`, via Mollusk) — so both
-implementations are held to the same bar, not just the one that's deployed. The
-Pinocchio program is not deployed anywhere and does not replace the live Anchor
-deployment; it's offered as an option, tested to the same standard.
+implementations are held to the same bar. The Pinocchio program is now also deployed
+live on devnet and functionally exercised with a real, RPC-verified transaction
+(`BENCHMARK.md` Result 4); it does not replace the live Anchor deployment as the
+production program, it's offered and proven as an option to the same standard.
 
 ## 6. Explicit non-goals and limitations (what this does NOT do)
 
@@ -338,27 +339,48 @@ An auditor reads this section first. We are deliberately honest about the edges.
   (e.g., you posted your wallet publicly, or KYC ties it).
 - **Does not defend against a global adversary correlating across many of your bundles
   over time with unlimited compute** — repeated use leaks a behavioral prior. We can
-  raise the cost, not reduce it to zero. The metric measured throughout this document
-  is **per-bundle** ambiguity (does the K-1 decoys hide the real leg *within one
-  bundle*), not cross-bundle unlinkability (can an observer who watches the same
+  raise the cost, not reduce it to zero. The metric measured throughout most of this
+  document is **per-bundle** ambiguity (does the K-1 decoys hide the real leg *within
+  one bundle*), not cross-bundle unlinkability (can an observer who watches the same
   signer cast many bundles over weeks build a profile that links them, or that skews
   identification better than the per-bundle number suggests). We have not built or run
-  a multi-bundle adversary — no measured advantage number exists for this channel, and
-  we are explicit about that rather than implying a small per-bundle epsilon composes
-  safely across N observations (compounding, if it happens, is not bounded or
-  quantified here). One narrow piece of this *is* measured, and is worth naming
-  precisely rather than folding into the general disclaimer: `select_pool_slots`
-  (`sdk/src/warming.rs`) draws a distinct, bundle-seeded subset of the warm-pool per
-  bundle rather than a fixed prefix, and
-  `warming.rs::tests::selection_varies_across_bundles_not_a_fixed_prefix` checks over
-  500 bundles that this doesn't collapse onto a repeating group — closing the specific
-  "same decoy set reused every time" tell a naive pool implementation would have. That
-  is one component of the cross-bundle surface, not the whole channel: it says nothing
-  about whether amount patterns, timing, or fee-payer behavior across many bundles from
-  the same signer are themselves distinguishable in aggregate. Until that's measured,
-  the honest operational mitigation is procedural, not cryptographic: vary `K` and
-  timing across bundles rather than using an identical, clockwork pattern, since a
-  fixed cadence is itself a fingerprint no code change here can close.
+  a general multi-bundle adversary covering every surface (amount patterns, timing);
+  compounding across those, if it happens, is not bounded or quantified here. Two
+  narrower pieces of this *are* measured, worth naming precisely rather than folding
+  into the general disclaimer:
+  - `select_pool_slots` (`sdk/src/warming.rs`) draws a distinct, bundle-seeded subset of
+    the warm-pool per bundle rather than a fixed prefix, and
+    `warming.rs::tests::selection_varies_across_bundles_not_a_fixed_prefix` checks over
+    500 bundles that this doesn't collapse onto a repeating group — closing the
+    specific "same decoy set reused every time" tell a naive pool implementation would
+    have.
+  - **Fee-payer behavior across many bundles is now measured, and the news is bad: it
+    escalates fast.** `harness/src/cross_bundle.rs`'s
+    `eval_cross_bundle_subfunder_learning` models an attacker who has observed every
+    *prior* bundle this signer cast from the same warm pool — realistic, since
+    `derive_subfunder_keypair(master_seed, slot)` depends only on the slot, so the same
+    sub-funder recurs whenever a later bundle draws that slot again. Measured
+    (`pool_size=32`, the CLI default, `supersonic-harness` prints this table):
+
+    | K  | bundle 1 | bundle 5 | bundle 10 | bundle 25 | bundle 50 | bundle 100 |
+    |---:|---------:|---------:|----------:|----------:|----------:|-----------:|
+    | 2  | -0.0550  | +0.0450  | +0.1675   | +0.2450   | +0.4000   | +0.4775    |
+    | 4  | -0.0325  | +0.0800  | +0.3025   | +0.6150   | +0.7475   | +0.7500    |
+    | 8  | -0.0050  | +0.2100  | +0.5875   | +0.8675   | +0.8750   | +0.8750    |
+    | 16 | -0.0125  | +0.5175  | +0.9075   | +0.9375   | +0.9375   | +0.9375    |
+
+    The single-bundle mitigation's ~0 residual (§4.7) only holds for the *first* bundle
+    an attacker observes. By bundle 25–50 (well within normal usage of a `pool_size=32`
+    pool), the learned sub-funder set is large enough that this attacker reaches the
+    *same* ceiling the per-slot mitigation collapsed for a single bundle
+    (+0.7500/+0.8750/+0.9375 at K=4/8/16) — the mitigation delays this attack, it does
+    not close it. Closing it for real would need sub-funders that themselves rotate per
+    bundle (reintroducing per-bundle funding cost) or a genuinely external multi-party
+    funding source, same frontier every funding-graph mitigation in this document points
+    at. Until that's measured, the honest operational mitigation is procedural, not
+    cryptographic: vary `K` and timing across bundles rather than using an identical,
+    clockwork pattern, since a fixed cadence is itself a fingerprint no code change here
+    can close.
 - **Funding-graph channel: mitigated against the same-hop attacker, not closed against a
   stronger one.** `warm_pool` now funds each pool slot from its own dedicated,
   deterministically-derived sub-funder (`sdk/src/warming.rs::derive_subfunder_keypair`),

@@ -12,6 +12,7 @@
 
 mod classifiers;
 mod consolidation;
+mod cross_bundle;
 mod destination;
 mod eval;
 mod forest;
@@ -77,6 +78,7 @@ fn main() {
     print_table(&results, n);
     print_fixture_provenance();
     print_mainnet_fixture_provenance();
+    print_cross_bundle_learning(seed);
 
     let report = Report {
         n_per_split: n,
@@ -288,6 +290,57 @@ fn print_mainnet_fixture_provenance() {
         );
     }
     println!("  full list: harness/fixtures/mainnet_profiles.json");
+}
+
+/// Reports `cross_bundle::eval_cross_bundle_subfunder_learning` — the
+/// escalating attacker who's observed every prior bundle this signer cast
+/// from the same warm pool, and learns the per-slot sub-funder mitigation's
+/// closed set of sub-funder pubkeys over time. `POOL_SIZE` matches the CLI's
+/// own default (`cli/src/main.rs`'s `Warm` subcommand, `--pool-size 32`).
+fn print_cross_bundle_learning(seed: u64) {
+    const POOL_SIZE: u32 = 32;
+    const NUM_BUNDLES: usize = 100;
+    const TRIALS: usize = 400;
+    let checkpoints = [1usize, 5, 10, 25, 50, 100];
+
+    println!();
+    println!(
+        "cross-bundle sub-funder learning (pool_size={POOL_SIZE}) — an attacker who has observed"
+    );
+    println!(
+        "every PRIOR bundle this signer cast from the same warm pool, not just the current one:"
+    );
+    println!("  K  | bundle 1 | bundle 5 | bundle 10 | bundle 25 | bundle 50 | bundle 100");
+    println!("-----+----------+----------+-----------+-----------+-----------+------------");
+    for &k in &[2usize, 4, 8, 16] {
+        let advantage = cross_bundle::eval_cross_bundle_subfunder_learning(
+            POOL_SIZE,
+            k,
+            NUM_BUNDLES,
+            TRIALS,
+            seed,
+        );
+        print!("  {k:>2} |");
+        for &cp in &checkpoints {
+            print!(" {:>+8.4} |", advantage[cp - 1]);
+        }
+        println!();
+    }
+    println!();
+    println!("Same same-hop attacker as the per-slot sub-funder mitigation above, but with memory");
+    println!(
+        "across bundles: derive_subfunder_keypair(master_seed, slot) is a function of the slot"
+    );
+    println!("alone, so the same sub-funder recurs whenever a later bundle draws that slot again.");
+    println!(
+        "Advantage climbs from ~0 at bundle 1 toward the pre-mitigation same-wallet residual as"
+    );
+    println!(
+        "pool_size's sub-funders get learned. This is the number THREAT_MODEL.md §6's general"
+    );
+    println!(
+        "\"no measured advantage exists for this channel\" disclaimer used to leave unmeasured."
+    );
 }
 
 fn interpret(adv: f64, baseline: f64) -> &'static str {

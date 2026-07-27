@@ -94,17 +94,34 @@ signer requirement is still enforced by the System Program during the CPI regard
 **Recommendation:** the Pinocchio core is the better artifact for a program whose entire
 job is a bounded transfer loop, and it is what makes a live mainnet deployment cheap. The
 Anchor implementation remains the shipped/deployed one and the reference for this
-benchmark; porting the production program (and re-running the devnet proofs against the
-Pinocchio program id) is a clean, well-scoped follow-up — this benchmark is the evidence
-that justifies it.
+benchmark; porting the production program to Pinocchio as the primary deployment is a
+clean, well-scoped follow-up — this benchmark is the evidence that justifies it.
+
+## Result 4 — deployed and functionally proven on devnet, not just benchmarked
+
+The Pinocchio program is deployed to devnet at `3cKHNQ4YyfkEnc3YuJjSdrFAGCketGqTUobWy6gxaoLP`
+(deploy tx `54qV4gqsZkwwCK3Vqzwmp8bD2ZgFbBsRZwe9z69FQy2aKXkBqKY6Jr8AGiMU2WqcNyfVtD6C91ScJyPz7KVtJNhs`,
+independently confirmed via raw `getAccountInfo`: `executable: true`, owner
+`BPFLoaderUpgradeab1e`). It executes a real, atomic, 2-destination bundle correctly against
+that live deployment — not just proven in isolation via Mollusk (Result 3): a real
+transaction moved real lamports to two fresh destinations, each independently re-verified
+against a fresh `getBalance` call, not just "the send call didn't error." Reproduce:
+```bash
+cd bench/pinocchio-router && cargo build-sbf
+solana program deploy target/deploy/supersonic_tx_pinocchio.so \
+  --program-id target/deploy/supersonic_tx_pinocchio-keypair.json --url devnet
+cargo run --release -p supersonic-harness --bin verify-pinocchio-devnet-deploy -- \
+  --program-id <PROGRAM_ID> --keypair <PAYER_KEYPAIR> --rpc https://api.devnet.solana.com
+```
+(`harness/src/bin/verify_pinocchio_devnet_deploy.rs`.)
 
 ## Honest caveats
 
-- The Pinocchio program is **not deployed anywhere** and does not replace the live Anchor
-  deployment — it implements the same core logic with a compact manual instruction
-  encoding, not the shipped Anchor instruction format, and is offered as a
-  minimal-attack-surface *option*, tested to the same bar (Result 3), not a benchmark-only
-  artifact.
+- Deployed to devnet as a functional proof, alongside the shipped Anchor deployment — it
+  does not replace it as the production program. It implements the same core logic with a
+  compact manual instruction encoding, not the shipped Anchor instruction format, and is
+  offered as a minimal-attack-surface *option*, tested to the same bar (Result 3) and now
+  also deployed and exercised live (Result 4), not a benchmark-only artifact.
 - Binary sizes depend on toolchain/optimization flags; both were built with
   `opt-level = 3` + fat LTO and the standard `cargo build-sbf` / `anchor build` pipelines.
 - A pending network change (SIMD-0436) could halve rent-exempt minimums generally; that

@@ -37,6 +37,10 @@ path = "src/bin/collect_mainnet_profiles.rs"
 name = "program-identity"
 path = "src/bin/program_identity.rs"
 
+[[bin]]
+name = "verify-pinocchio-devnet-deploy"
+path = "src/bin/verify_pinocchio_devnet_deploy.rs"
+
 [dev-dependencies]
 mollusk-svm = "0.14"
 mollusk-svm-bencher = "0.14"

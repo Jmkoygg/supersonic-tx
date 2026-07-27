@@ -251,13 +251,14 @@ decoy" is not.
   (each sub-funder's own funder) still finds the same wallet behind every slot. See
   `THREAT_MODEL.md §6` and `PROOF.md §3f` for the full, itemized breakdown of what's
   closed vs. open across all three sub-channels.
-- **Two implementations, same invariants, one deployed.** The shipped program is Anchor,
+- **Two implementations, same invariants, both deployed.** The shipped program is Anchor,
   live and proven on devnet. [`BENCHMARK.md`](./BENCHMARK.md) reimplements the core in
-  Pinocchio and measures the tradeoff (~32× smaller, ~32× cheaper to deploy) — and
+  Pinocchio and measures the tradeoff (~32× smaller, ~32× cheaper to deploy) —
   `harness/tests/pinocchio_invariants.rs` proves the *same* 8 invariants against it via
-  Mollusk, not just its binary size. The Pinocchio build is not deployed anywhere and does
-  not replace the Anchor build; it's offered as a minimal-attack-surface option, tested to
-  the same bar.
+  Mollusk, not just its binary size, and it is now also deployed live on devnet
+  (BENCHMARK.md Result 4) and functionally exercised with a real, RPC-verified
+  transaction. It does not replace the Anchor build as the production deployment; it's
+  offered as a minimal-attack-surface option, tested and proven to the same bar.
 - **Devnet-validated.** Deployed and exercised on devnet; not audited for mainnet.
 - **Security tooling run against the real code:** Sec3 X-Ray (Solana-specific static
   analyzer) reports 0 findings on the on-chain program; `cargo audit` reports 5 advisories,
@@ -284,7 +285,7 @@ harness/                  supersonic-harness: adversarial proof
                            token-holdings measured against real mainnet data)
                           + tests/pinocchio_invariants.rs — same invariants, Pinocchio
 bench/pinocchio-router/   Pinocchio reimplementation of the core: same invariants
-                          proven via Mollusk, not deployed, offered as an option
+                          proven via Mollusk, deployed live on devnet, offered as an option
 .github/workflows/ci.yml  CI: fmt + clippy -D warnings + build + test + proof reproduction
 THREAT_MODEL.md           adversaries, observability, metric, invariants
 ARCHITECTURE.md           component design and boundaries

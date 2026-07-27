@@ -222,10 +222,57 @@ counter last met at rounds 5–6. A follow-up round with zero new findings at se
 would be needed to formally re-close the cycle; this document does not claim that closure
 prematurely.
 
+### Round 8 — fifth formal report, scoped diff-audit + full re-walk
+
+Two-phase round against the work added after round 7: the Pinocchio bench program
+(`bench/pinocchio-router`) deployed live to devnet
+(`3cKHNQ4YyfkEnc3YuJjSdrFAGCketGqTUobWy6gxaoLP`) with a functional proof binary
+(`harness/src/bin/verify_pinocchio_devnet_deploy.rs`) that sends a real, RPC-verified
+transaction against it, and a new cross-bundle adversarial measurement
+(`harness/src/cross_bundle.rs`) quantifying how the per-slot sub-funder mitigation's
+residual grows across repeated bundles from the same signer (see `THREAT_MODEL.md §6`,
+`PROOF.md §3f` for the numbers).
+
+**Scoped diff-audit pass found one real gap, fixed within the round:**
+
+- **F-2 (severity 4, LOW).** The newly-deployed Pinocchio program shares the exact same
+  single-wallet upgrade authority as the Anchor program — confirmed live via
+  `solana program show` against both program ids — but `SECURITY.md`'s "Known, stated
+  hardening gaps" only disclosed this for the Anchor program, not the new deployment.
+  Doesn't introduce a new class of risk (same accepted devnet-only gap, same blocking
+  requirement before mainnet) but doubles that single key's blast radius without the
+  disclosure following it. **Fixed:** a matching entry added to `SECURITY.md` naming the
+  Pinocchio program id and the shared authority.
+
+**Full Mode-1 re-walk of the entire repository (not just the diff) found zero findings at
+severity ≥ 4** — every `.rs` file read in full (28 files, 7,339 lines), full toolchain
+re-run (`anchor build`, both `cargo build-sbf` targets, `cargo test --workspace` 78/78,
+`cargo clippy --workspace --all-targets -- -D warnings` clean, `cargo fmt --all -- --check`
+clean, `cargo audit`), live devnet deployment identity and upgrade authority independently
+re-confirmed via raw RPC for both programs, and the mainnet/devnet fixture statistics cited
+throughout `THREAT_MODEL.md`/`PROOF.md` independently recomputed from the raw JSON rather
+than trusted from prose — all matched exactly. Two informational-only items surfaced and
+were fixed:
+
+- **N-6 (severity 2, informational).** `PROOF.md`'s cited test count ("74 passing") had
+  drifted stale again — the same recurring class N-4/N-5 already named — after
+  `cross_bundle.rs`'s 4 new tests. A fresh `cargo test --workspace` gave 78 passing, not
+  74. **Fixed:** the count and per-crate breakdown are current.
+- **N-7 (severity 1, informational).** `security/semgrep-report.md`'s line citation for
+  its one documented false positive (`cli/src/main.rs`) had drifted from line 988 to the
+  current line 1091 as code was added above it; the finding's substance (test-only,
+  false positive) was still correct, only the line number was stale. **Fixed.**
+
+This round is **not** a second consecutive clean round in the framework's strict sense —
+F-2 was a real finding at the scoped-pass stage, even though the full re-walk that
+followed within the same round came back clean. The next round that starts clean and
+stays clean would be the first of the two needed to formally re-close the cycle.
+
 ## What was covered
 
-Both formal rounds that ran the full checklist (round 4, and round 6's fresh re-walk of
-everything touched by its diff) evaluated all in-scope items with no gaps: checklists
+Three formal rounds ran the full checklist against the entire repository (round 4, round
+6's fresh re-walk of everything touched by its diff, and round 8's full Mode-1 re-walk of
+every file regardless of diff) and evaluated all in-scope items with no gaps: checklists
 01–07 (on-chain: account validation, access control, arithmetic safety, CPI/PDA safety,
 state machine, economic/logic attacks, opsec/governance), 11–13 (supply chain, secrets
 and key management, deployment/infra), 16–18 (formal verification and testing, logging/
@@ -239,23 +286,24 @@ fresh, full review effort into whatever the diff actually touched.
 
 ## Conclusion
 
-Seven rounds, twelve real issues found and fixed across the whole process: six at or
+Eight rounds, fifteen real issues found and fixed across the whole process: seven at or
 above the disclosure bar that mattered enough to name individually in `SECURITY.md`'s
 "Fixed findings" (the `warm` fee-payer bug, the funding-graph/token-holdings overclaim,
-the plaintext local-storage leak, F-001, F-003, and round 7's F-1), plus six additional
-low/informational observations (N-1 through N-5, plus round 7's unbounded-`pool_size`
-sanity-cap gap) that the same rigor surfaced and closed along the way. Rounds 5 and 6
-came back with zero findings at severity ≥ 4 — two clean rounds in a row, the
-framework's own stated bar for closing the cycle, met at that point without skipping or
-softening anything. Round 7 then found new real issues in the newest code and fixed them
-within the same round, which honestly resets that closing counter — this document does
-not claim the cycle is closed again until a follow-up round comes back clean. Every
-"clean" verdict in this document was independently re-derived from the actual code and
-re-run tests, not carried over on trust from a prior round's or a fix commit's own
-claims. Toolchain results as of the last round: `cargo test --workspace` 74/74 passing,
-`cargo clippy --workspace --all-targets -- -D warnings` clean, `cargo fmt --all --
---check` clean, `cargo audit` showing 5 pre-existing advisories (all transitive through `solana-sdk`/`reqwest`, none reachable
-from this project's own code, tracked in `SECURITY.md`'s hardening-gaps section rather
+the plaintext local-storage leak, F-001, F-003, round 7's F-1, and round 8's F-2), plus
+eight additional low/informational observations (N-1 through N-7, plus round 7's
+unbounded-`pool_size` sanity-cap gap) that the same rigor surfaced and closed along the
+way. Rounds 5 and 6 came back with zero findings at severity ≥ 4 — two clean rounds in a
+row, the framework's own stated bar for closing the cycle, met at that point without
+skipping or softening anything. Round 7 found new real issues in the newest code and
+fixed them within the same round; round 8's scoped pass found one more (F-2) before its
+own full re-walk came back clean — honestly, neither round claims to re-close the cycle
+on its own. Every "clean" verdict in this document was independently re-derived from the
+actual code and re-run tests, not carried over on trust from a prior round's or a fix
+commit's own claims. Toolchain results as of the last round: `cargo test --workspace`
+78/78 passing, `cargo clippy --workspace --all-targets -- -D warnings` clean, `cargo fmt
+--all -- --check` clean, `cargo audit` showing 5 pre-existing advisories (all transitive
+through `solana-sdk`/`reqwest`, none reachable from this project's own code, tracked in
+`SECURITY.md`'s hardening-gaps section rather
 than treated as blocking for a devnet/bounty-stage submission).
 
 What remains open, honestly: `supersonic warm` still prints no cost estimate before

@@ -5,20 +5,25 @@
 //!
 //! This is what makes the Pinocchio side of BENCHMARK.md more than a size
 //! comparison: both implementations are proven to uphold the identical set of
-//! invariants, not just measured for binary size. The Pinocchio program is not
-//! deployed anywhere and does not replace the live Anchor deployment — it is
-//! offered as a minimal-attack-surface *option*, tested to the same bar.
-//! Mirrors the Anchor tests' own style of asserting fail-closed behavior
-//! generically (`res.is_err()`), not pinned to a specific error code.
+//! invariants, not just measured for binary size. The Pinocchio program is
+//! also deployed and functionally proven live on devnet (BENCHMARK.md Result
+//! 4, `harness/src/bin/verify_pinocchio_devnet_deploy.rs`), not offered as a
+//! benchmark-only artifact — this test suite proves it correct in isolation
+//! via Mollusk; that binary proves the deployed bytecode executes correctly
+//! against real devnet RPC. Mirrors the Anchor tests' own style of asserting
+//! fail-closed behavior generically (`res.is_err()`), not pinned to a
+//! specific error code.
 //!
 //! Instruction encoding (manual, no Borsh/discriminator — see `bench/pinocchio-router/src/lib.rs`):
 //!   data:     `[count: u8][count × u64 LE amounts]`
-//!   accounts: `[payer (signer, writable), dest_0, .., dest_{count-1} (writable)]`
-//!             — no system-program account slot in the instruction's own account
-//!             list; `Transfer::invoke()` only needs `from`/`to` per leg (verified
-//!             against pinocchio-system 0.6.1's source), though the System
-//!             Program's account must still be loaded into Mollusk's broader
-//!             account set for the CPI target to resolve.
+//!   accounts: `[payer (signer, writable), dest_0, .., dest_{count-1} (writable),
+//!              system_program (readonly)]` — `Transfer::invoke()` itself only
+//!              reads `from`/`to` per leg (verified against pinocchio-system
+//!              0.6.1's source), but the runtime still requires the CPI
+//!              target present among *this instruction's* own accounts to
+//!              resolve it (confirmed empirically: omitting it fails with
+//!              "insufficient account keys for instruction" against the real
+//!              deployed program, not just in Mollusk) — see `bundle()` below.
 
 use mollusk_svm::{result::Check, Mollusk};
 use solana_account::Account;
