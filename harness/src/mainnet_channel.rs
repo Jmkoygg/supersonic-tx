@@ -25,6 +25,35 @@
 //! kept separate from `eval_channel`'s generic bootstrap shape because the
 //! shipped mechanism isn't a bootstrap-resampled numeric feature — it's a
 //! same-wallet-vs-real-funder identity comparison.
+//!
+//! **`eval_channel`'s warm regime is construction-modeled, not selector-run —
+//! stated plainly, not left implied.** The warm column for destination-history
+//! and token-holdings draws every leg (real and decoy) i.i.d. from the same
+//! `aged` pool each bundle; it does not route decoy selection through the
+//! actual shipped `supersonic_sdk::warming::select_pool_slots` /
+//! `derive_pool_member_keypair`. Wiring it through the real selector was
+//! attempted and reverted: giving each pool slot a fixed persistent feature
+//! value (as a real warmed slot would have) and letting `select_pool_slots`
+//! decide which bundles draw it either (a) made the reported advantage swing
+//! wildly and seed-dependent when the fixed value was a single bootstrap draw
+//! (an outlier slot dominates `predict_by_history`'s max-pick whenever
+//! selected — measured: -0.15 to +0.02 across seeds 1/2/3/42 at K=2 for
+//! token-holdings, nothing like this project's usual "holds across 4
+//! independent seeds" bar), or (b) introduced a systematic bias — not noise,
+//! a consistent, wrong-shaped result — when the fixed value was smoothed by
+//! averaging multiple draws: decoys clustering tightly around the pool mean
+//! while the real leg stays a single high-variance draw breaks the symmetric
+//! K-way comparison `predict_by_history` assumes, measured to make accuracy
+//! roughly constant across K instead of scaling with `1/K` (e.g. destination-
+//! history "warm" advantage climbing to +0.6 at K=16, a large *reported* leak
+//! that was a measurement artifact, not a real property of the mechanism).
+//! Getting this right needs either running the K-1 decoys AND the real leg
+//! through the same persistence discipline (the real leg is a genuine one-off
+//! payee, so that doesn't apply), or averaging the whole measurement over many
+//! independent pool realizations (`cross_bundle.rs`'s `trials` pattern) rather
+//! than one fixed `pool_features` draw per harness run — real, but more work
+//! than fits safely under this fix. Tracked as an open item rather than
+//! shipped half-verified; see `SECURITY.md`.
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
@@ -280,6 +309,9 @@ pub fn eval_mainnet_token_holdings(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use solana_sdk::{pubkey::Pubkey, signer::Signer};
+    use std::collections::HashSet;
+    use supersonic_sdk::warming::{derive_pool_member_keypair, select_pool_slots};
 
     fn synthetic_bundles(k: usize, count: usize) -> Vec<Bundle> {
         let mut rng = ChaCha20Rng::seed_from_u64(0xB00D_1E00);
@@ -369,5 +401,60 @@ mod tests {
             eval_mainnet_funding_graph_shipped_mechanism_subfunder_pool(&[], 1, &fixture),
             0.0
         );
+    }
+
+    /// Coverage checkpoint for the B4 gap named in this module's doc comment:
+    /// `eval_channel`'s warm column does NOT route decoy selection through the
+    /// real shipped selector (`select_pool_slots` / `derive_pool_member_keypair`)
+    /// — that wiring was attempted and reverted (module doc has the full
+    /// account, including the specific numbers that ruled it out). This test
+    /// does not close that gap and must not be read as if it did; it's a canary
+    /// living in THIS crate (not just `sdk/tests/properties.rs`, which proves an
+    /// adjacent but distinct SDK-level guarantee) proving the real selector is
+    /// invokable and well-formed from the harness at exactly the configuration
+    /// `eval_channel` would need if it were wired through it: `POOL_SIZE`
+    /// matching the CLI default, decoy counts spanning every `K` this harness
+    /// reports (2/4/8/16), across many `bundle_id`s. If a future attempt rewires
+    /// `eval_channel` through the selector, this test's assertions (right decoy
+    /// count, no duplicate slot per bundle, every slot resolves to a real,
+    /// distinct keypair) are exactly what that wiring needs to hold.
+    #[test]
+    fn warm_pool_selector_is_invokable_and_well_formed_at_every_reported_k() {
+        const POOL_SIZE: u32 = 32;
+        let seed = [9u8; 32];
+        for &k in &[2usize, 4, 8, 16] {
+            let n_decoys = k - 1;
+            for bundle_id in 0..20u64 {
+                let slots = select_pool_slots(&seed, bundle_id, n_decoys, POOL_SIZE);
+                assert_eq!(
+                    slots.len(),
+                    n_decoys,
+                    "K={k} bundle {bundle_id}: expected {n_decoys} decoy slots, got {}",
+                    slots.len()
+                );
+                let unique: HashSet<u32> = slots.iter().copied().collect();
+                assert_eq!(
+                    unique.len(),
+                    slots.len(),
+                    "K={k} bundle {bundle_id}: duplicate slot within one bundle"
+                );
+                let mut seen_keys: HashSet<Pubkey> = HashSet::new();
+                for &slot in &slots {
+                    // The exact call eval_channel's warm regime would need to
+                    // make per decoy leg if/when it's wired through the selector.
+                    let kp = derive_pool_member_keypair(&seed, slot);
+                    assert_ne!(
+                        kp.pubkey(),
+                        Pubkey::default(),
+                        "K={k} slot {slot}: degenerate keypair"
+                    );
+                    assert!(
+                        seen_keys.insert(kp.pubkey()),
+                        "K={k} bundle {bundle_id} slot {slot}: pool member pubkey collided \
+                         with another slot's — selector's distinctness guarantee broken"
+                    );
+                }
+            }
+        }
     }
 }

@@ -10,7 +10,11 @@
 
 use proptest::prelude::*;
 use solana_sdk::{pubkey::Pubkey, signer::Signer};
-use supersonic_sdk::{build_instruction, derive_decoy_keypair, plan_bundle, DecoyConfig};
+use supersonic_sdk::warming::{derive_pool_member_keypair, select_pool_slots};
+use supersonic_sdk::{
+    build_instruction, derive_decoy_keypair, plan_bundle, plan_bundle_with_mode, DecoyConfig,
+    DecoyMode,
+};
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(400))]
@@ -122,6 +126,44 @@ proptest! {
         // Instruction data = 8-byte discriminator + 4-byte Borsh vec length + k × 8-byte
         // legs. Each leg occupies exactly 8 bytes, so no leg is wider/narrower than another.
         prop_assert_eq!(ix.data.len(), 8 + 4 + k * 8, "every leg is a fixed 8-byte cell");
+    }
+
+    /// Same guarantee as `decoys_are_fully_recoverable`, for `DecoyMode::WarmPool`:
+    /// decoy destinations must be exactly the pool slots `select_pool_slots` (the
+    /// real shipped selector, `warming.rs`) picked for this `bundle_id`, each
+    /// resolving to `derive_pool_member_keypair(seed, slot)` — and therefore
+    /// recoverable the same way. This is the companion the B4 harness fix
+    /// (`harness/src/mainnet_channel.rs`) now measures against: this test instead
+    /// makes it a hard SDK guarantee, for arbitrary inputs, not a sampled
+    /// measurement.
+    #[test]
+    fn warm_pool_decoys_match_the_selector_and_are_recoverable(
+        seed in any::<[u8; 32]>(),
+        bundle_id in any::<u64>(),
+        real_amount in 1u64..=1_000_000_000_000,
+        k in 2usize..=16,
+        dest_bytes in any::<[u8; 32]>(),
+    ) {
+        const POOL_SIZE: u32 = 32;
+        let real_dest = Pubkey::new_from_array(dest_bytes);
+        let decoy_mode = DecoyMode::WarmPool { pool_size: POOL_SIZE };
+        let plan = plan_bundle_with_mode(
+            &seed, bundle_id, real_dest, real_amount, k, DecoyConfig::default(), decoy_mode,
+        ).unwrap();
+
+        let mut expected_slots = select_pool_slots(&seed, bundle_id, k - 1, POOL_SIZE);
+        expected_slots.sort_unstable();
+
+        let mut actual_slots: Vec<u32> = Vec::new();
+        for leg in plan.legs.iter().filter(|l| !l.is_real) {
+            let slot = leg.decoy_index.expect("warm-pool decoy carries a slot index");
+            actual_slots.push(slot);
+            let kp = derive_pool_member_keypair(&seed, slot);
+            prop_assert_eq!(kp.pubkey(), leg.dest, "warm-pool decoy dest recoverable from (seed, slot)");
+        }
+        actual_slots.sort_unstable();
+        prop_assert_eq!(actual_slots, expected_slots, "decoy slots match select_pool_slots' output exactly");
+        prop_assert_eq!(plan.decoy_mode, decoy_mode);
     }
 
     /// The plan is a pure function of (master_seed, bundle_id, intent, k): identical

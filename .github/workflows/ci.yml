@@ -51,5 +51,7 @@ jobs:
       - name: Test workspace (unit/integration/property/bench/pinocchio-invariant tests)
         run: cargo test --workspace
 
-      - name: Reproduce the adversarial proof numbers
-        run: cargo run -p supersonic-harness --release -- --n 2000 --seed 1
+      - name: Reproduce the adversarial proof numbers and assert the committed report is current
+        run: |
+          cargo run -p supersonic-harness --release -- --n 8000 --seed 1 --out /tmp/harness-report.json
+          git diff --no-index --exit-code PROOF/harness-report.json /tmp/harness-report.json

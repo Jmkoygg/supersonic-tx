@@ -318,6 +318,18 @@ one, and the harness must *test* each one.
   amount, self-send, leg/destination count mismatch, insufficient funds) must fail
   closed — revert the entire bundle — never move funds partially.
 
+**Known gap, not enforced: duplicate destinations within a bundle.** `execute_bundle`
+(`programs/supersonic-tx/src/lib.rs`) pairs each leg 1:1 with a `remaining_accounts`
+destination but never checks the `K` destinations are pairwise distinct. Not
+exploitable via the shipped SDK — `select_pool_slots` returns distinct slots
+(`selection_has_no_duplicates_within_a_bundle`), and `DecoyMode::Fresh` derives a
+distinct key per index — so a duplicate can only arise from a hand-built,
+malformed instruction bypassing the SDK entirely. Even then, funds still land on
+user-controlled addresses and atomicity (I3) holds; no fund-leakage or custody risk.
+Left as a documented gap rather than an on-chain `require!`, since the program is
+already deployed at a fixed address and this is not reachable through any shipped
+code path.
+
 These four are written as program tests (`programs/supersonic-tx/tests/invariants.rs`)
 and re-checked from scratch by `auditor-zero`. The same four are additionally proven
 against `bench/pinocchio-router` — a minimal-attack-surface Pinocchio reimplementation

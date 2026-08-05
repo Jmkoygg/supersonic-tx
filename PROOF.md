@@ -36,30 +36,36 @@ compile with zero errors.
 > resolved it upstream, and CI now pins that and runs `cargo clippy --workspace
 > --all-targets -- -D warnings` on every push** — clean, not just "not disabled."
 
-## 2. Automated tests — 78 passing, 0 failing
+## 2. Automated tests — 80 passing, 0 failing
 
 ```
 $ cargo test --workspace
    supersonic-cli   (lib unit tests, incl. warm_profile, inspect skip-on-corrupt, warm-pool fail-closed,
                       pool-size cap, recover-mode pool-size fail-loud)             : 18 passed
    supersonic-cli   (warm-sweep fee-payer regression)    : 1 passed
-   supersonic-harness (incl. cross_bundle.rs's cross-bundle sub-funder learning tests) : 13 passed
+   supersonic-harness (incl. cross_bundle.rs's cross-bundle sub-funder learning tests,
+                        and a canary proving the shipped warm-pool selector is invokable
+                        and well-formed at every reported K, added while addressing
+                        kauenet's B4 review comment)                : 14 passed
    supersonic-harness (mollusk_cu_bench)                 : 2 passed
    supersonic-harness (pinocchio_invariants, Mollusk)    : 8 passed
    supersonic-sdk (lib, incl. warming.rs + subfunder-pool + zeroize golden-value tests) : 22 passed
-   supersonic-sdk (properties)                           : 5 passed   (proptest, 400 cases each)
+   supersonic-sdk (properties, incl. a new DecoyMode::WarmPool test proving decoy
+                    destinations match select_pool_slots' output and are recoverable) : 6 passed   (proptest, 400 cases each)
    supersonic-tx (lib)                                   : 1 passed
    supersonic-tx (invariants)                            : 8 passed
 ```
 
-**Total: 78 passed, 0 failed** (up from 31 tests at the start of the audit cycle to 58 at
+**Total: 80 passed, 0 failed** (up from 31 tests at the start of the audit cycle to 58 at
 its close — see `AUDIT.md` — plus 4 more from the post-audit `inspect`/warm-pool
 fail-closed fixes, plus 4 more from the funding-graph shipped-mechanism regression
 tests below (§3f), reaching 66 — plus 8 more from round 7's work: the per-slot
 sub-funder mitigation and its zero-residual regression test, the `--pool-size` sanity
 cap, and the `recover`/`--pool-size` fail-loud fix (`AUDIT.md`, `SECURITY.md`), reaching
 74 — plus 4 more from `cross_bundle.rs`'s cross-bundle sub-funder learning tests,
-reaching the current 78. The
+reaching 78 — plus 2 more responding to kauenet's PR review (a harness-side canary for
+the B4 selector-wiring gap, and an SDK property test for `DecoyMode::WarmPool` recovery),
+reaching the current 80. The
 8 Anchor invariant
 tests map 1:1 to the threat-model invariants (atomicity, fail-closed, bounds, real value
 movement) — and the same 8 are now also proven against `bench/pinocchio-router` via
@@ -230,6 +236,20 @@ $ supersonic-harness --n 8000 --seed 1
    8 |  +0.8750 ->  -0.0006                        |  +0.8750 ->  -0.0004                   |  +0.5319 ->  -0.0011
   16 |  +0.9375 ->  +0.0003                        |  +0.9375 ->  +0.0004                   |  +0.5656 ->  +0.0011
 ```
+
+**Methodology note — destination-history/token-holdings "warm" columns above are
+construction-modeled, not selector-run.** Every leg (real and decoy) in the warm regime
+is drawn i.i.d. from the real `aged` mainnet fixture pool; decoy selection does not route
+through the shipped `select_pool_slots`/`derive_pool_member_keypair` selector
+(`sdk/src/warming.rs`). Wiring the real selector in was attempted and reverted — it
+either made the number swing wildly and seed-dependent, or introduced a systematic bias
+that broke the `1/K`-scaling this measurement relies on, depending on how the persistent
+per-slot value was modeled. Neither was safe to publish. Full account, the specific
+numbers that ruled both attempts out, and what correctly wiring it needs (averaging over
+many independent pool realizations, not a single fixed draw per run):
+`harness/src/mainnet_channel.rs`'s module doc and `SECURITY.md`. The mainnet
+funding-graph shipped-mechanism residual two sections below is unaffected — it already
+models the real mechanism directly, not through this bootstrap shape.
 
 **Funding-graph, SHIPPED-mechanism residual — real, not idealized.** The "warm" column
 above for funding-graph is an idealized ceiling: it resamples real aged addresses' actual

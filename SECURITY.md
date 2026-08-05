@@ -195,3 +195,23 @@ filing.
   bytecode to two deployed programs, not one) rather than introducing a new class of
   risk. Same acceptance and same blocking requirement as above: fine for a devnet
   functional proof, not for any mainnet deploy of either program under this key.
+- The mainnet-scale destination-history/token-holdings "warm" columns in `PROOF.md §3f`
+  (`harness/src/mainnet_channel.rs::eval_channel`) are construction-modeled — every leg
+  drawn i.i.d. from the real `aged` mainnet fixture pool — not a literal replay of the
+  shipped `supersonic_sdk::warming::select_pool_slots` selector's per-bundle slot
+  selection. Wiring the real selector in was attempted and reverted after it was found to
+  either (a) make the reported number swing wildly and seed-dependent (a single fixed,
+  persistent per-slot feature value lets one outlier pool slot dominate the max-pick
+  attacker whenever selected), or (b) introduce a systematic bias when the fixed value
+  was smoothed by averaging — decoys clustering around the pool mean while the real leg
+  stays a single high-variance draw breaks the `1/K`-scaling the measurement relies on.
+  Neither is a valid number to publish, so both were reverted rather than shipped
+  half-verified; the mainnet funding-graph shipped-mechanism residual
+  (`eval_mainnet_funding_graph_shipped_mechanism[_subfunder_pool]`) is unaffected — it
+  already models the real mechanism directly, not via `eval_channel`. Getting the
+  destination-history/token-holdings columns properly selector-wired needs averaging the
+  measurement over many independent pool realizations (the same pattern
+  `cross_bundle.rs`'s `trials` parameter already uses), not a single fixed
+  `pool_features` draw per run — real follow-up work, not attempted here under this
+  fix's time budget. See `harness/src/mainnet_channel.rs`'s module doc for the full
+  account, including the specific numbers that made both attempts unacceptable.

@@ -74,7 +74,9 @@
       "naive_mainnet_funding_advantage": 0.5,
       "prewarmed_mainnet_funding_advantage": -0.0022499999999999742,
       "naive_mainnet_tokens_advantage": 0.292875,
-      "prewarmed_mainnet_tokens_advantage": -0.0027499999999999747
+      "prewarmed_mainnet_tokens_advantage": -0.0027499999999999747,
+      "mainnet_funding_shipped_advantage": -0.0022499999999999742,
+      "mainnet_funding_shipped_subfunder_pool_advantage": -0.0022499999999999742
     },
     {
       "k": 4,
@@ -146,7 +148,9 @@
       "naive_mainnet_funding_advantage": 0.75,
       "prewarmed_mainnet_funding_advantage": 0.0036249999999999893,
       "naive_mainnet_tokens_advantage": 0.449125,
-      "prewarmed_mainnet_tokens_advantage": 0.007500000000000007
+      "prewarmed_mainnet_tokens_advantage": 0.007500000000000007,
+      "mainnet_funding_shipped_advantage": 0.75,
+      "mainnet_funding_shipped_subfunder_pool_advantage": 0.0036249999999999893
     },
     {
       "k": 8,
@@ -218,7 +222,9 @@
       "naive_mainnet_funding_advantage": 0.875,
       "prewarmed_mainnet_funding_advantage": -0.00037500000000000033,
       "naive_mainnet_tokens_advantage": 0.531875,
-      "prewarmed_mainnet_tokens_advantage": -0.001125000000000001
+      "prewarmed_mainnet_tokens_advantage": -0.001125000000000001,
+      "mainnet_funding_shipped_advantage": 0.875,
+      "mainnet_funding_shipped_subfunder_pool_advantage": -0.00037500000000000033
     },
     {
       "k": 16,
@@ -290,7 +296,9 @@
       "naive_mainnet_funding_advantage": 0.9375,
       "prewarmed_mainnet_funding_advantage": 0.00037500000000000033,
       "naive_mainnet_tokens_advantage": 0.565625,
-      "prewarmed_mainnet_tokens_advantage": 0.001125000000000001
+      "prewarmed_mainnet_tokens_advantage": 0.001125000000000001,
+      "mainnet_funding_shipped_advantage": 0.9375,
+      "mainnet_funding_shipped_subfunder_pool_advantage": 0.00037500000000000033
     }
   ]
 }

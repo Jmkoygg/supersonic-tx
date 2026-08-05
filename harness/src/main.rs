@@ -8,7 +8,11 @@
 //! Usage:
 //!   supersonic-harness [--n N] [--seed S] [--out path.json]
 //!
-//! Defaults: N=5000 bundles per train/test split, seed=1, K ∈ {2,4,8,16}.
+//! Defaults: N=8000 bundles per train/test split, seed=1, K ∈ {2,4,8,16} — matches
+//! the `n` committed to `PROOF/harness-report.json`, CI's proof-reproduction step,
+//! and every "Reproduce:" command in README.md/PROOF.md/THREAT_MODEL.md. Keeping
+//! one number in sync across all four is deliberate: a mismatched default here was
+//! a real, found-in-review drift (see PROOF.md's own honesty about it).
 
 mod classifiers;
 mod consolidation;
@@ -35,7 +39,7 @@ struct Report {
 }
 
 fn main() {
-    let mut n = 5000usize;
+    let mut n = 8000usize;
     let mut seed = 1u64;
     let mut out: Option<String> = None;
     let mut cfg = DecoyConfig::default();
